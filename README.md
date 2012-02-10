@@ -143,15 +143,40 @@ app.getAll( type )
 ```
 
 
-### Destroy
+### Delete
 
-destroy an existing object
+delete an existing object
 
 ```
 app.destroy( known_id )
 
-  .success ( function(destroyed_object) { } )
-  .error   ( function(err)    { } )
+  .success ( function(deleted_object) { } )
+  .error   ( function(err)            { } )
+```
+
+
+### Remote Updates
+
+subscribe to changes from remote
+
+```
+// new doc created
+app.remote.on_create( function( created_object) { } )
+
+// existing doc updated
+app.remote.on_update( function( update_object)  { } )
+
+// doc deleted
+app.remote.on_delete( function( deleted_object) { } )
+
+// any of above events
+app.remote.on_change( function( changed_object) { } )
+
+// all listeners can be filtered by type
+app.remote.on_create( type, function( created_object) { } )
+app.remote.on_update( type, function( update_object)  { } )
+app.remote.on_delete( type, function( deleted_object) { } )
+app.remote.on_change( type, function( changed_object) { } )
 ```
 
 
