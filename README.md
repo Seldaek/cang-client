@@ -24,7 +24,7 @@ Accounts / Sessions
 ```javascript
 app.sign_up('joe@example.com', 'secret')
 
-  .success( function(user) {
+  .done( function(user) {
     user.email // 'joe@example.com'
     user.uuid  // auto generated
     
@@ -32,7 +32,7 @@ app.sign_up('joe@example.com', 'secret')
   } ) 
   
   // signup error
-  .error( function(err) {
+  .fail( function(err) {
     alert("Oops: " + err.message)
   } ) 
 ```
@@ -43,10 +43,10 @@ app.sign_up('joe@example.com', 'secret')
 ```javascript
 app.sign_in('joe@example.com', 'secret')
 
-  .success( function(user) {
+  .done( function(user) {
     // data sync kicks in
   } ) 
-  .error( function(err) {
+  .fail( function(err) {
     alert("Oops: " + err.message)
   } ) 
 ```
@@ -57,10 +57,10 @@ app.sign_in('joe@example.com', 'secret')
 ```javascript
 app.sign_out()
 
-  .success( function() {
+  .done( function() {
     // session ends, local data gets cleaned up
   } ) 
-  .error( function(err) {
+  .fail( function(err) {
     alert("Oops: " + err.message)
   } ) 
 ```
@@ -71,10 +71,10 @@ app.sign_out()
 ```javascript
 app.forgot_password('joe@example.com')
 
-  .success( function() {
+  .done( function() {
     alert( "Link has been sent to joe@example.com")
   } ) 
-  .error( function(err) {
+  .fail( function(err) {
     alert("Oops: " + err.message)
   } )
 ```
@@ -100,10 +100,10 @@ create a new object.
 ```javascript
 uuid = app.uuid()
 type = 'rule'
-app.save( uuid, type, {name: "rule the world"} )
+app.store.save( uuid, type, {name: "rule the world"} )
   
-  .success ( function(new_object) { } )
-  .error   ( function(err)        { } )
+  .done ( function(new_object) { } )
+  .fail ( function(err)        { } )
 ```
 
 
@@ -112,10 +112,10 @@ app.save( uuid, type, {name: "rule the world"} )
 update an existing object.
 
 ```javascript
-app.save( known_id, {name: "rule the world like a baws."} )
+app.store.save( known_id, {name: "rule the world like a baws."} )
 
-  .success ( function(updated_object) { } )
-  .error   ( function(err)            { } )
+  .done ( function(updated_object) { } )
+  .fail ( function(err)            { } )
 ```
 
 
@@ -124,10 +124,10 @@ app.save( known_id, {name: "rule the world like a baws."} )
 load an existing object
 
 ```javascript
-app.get( known_id )
+app.store.get( known_id )
 
-  .success ( function(object) { } )
-  .error   ( function(err)    { } )
+  .done ( function(object) { } )
+  .fail ( function(err)    { } )
 ```
 
 
@@ -136,10 +136,10 @@ app.get( known_id )
 load all objects available or from a specific type
 
 ```javascript
-app.getAll( type )
+app.store.getAll( type )
 
-  .success ( function(objects) { } )
-  .error   ( function(err)     { } )
+  .done ( function(objects) { } )
+  .fail ( function(err)     { } )
 ```
 
 
@@ -148,10 +148,10 @@ app.getAll( type )
 delete an existing object
 
 ```javascript
-app.destroy( known_id )
+app.store.destroy( known_id )
 
-  .success ( function(deleted_object) { } )
-  .error   ( function(err)            { } )
+  .done ( function(deleted_object) { } )
+  .fail ( function(err)            { } )
 ```
 
 
@@ -197,13 +197,13 @@ email = {
 app.send_email( known_id )
   
   // successfully synched to server
-  .outbox  ( function(email) { } )
+  .progress ( function(email) { } )
   
   // email sent successfully
-  .sent    ( function(email) { } )
+  .done     ( function(email) { } )
   
   // something went wrong
-  .error   ( function(err)   { } )
+  .fail     ( function(err)   { } )
 ```
 
 
