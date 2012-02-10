@@ -9,7 +9,7 @@ API
 Setup
 -----
 
-```
+```javascript
 couchDB_endpoint = 'worlddominatorapp.iriscouch.com'
 app = new couchApp(couchDB_endpoint)
 ```
@@ -21,7 +21,7 @@ Accounts / Sessions
 
 ### Sign Up
 
-```
+```javascript
 app.sign_up('joe@example.com', 'secret')
 
   .success( function(user) {
@@ -40,7 +40,7 @@ app.sign_up('joe@example.com', 'secret')
 
 ### Sign In
 
-```
+```javascript
 app.sign_in('joe@example.com', 'secret')
 
   .success( function(user) {
@@ -54,7 +54,7 @@ app.sign_in('joe@example.com', 'secret')
 
 ### Sign Out
 
-```
+```javascript
 app.sign_out()
 
   .success( function() {
@@ -68,7 +68,7 @@ app.sign_out()
 
 ### Forgot Password
 
-```
+```javascript
 app.forgot_password('joe@example.com')
 
   .success( function() {
@@ -88,7 +88,7 @@ Data Storage / Sync
 
 helper to generate unique IDs that you can use to store your objects.
 
-```
+```javascript
 uuid = app.uuid()
 ```
 
@@ -97,7 +97,7 @@ uuid = app.uuid()
 
 create a new object.
 
-```
+```javascript
 uuid = app.uuid()
 type = 'rule'
 app.save( uuid, type, {name: "rule the world"} )
@@ -111,7 +111,7 @@ app.save( uuid, type, {name: "rule the world"} )
 
 update an existing object.
 
-```
+```javascript
 app.save( known_id, {name: "rule the world like a baws."} )
 
   .success ( function(updated_object) { } )
@@ -123,7 +123,7 @@ app.save( known_id, {name: "rule the world like a baws."} )
 
 load an existing object
 
-```
+```javascript
 app.get( known_id )
 
   .success ( function(object) { } )
@@ -135,7 +135,7 @@ app.get( known_id )
 
 load all objects available or from a specific type
 
-```
+```javascript
 app.getAll( type )
 
   .success ( function(objects) { } )
@@ -147,7 +147,7 @@ app.getAll( type )
 
 delete an existing object
 
-```
+```javascript
 app.destroy( known_id )
 
   .success ( function(deleted_object) { } )
@@ -159,7 +159,7 @@ app.destroy( known_id )
 
 subscribe to changes from remote
 
-```
+```javascript
 // new doc created
 app.remote.on_create( function( created_object) { } )
 
@@ -185,7 +185,7 @@ Send E-Mails
 
 hell, yeah!
 
-```
+```javascript
 email = {
   from    : 'joe@example.com',
   to      : ['you@roundthewor.ld'],
