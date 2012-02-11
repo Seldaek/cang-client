@@ -7,6 +7,8 @@ describe "couchApp", ->
     spyOn(@app.store, "_removeItem").andCallThrough()
     spyOn(@app.store, "_clear").andCallThrough()
     
+    @app.store.clear()
+    
   
   describe ".store", ->
     describe ".uuid(num = 7)", ->

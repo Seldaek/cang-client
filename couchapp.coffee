@@ -167,25 +167,18 @@ class Store
       def.reject INVALID_ARGUMENTS_ERROR "type & id are required"
       return def
     
-    # build the key
-    key = "#{type}/#{id}"
-    
-    
     #
     # try to read from localStorage. 
     #
     try
-      data = @_getItem key
+      object = @cache type, id
       
       #
       # if object cannot be found, call the error callback
       #
-      unless data
+      unless object
         def.reject NOT_FOUND_ERROR type, id
         return def
-      
-      # parse data
-      object = JSON.parse data
 
       #
       # add id & type to returned object
@@ -198,6 +191,139 @@ class Store
       def.reject error
       
     return def
+    
+  ##
+  # cache(key, value, options = {})
+  #
+  # loads a key only once from localStorage and caches it for
+  # faster future access. When value is passed, update cache.
+  #
+  # unless options.remote is true, check if object is dirty
+  #
+  # TODO: SPEC me
+  cache : (type, id, value = false, options = {}) ->
+    key = "#{type}/#{id}"
+    
+    #
+    #
+    #
+    if value
+      @_cached[key] = value
+      @_setItem key, JSON.stringify value
+        
+    else
+      return @_cached[key] if @_cached[key]?
+      
+      json_string = @_getItem key
+
+      if json_string
+        
+        # cache the model
+        @_cached[key] = JSON.parse json_string
+        
+      else
+        # cache a "not found" as well
+        @_cached[key] = false
+    
+    
+    if options.remote
+      @clear_changed key
+    else
+      if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
+        @changed type, id, @_cached[key]
+      else
+        @clear_changed key
+        
+    @_cached[key]
+  
+  ##
+  # TODO: SPEC me
+  clear_changed: (type, id) ->
+    key = "#{type}/#{id}"
+    
+    if key
+      delete @_dirty[key]
+    else
+      @_dirty = {}
+    
+    # @trigger 'dirty_change'
+    
+  ##
+  # marked as deleted
+  #
+  # a model is marked as deleted, when it has a `_deleted:true` attribute
+  #
+  # TODO: SPEC me
+  is_marked_as_deleted : (type, id) ->
+    @cache(type, id)._deleted is true
+      
+  ##
+  # Store.changed(id, value)
+  #
+  # returns a map of dirty model id's
+  #
+  # TODO: SPEC me
+  _dirty_timeout = null
+  changed: (type, id, value) ->
+    key = "#{type}/#{id}"
+    
+    if value
+        
+      @_dirty[key] = value
+      
+      # @trigger 'dirty_change'
+      window.clearTimeout @_dirty_timeout
+      @_dirty_timeout = window.setTimeout ( => 
+        # @trigger 'dirty_idle'
+      ), 2000 # 2 seconds timout for `dirty_idle` event
+    else
+      if arguments.length
+        @_dirty[key]
+      else
+        @_dirty
+         
+  ##
+  # is dirty
+  #
+  # TODO: SPEC me
+  is_dirty: (type = null, id = null) ->
+    unless type
+      return _(@_dirty).keys().length > 0
+    
+    key = "#{type}/#{id}"
+        
+    # no synced_at? uuhh, that's dirty.
+    return true unless @cache(type, id).synced_at
+    
+    # no updated_at? no dirt then
+    return false unless @cache(type, id).updated_at
+    
+    @cache(type, id).synced_at  = Date.parse @cache(type, id).synced_at unless @cache(type, id).synced_at instanceof Date
+    @cache(type, id).updated_at = Date.parse @cache(type, id).updated_at unless @cache(type, id).updated_at instanceof Date
+    
+    # we compare last sync with last updated and give sync an aditional .1 second
+    @cache(type, id).synced_at.getTime() + 100 < @cache(type, id).updated_at.getTime()
+  
+  ##
+  # Store.clear()
+  #
+  # clears localStorage and cache
+  #
+  # TOOD: SPEC me
+  clear: ()->
+    def = @_deferred()
+    
+    try
+      @_clear()
+      @_cached = {}
+      @clear_changed()
+      
+      def.done()
+    catch error
+      def.fail()
+      
+    return def
+    
   
   ##
   #
@@ -253,6 +379,15 @@ class Store
   #
   _deferred: $.Deferred
 
+  ##
+  # cache of localStorage for quicker access
+  #
+  _cached: {}
+  
+  ##
+  # map of dirty models by their ids
+  #
+  _dirty: {}
 
 
 ##
