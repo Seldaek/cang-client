@@ -205,10 +205,12 @@ class Store
       # otherwise return them all
       #
       results = for key in keys when (type is undefined or key.indexOf(type) is 0) and @_is_semantic_id key
-        [id, _type] = key.split '/'
-        object = @cache id, _type
+        [_type, id] = key.split '/'
+        
+        object = @cache _type, id
         object.id   = id
         object.type = _type
+        
         object
 
       def.resolve(results)

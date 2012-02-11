@@ -271,7 +271,7 @@ describe "couchApp", ->
             promise.done success
             results = success.mostRecentCall.args[0]
             expect(results.length).toBe 1
-            expect(results[0].id).toBe 'valid'
+            expect(results[0].id).toBe '123'
           
       _when "called with type = 'cat'", ->
         with_2_cats_and_3_dogs ->
