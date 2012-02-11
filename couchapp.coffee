@@ -218,6 +218,40 @@ class Store
     return def
     
   ##
+  #
+  destroy: (type, id) ->
+    def = @_deferred()
+
+    #
+    # does object exist at aill?
+    #
+    object = @cache type, id
+    if object
+      
+      #
+      # if object has been synched before, only mark it as deleted
+      #
+      if object._rev
+        object._deleted = true
+        @cache type, id, object
+        
+      #
+      # otherwise: kick it
+      #
+      else
+        key = "#{type}/#{id}"
+        @_removeItem key
+      
+        delete @_cached[key]
+        @clear_changed type, id
+      
+      def.resolve object
+    else
+      def.reject NOT_FOUND_ERROR type, id
+    
+    return def
+    
+  ##
   # cache(key, value, options = {})
   #
   # loads a key only once from localStorage and caches it for
@@ -241,7 +275,7 @@ class Store
 
       if json_string
         
-        # cache the model
+        # cache the object
         @_cached[key] = JSON.parse json_string
         
       else
@@ -250,12 +284,12 @@ class Store
     
     
     if options.remote
-      @clear_changed key
+      @clear_changed type, id
     else
       if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
         @changed type, id, @_cached[key]
       else
-        @clear_changed key
+        @clear_changed type, id
         
     @_cached[key]
   
@@ -274,7 +308,7 @@ class Store
   ##
   # marked as deleted
   #
-  # a model is marked as deleted, when it has a `_deleted:true` attribute
+  # an object is marked as deleted, when it has a `_deleted:true` attribute
   #
   # 
   is_marked_as_deleted : (type, id) ->
@@ -283,7 +317,7 @@ class Store
   ##
   # Store.changed(id, value)
   #
-  # returns a map of dirty model id's
+  # returns a map of dirty object id's
   _dirty_timeout = null
   changed: (type, id, value) ->
     key = "#{type}/#{id}"
@@ -406,7 +440,7 @@ class Store
   _cached: {}
   
   ##
-  # map of dirty models by their ids
+  # map of dirty objects by their ids
   #
   _dirty: {}
   

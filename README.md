@@ -150,7 +150,7 @@ app.store.getAll( type )
 delete an existing object
 
 ```javascript
-app.store.destroy( known_id )
+app.store.destroy( type, id )
 
   .done ( function(deleted_object) { } )
   .fail ( function(err)            { } )

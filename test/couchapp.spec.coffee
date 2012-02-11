@@ -281,12 +281,18 @@ describe "couchApp", ->
             promise.done success
             results = success.mostRecentCall.args[0]
             expect(results.length).toBe 2
-          
-        
-          
-        
-        
     # /.getAll(type)
+    
+    describe ".destroy(type, id)", ->
+      it "should return a promise", ->
+        promise = @app.store.destroy 'document', '123'
+        do expect(promise.done).toBeDefined
+        do expect(promise.fail).toBeDefined
+      
+      it "should have more specs"
+        
+      
+    # /.destroy(type, id)
     
     describe ".clear()", ->
       it "should have some specs"
