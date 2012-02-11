@@ -192,8 +192,8 @@ describe "couchApp", ->
             
       _when "object can be found", ->
         beforeEach ->
-          object = name: 'test'
-          @app.store._getItem.andReturn JSON.stringify object
+          spyOn(@app.store, "cache").andReturn name: 'test'
+
           @promise = @app.store.get 'document', 'abc4567'
           @success = jasmine.createSpy 'success'
           @promise.done @success
@@ -210,7 +210,8 @@ describe "couchApp", ->
           
       _when "object cannot be found", ->
         beforeEach ->
-          @app.store._getItem.andReturn null
+          spyOn(@app.store, "cache").andReturn false
+          
           @promise = @app.store.get 'document', 'abc4567'
           @error = jasmine.createSpy 'error'
           @promise.fail @error
@@ -224,5 +225,87 @@ describe "couchApp", ->
         
         expect(@app.store._getItem.callCount).toBe 1
     # /.get(type, id)
+    
+    describe ".getAll(type)", ->
+      with_2_cats_and_3_dogs = (specs) ->
+        _and "two cat and three dog objects exist in the store", ->
+          beforeEach ->
+            spyOn(@app.store, "_index").andReturn ["cat/1", "cat/2", "dog/1", "dog/2", "dog/3"]
+            spyOn(@app.store, "cache").andReturn name: 'becks'
+            
+          specs()
+      
+      
+      it "should return a promise", ->
+        promise = @app.store.getAll 'document'
+        do expect(promise.done).toBeDefined
+        do expect(promise.fail).toBeDefined
+        
+      _when "called without a type", ->
+        with_2_cats_and_3_dogs ->
+          it "should return'em all", ->
+            success = jasmine.createSpy 'success'
+            promise = @app.store.getAll()
+            promise.done success
+            results = success.mostRecentCall.args[0]
+            expect(results.length).toBe 5
+            
+        _and "no documents exist in the store", ->          
+          beforeEach ->
+            spyOn(@app.store, "_index").andReturn []
+          
+          it "should return an empty array", ->
+            success = jasmine.createSpy 'success'
+            promise = @app.store.getAll()
+            promise.done success
+            expect(success).wasCalledWith []
+        
+        _and "there are other documents in localStorage not stored with app.store", ->
+          beforeEach ->
+            spyOn(@app.store, "_index").andReturn ["_some_config", "some_other_shizzle", "whatever", "valid/123"]
+            spyOn(@app.store, "cache").andReturn {}
+          
+          it "should not return them", ->
+            success = jasmine.createSpy 'success'
+            promise = @app.store.getAll()
+            promise.done success
+            results = success.mostRecentCall.args[0]
+            expect(results.length).toBe 1
+            expect(results[0].id).toBe 'valid'
+          
+      _when "called with type = 'cat'", ->
+        with_2_cats_and_3_dogs ->
+          it "should return only the cat objects", ->
+            success = jasmine.createSpy 'success'
+            promise = @app.store.getAll('cat')
+            promise.done success
+            results = success.mostRecentCall.args[0]
+            expect(results.length).toBe 2
+          
+        
+          
+        
+        
+    # /.getAll(type)
+    
+    describe ".clear()", ->
+      it "should have some specs"
+    # /.clear()
+    
+    describe ".is_dirty(type, id)", ->
+      it "should have some specs"
+    # /.is_dirty(type, id)
+    
+    describe ".changed(type, id, value)", ->
+      it "should have some specs"
+    # /.changed(type, id, value)
+    
+    describe ".is_marked_as_deleted(type, id)", ->
+      it "should have some specs"
+    # /.is_marked_as_deleted(type, id)
+    
+    describe ".clear_changed()", ->
+      it "should have some specs"
+    # /.clear_changed()
   # /.store
 # /couchApp

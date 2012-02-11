@@ -191,6 +191,31 @@ class Store
       def.reject error
       
     return def
+  
+  ##
+  #
+  getAll: (type) ->
+    def = @_deferred()
+    keys = @_index()
+    
+    try
+      
+      #
+      # when type is set, return results filtered by type
+      # otherwise return them all
+      #
+      results = for key in keys when (type is undefined or key.indexOf(type) is 0) and @_is_semantic_id key
+        [id, _type] = key.split '/'
+        object = @cache id, _type
+        object.id   = id
+        object.type = _type
+        object
+
+      def.resolve(results)
+    catch error
+      def.reject error
+    
+    return def
     
   ##
   # cache(key, value, options = {})
@@ -199,8 +224,6 @@ class Store
   # faster future access. When value is passed, update cache.
   #
   # unless options.remote is true, check if object is dirty
-  #
-  # TODO: SPEC me
   cache : (type, id, value = false, options = {}) ->
     key = "#{type}/#{id}"
     
@@ -237,7 +260,7 @@ class Store
     @_cached[key]
   
   ##
-  # TODO: SPEC me
+  # 
   clear_changed: (type, id) ->
     key = "#{type}/#{id}"
     
@@ -253,7 +276,7 @@ class Store
   #
   # a model is marked as deleted, when it has a `_deleted:true` attribute
   #
-  # TODO: SPEC me
+  # 
   is_marked_as_deleted : (type, id) ->
     @cache(type, id)._deleted is true
       
@@ -261,8 +284,6 @@ class Store
   # Store.changed(id, value)
   #
   # returns a map of dirty model id's
-  #
-  # TODO: SPEC me
   _dirty_timeout = null
   changed: (type, id, value) ->
     key = "#{type}/#{id}"
@@ -285,7 +306,6 @@ class Store
   ##
   # is dirty
   #
-  # TODO: SPEC me
   is_dirty: (type = null, id = null) ->
     unless type
       return _(@_dirty).keys().length > 0
@@ -308,8 +328,6 @@ class Store
   # Store.clear()
   #
   # clears localStorage and cache
-  #
-  # TOOD: SPEC me
   clear: ()->
     def = @_deferred()
     
@@ -318,9 +336,9 @@ class Store
       @_cached = {}
       @clear_changed()
       
-      def.done()
+      def.resolve()
     catch error
-      def.fail()
+      def.reject()
       
     return def
     
@@ -374,6 +392,9 @@ class Store
   # only lowercase letters and numbers are allowed for keys
   _is_valid_key: (key) ->
     /^[a-z0-9]+$/.test key
+
+  _is_semantic_id: (key) ->
+    /^[a-z0-9]+\/[a-z0-9]+$/.test key
     
   ##
   #
@@ -388,6 +409,13 @@ class Store
   # map of dirty models by their ids
   #
   _dirty: {}
+  
+  ##
+  # document key index
+  #
+  # TODO: make this cachy
+  _index: ->
+    @_key(i) for i in [0...@_length()]
 
 
 ##
