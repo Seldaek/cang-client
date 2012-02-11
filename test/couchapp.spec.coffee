@@ -23,6 +23,21 @@ describe "couchApp", ->
         promise = @app.store.save 'document', '123', name: 'test'
         do expect(promise.done).toBeDefined
         do expect(promise.fail).toBeDefined
+      
+      describe "invalid arguments", ->
+        _when "no arguments passed", ->          
+          it "should call the fail callback", ->
+            promise = @app.store.save()
+            error = jasmine.createSpy 'error'
+            promise.fail error
+            expect(error).wasCalled()
+        
+        _when "no object passed", ->
+          it "should call the fail callback", ->
+            promise = @app.store.save 'document', 'abc4567'
+            error = jasmine.createSpy 'error'
+            promise.fail error
+            expect(error).wasCalled()
         
       _when "id is '123', type is 'document', object is {name: 'test'}", ->
         beforeEach ->
@@ -157,6 +172,55 @@ describe "couchApp", ->
         promise = @app.store.get 'document', '123'
         do expect(promise.done).toBeDefined
         do expect(promise.fail).toBeDefined
+      
+      describe "invalid arguments", ->
+        _when "no arguments passed", ->          
+          it "should call the fail callback", ->
+            promise = @app.store.get()
+            error = jasmine.createSpy 'error'
+            promise.fail error
+            expect(error).wasCalled()
+
+        _when "no id passed", ->
+          it "should call the fail callback", ->
+            promise = @app.store.get 'document'
+            error = jasmine.createSpy 'error'
+            promise.fail error
+            expect(error).wasCalled()
+            
+      _when "object can be found", ->
+        beforeEach ->
+          object = name: 'test'
+          @app.store._getItem.andReturn JSON.stringify object
+          @promise = @app.store.get 'document', 'abc4567'
+          @success = jasmine.createSpy 'success'
+          @promise.done @success
+          @object = @success.mostRecentCall.args[0]
+        
+        it "should call the done callback", ->
+          expect(@success).wasCalled()
+          
+        it "should set id attribute", ->
+          expect(@object.id).toBe 'abc4567'
+        
+        it "should set type attribute", ->
+          expect(@object.type).toBe 'document'
+          
+      _when "object cannot be found", ->
+        beforeEach ->
+          @app.store._getItem.andReturn null
+          @promise = @app.store.get 'document', 'abc4567'
+          @error = jasmine.createSpy 'error'
+          @promise.fail @error
+          
+        it "should call the fail callback", ->
+          expect(@error).wasCalled()
+      
+      it "should cache the object after the first get", ->
+        @app.store.get 'document', 'abc4567'
+        @app.store.get 'document', 'abc4567'
+        
+        expect(@app.store._getItem.callCount).toBe 1
     # /.get(type, id)
   # /.store
 # /couchApp

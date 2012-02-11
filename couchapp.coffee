@@ -90,13 +90,21 @@ class Store
     # if called without an id, get it from object.
     # if called without id and type, get both from object
     #
-    if arguments.length is 2
-      object  = id
-      id      = object.id
-    if arguments.length is 1
-      object  = type
-      type    = object.type
-      id      = object.id
+    switch arguments.length
+      when 2
+        object  = id
+        id      = object.id
+      when 1
+        object  = type
+        type    = object.type
+        id      = object.id
+    
+    #
+    # catch invalid object error
+    #
+    unless typeof object is 'object'
+      def.reject INVALID_ARGUMENTS_ERROR "object is #{typeof object}"
+      return def
       
     #
     # if object has no id, generate one
@@ -107,10 +115,10 @@ class Store
     # validate id & type
     #
     unless @_is_valid_key id
-      def.reject @_invalid_key_error id: id
+      def.reject INVALID_KEY_ERROR id: id
       return def
     unless @_is_valid_key type
-      def.reject @_invalid_key_error type: type
+      def.reject INVALID_KEY_ERROR type: type
       return def
     
     #
@@ -154,6 +162,42 @@ class Store
   get : (type, id) ->
     def = @_deferred()
     
+    # catch invalid arguments
+    unless typeof type is 'string' and typeof id is 'string'
+      def.reject INVALID_ARGUMENTS_ERROR "type & id are required"
+      return def
+    
+    # build the key
+    key = "#{type}/#{id}"
+    
+    
+    #
+    # try to read from localStorage. 
+    #
+    try
+      data = @_getItem key
+      
+      #
+      # if object cannot be found, call the error callback
+      #
+      unless data
+        def.reject NOT_FOUND_ERROR type, id
+        return def
+      
+      # parse data
+      object = JSON.parse data
+
+      #
+      # add id & type to returned object
+      #
+      object.id   = id
+      object.type = type
+
+      def.resolve object
+    catch error
+      def.reject error
+      
+    return def
   
   ##
   #
@@ -204,18 +248,11 @@ class Store
   # only lowercase letters and numbers are allowed for keys
   _is_valid_key: (key) ->
     /^[a-z0-9]+$/.test key
-  
-  ##
-  #
-  _invalid_key_error: (id_or_type) ->
-    key = if id_or_type.id then 'id' else 'type'
-    new Error "invalid #{key} '#{id_or_type[key]}': numbers and lowercase letters allowed only"
     
   ##
   #
   _deferred: $.Deferred
 
-    
 
 
 ##
@@ -235,3 +272,16 @@ class @couchApp extends Events
   ##
   # uuid proxy to store
   uuid: (len) -> @store.uuid len
+  
+  
+##
+# Errors
+INVALID_KEY_ERROR =  (id_or_type) ->
+  key = if id_or_type.id then 'id' else 'type'
+  new Error "invalid #{key} '#{id_or_type[key]}': numbers and lowercase letters allowed only"
+  
+INVALID_ARGUMENTS_ERROR = (msg) ->
+  new Error msg
+  
+NOT_FOUND_ERROR = (type, id) ->
+  new Error "#{type} with #{id} could not be found"
