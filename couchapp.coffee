@@ -68,25 +68,92 @@ class Store
       @_clear      = -> null
   
   ##
+  # helper to generate uuids
+  #
+  # chars define all possible characters a uuid may exist of
+  uuid: (len = 7) ->
+    chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('')
+    radix = chars.length
+    (
+      chars[ 0 | Math.random()*radix ] for i in [0...len]
+    ).join('')
+    
+  ##
   # save an object
   #
-  # the object be extend with `_id`, `type`, `updated_at`, `created_at`
-  save: (id, type, object) ->
-    def = $.Deferred()
+  # extends object with `_id`, `type`, `updated_at`, `created_at`
+  # and stores it in localStorage
+  save: (type, id, object) ->
+    def = @_deferred()
     
-    object._id  = id
-    object.type = type
+    #
+    # if called without an id, get it from object.
+    # if called without id and type, get both from object
+    #
+    if arguments.length is 2
+      object  = id
+      id      = object.id
+    if arguments.length is 1
+      object  = type
+      type    = object.type
+      id      = object.id
+      
+    #
+    # if object has no id, generate one
+    #
+    id ||= @uuid()
     
-    object.created_at ||= object.updated_at = new Date
+    #
+    # validate id & type
+    #
+    unless @_is_valid_key id
+      def.reject @_invalid_key_error id: id
+      return def
+    unless @_is_valid_key type
+      def.reject @_invalid_key_error type: type
+      return def
     
+    #
+    # use semantic Ids
+    # e.g. "document/123"
+    #
+    key = "#{type}/#{id}"
+    
+    #
+    # add timestamps.
+    #
+    object.created_at ||= object.updated_at = @_now()
+    
+    #
+    # remove `id` and `type` attributes.
+    # document key contains this information
+    #
+    delete object.id
+    delete object.type
+    
+    #
+    # try to write to localStorage. 
+    #
     try
-      @_setItem id, JSON.stringify object
+      @_setItem key, JSON.stringify object
+      
+      #
+      # add id & type to returned object
+      #
+      object.id   = id
+      object.type = type
+      
       def.resolve object
     catch error
       def.reject error
     
-    
     return def
+    
+  ##
+  #
+  get : (type, id) ->
+    def = @_deferred()
+    
   
   ##
   #
@@ -128,6 +195,25 @@ class Store
   _key        : (nr)          -> window.localStorage.key(nr)
   _length     : ()            -> window.localStorage.length
   _clear      : ()            -> window.localStorage.clear()
+  
+  ##
+  #
+  _now: -> new Date
+  
+  ##
+  # only lowercase letters and numbers are allowed for keys
+  _is_valid_key: (key) ->
+    /^[a-z0-9]+$/.test key
+  
+  ##
+  #
+  _invalid_key_error: (id_or_type) ->
+    key = if id_or_type.id then 'id' else 'type'
+    new Error "invalid #{key} '#{id_or_type[key]}': numbers and lowercase letters allowed only"
+    
+  ##
+  #
+  _deferred: $.Deferred
 
     
 
@@ -146,3 +232,6 @@ class @couchApp extends Events
 
     @store = new Store couchDB_url
 
+  ##
+  # uuid proxy to store
+  uuid: (len) -> @store.uuid len

@@ -93,29 +93,31 @@ uuid = app.uuid()
 ```
 
 
-### Create
+### Create / Update
 
-create a new object.
+create or update an object.
 
 ```javascript
-uuid = app.uuid()
+// create a new rule
 type = 'rule'
-app.store.save( uuid, type, {name: "rule the world"} )
+app.store.save( type, {name: "rule the world"} )
   
   .done ( function(new_object) { } )
   .fail ( function(err)        { } )
-```
-
-
-### Update
-
-update an existing object.
-
-```javascript
-app.store.save( known_id, {name: "rule the world like a baws."} )
-
-  .done ( function(updated_object) { } )
-  .fail ( function(err)            { } )
+  
+// update an existing rule
+id   = 'abc4567'
+type = 'rule'
+app.store.save( type, id, {name: "rule the world"} )
+  
+  .done ( function(new_object) { } )
+  .fail ( function(err)        { } )
+  
+// alternative syntax
+app.store.save( {name: "rule the world", type: "rule", id: "abc4567"} )
+  
+  .done ( function(new_object) { } )
+  .fail ( function(err)        { } )
 ```
 
 
@@ -124,7 +126,7 @@ app.store.save( known_id, {name: "rule the world like a baws."} )
 load an existing object
 
 ```javascript
-app.store.get( known_id )
+app.store.get( type, id )
 
   .done ( function(object) { } )
   .fail ( function(err)    { } )
