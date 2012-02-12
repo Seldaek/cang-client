@@ -1,25 +1,48 @@
 describe "couchApp", ->
   beforeEach ->
-    @app = new couchApp '/path/to/couch'
+    @app = new couchApp 'http://my.cou.ch'
     
+    # requests
+    spyOn($, "ajax").andReturn $.Deferred()
+    
+    # store
     spyOn(@app.store, "_getItem").andCallThrough()
     spyOn(@app.store, "_setItem").andCallThrough()
     spyOn(@app.store, "_removeItem").andCallThrough()
     spyOn(@app.store, "_clear").andCallThrough()
-    
     @app.store.clear()
-    
   
-  describe ".store", ->
-    describe ".uuid(num = 7)", ->
-      it "should default to a length of 7", ->
-        expect(@app.store.uuid().length).toBe 7
-        
-      _when "called with num = 5", ->
-        it "should generate an id with length = 5", ->
-          expect(@app.store.uuid(5).length).toBe 5
-    # /.uuid(num)
+  describe ".uuid(num = 7)", ->
+    it "should default to a length of 7", ->
+      expect(@app.uuid().length).toBe 7
+      
+    _when "called with num = 5", ->
+      it "should generate an id with length = 5", ->
+        expect(@app.uuid(5).length).toBe 5
+  # /.uuid(num)
+  
+  describe ".sign_up(email, password)", ->
+    beforeEach ->
+      @app.sign_up('joe@example.com', 'secret')
+      @args = $.ajax.mostRecentCall.args[0]
+      @data = JSON.parse @args.data
     
+    it "should send a PUT request to http://my.cou.ch/_users/org.couchdb.user:email", ->
+      expect($.ajax).wasCalled()
+      expect(@args.type).toBe 'PUT'
+    
+    it "should have set type to 'user", ->
+      expect(@data.type).toBe 'user'
+      
+    it "should set a salt", ->
+      expect(@data.salt).toMatch /[0-9a-f]{40}/
+      
+    it "should set a password_sha hash", ->
+      expect(@data.password_sha).toMatch /[0-9a-f]{40}/      
+      expect(@data.password_sha).toBe hex_sha1 'secret' + @data.salt
+  # /.sign_up(email, password)
+  
+  describe ".store", ->  
     describe ".save(type, id, object)", ->
       it "should return a promise", ->
         promise = @app.store.save 'document', '123', name: 'test'

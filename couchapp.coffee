@@ -54,7 +54,7 @@ Events =
 #
 class Store
   
-  constructor : () ->
+  constructor : (@couch) ->
     
     # if browser does not support local storage,
     # e.g. Safari in private mode, overite the 
@@ -66,17 +66,6 @@ class Store
       @_key        = -> null
       @_length     = -> 0
       @_clear      = -> null
-  
-  ##
-  # helper to generate uuids
-  #
-  # chars define all possible characters a uuid may exist of
-  uuid: (len = 7) ->
-    chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('')
-    radix = chars.length
-    (
-      chars[ 0 | Math.random()*radix ] for i in [0...len]
-    ).join('')
     
   ##
   # save an object
@@ -109,7 +98,7 @@ class Store
     #
     # if object has no id, generate one
     #
-    id ||= @uuid()
+    id ||= @couch.uuid()
     
     #
     # validate id & type
@@ -464,13 +453,53 @@ class @couchApp extends Events
   ##
   # initialization
   #
-  constructor : (couchDB_url) ->
-
-    @store = new Store couchDB_url
+  constructor : (@couchDB_url) ->
+    
+    # remove trailing slash(es)
+    # TODO: SPEC me
+    @couchDB_url = @couchDB_url.replace /\/+$/, ''
+    
+    @store = new Store this
 
   ##
-  # uuid proxy to store
-  uuid: (len) -> @store.uuid len
+  # helper to generate uuids
+  #
+  # chars define all possible characters a uuid may exist of
+  uuid: (len = 7) ->
+    chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('')
+    radix = chars.length
+    (
+      chars[ 0 | Math.random()*radix ] for i in [0...len]
+    ).join('')
+  
+  ##
+  #
+  sign_up : (email, password) ->
+    prefix  = 'org.couchdb.user'
+    key     = "#{prefix}:#{email}"
+    
+    salt          = hex_sha1 @uuid()
+    password_sha  = hex_sha1 password + salt
+    
+    user = 
+      _id           : key
+      name          : email
+      type          : 'user'
+      roles         : []
+      salt          : salt
+      password_sha  : password_sha
+    
+    $.ajax
+      type        : 'PUT'
+      url         : "#{@couchDB_url}/_users/#{encodeURIComponent key}"
+      data        : JSON.stringify user
+      contentType : "application/json"
+     
+    
+  sign_in : (email, password) ->
+  sign_out: ->
+    
+
   
   
 ##
@@ -484,3 +513,5 @@ INVALID_ARGUMENTS_ERROR = (msg) ->
   
 NOT_FOUND_ERROR = (type, id) ->
   new Error "#{type} with #{id} could not be found"
+
+
