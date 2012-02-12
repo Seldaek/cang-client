@@ -52,10 +52,13 @@ app.sign_in('joe@example.com', 'secret')
 ```
 
 ### Change password
+
+```javascript
 app.change_password('new_secret')
 
   .done( function(user) { } ) 
   .fail( function(err)  { } )
+```
 
 ### Sign Out
 
