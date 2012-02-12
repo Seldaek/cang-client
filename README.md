@@ -91,7 +91,6 @@ app.forgot_password('joe@example.com')
 Data Storage / Sync
 -------------------
 
-
 ### uuid
 
 helper to generate unique IDs that you can use to store your objects.
@@ -204,7 +203,7 @@ email = {
   body    : "we can do it!\nSigned, Joe"
 }
 
-app.send_email( known_id )
+app.send_email( email )
   
   // successfully synched to server
   .progress ( function(email) { } )

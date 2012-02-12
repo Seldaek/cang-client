@@ -580,5 +580,3 @@ INVALID_ARGUMENTS_ERROR = (msg) ->
   
 NOT_FOUND_ERROR = (type, id) ->
   new Error "#{type} with #{id} could not be found"
-
-
