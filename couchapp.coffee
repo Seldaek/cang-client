@@ -472,7 +472,18 @@ class @couchApp extends Events
       chars[ 0 | Math.random()*radix ] for i in [0...len]
     ).join('')
   
+  
   ##
+  # sign up with email & password
+  #
+  # uses standard couchDB API to create a new document in _users db.
+  # The backend will automatically create a userDB based on the email
+  # address. (joe@example.com => joe_example_com, tbd)
+  #
+  # TODO:
+  #
+  # * start synchronization with userDB
+  # * return a custom promise
   #
   sign_up : (email, password) ->
     prefix  = 'org.couchdb.user'
@@ -495,12 +506,59 @@ class @couchApp extends Events
       data        : JSON.stringify user
       contentType : "application/json"
      
-    
-  sign_in : (email, password) ->
-  sign_out: ->
-    
-
   
+  ##
+  # sign in with email & password
+  #
+  # uses standard couchDB API to create a new user session (POST /_session)
+  #
+  # TODO: 
+  #
+  # * make sessions persistant, as of now, cooky won't be sent on successive requests
+  # * start synchronization with userDB
+  # * return a custom promise
+  #
+  sign_in : (email, password) ->
+    
+    creds = JSON.stringify
+              name      : email
+              password  : password
+    
+    $.ajax
+      type        : 'POST'
+      url         : "#{@couchDB_url}/_session"
+      data        : creds
+      contentType : "application/json"
+    
+  
+  ##
+  # change password
+  #
+  # to be done.
+  #
+  change_password : (email) ->
+    alert('change password is not yet implementd')
+    
+    # 1. GET user doc
+    # 2. update salt + password_sha
+    # 3. PUT user doc
+    
+  
+  ##
+  # sign out 
+  #
+  # uses standard couchDB API to destroy a user session (DELETE /_session)
+  #
+  # TODO:
+  #
+  # * stop synchronization
+  # * return a custom promise
+  #
+  sign_out: ->
+    $.ajax
+      type        : 'DELETE'
+      url         : "#{@couchDB_url}/_session"
+      contentType : "application/json"
   
 ##
 # Errors

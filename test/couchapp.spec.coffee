@@ -27,9 +27,13 @@ describe "couchApp", ->
       @args = $.ajax.mostRecentCall.args[0]
       @data = JSON.parse @args.data
     
-    it "should send a PUT request to http://my.cou.ch/_users/org.couchdb.user:email", ->
+    it "should send a PUT request to http://my.cou.ch/_users/org.couchdb.user%3Ajoe%40example.com", ->
       expect($.ajax).wasCalled()
       expect(@args.type).toBe 'PUT'
+      expect(@args.url).toBe  'http://my.cou.ch/_users/org.couchdb.user%3Ajoe%40example.com'
+      
+    it "should set Content-Type to application/json", ->
+      expect(@args.contentType).toBe 'application/json'
     
     it "should have set type to 'user", ->
       expect(@data.type).toBe 'user'
@@ -41,6 +45,40 @@ describe "couchApp", ->
       expect(@data.password_sha).toMatch /[0-9a-f]{40}/      
       expect(@data.password_sha).toBe hex_sha1 'secret' + @data.salt
   # /.sign_up(email, password)
+  
+  describe ".sign_in(email, password)", ->
+    beforeEach ->
+      @app.sign_in('joe@example.com', 'secret')
+      @args = $.ajax.mostRecentCall.args[0]
+      @data = JSON.parse @args.data
+    
+    it "should send a POST request to http://my.cou.ch/_session", ->
+      expect($.ajax).wasCalled()
+      expect(@args.type).toBe 'POST'
+      expect(@args.url).toBe  'http://my.cou.ch/_session'
+      
+    it "should send email as name parameter", ->
+      expect(@data.name).toBe 'joe@example.com'
+    
+    it "should send password", ->
+      expect(@data.password).toBe 'secret'
+  # /.sign_in(email, password)
+  
+  describe ".change_password(email, password)", ->
+    it "should have some specs"
+  # /.sign_up(email, password)
+  
+  
+  describe ".sign_out()", ->
+    beforeEach ->
+      @app.sign_out()
+      @args = $.ajax.mostRecentCall.args[0]
+    
+    it "should send a DELETE request to http://my.cou.ch/_session", ->
+      expect($.ajax).wasCalled()
+      expect(@args.type).toBe 'DELETE'
+      expect(@args.url).toBe  'http://my.cou.ch/_session'
+  # /.sign_in(email, password)
   
   describe ".store", ->  
     describe ".save(type, id, object)", ->

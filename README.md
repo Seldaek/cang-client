@@ -10,8 +10,8 @@ Setup
 -----
 
 ```javascript
-couchDB_endpoint = 'worlddominatorapp.iriscouch.com'
-app = new couchApp(couchDB_endpoint)
+couchDB_endpoint = 'http://worlddominatorapp.iriscouch.com';
+app = new couchApp(couchDB_endpoint);
 ```
 
 
@@ -51,6 +51,11 @@ app.sign_in('joe@example.com', 'secret')
   } ) 
 ```
 
+### Change password
+app.change_password('new_secret')
+
+  .done( function(user) { } ) 
+  .fail( function(err)  { } )
 
 ### Sign Out
 
