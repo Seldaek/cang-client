@@ -242,6 +242,9 @@ class Store
     
     return def
     
+  # alias
+  delete: destroy
+    
   ##
   # cache(key, value, options = {})
   #
@@ -461,6 +464,7 @@ class @couchApp extends Events
     
     @store = new Store this
 
+
   ##
   # helper to generate uuids
   #
@@ -529,7 +533,9 @@ class @couchApp extends Events
       url         : "#{@couchDB_url}/_session"
       data        : creds
       contentType : "application/json"
-    
+      
+  # alias
+  login: sign_in
   
   ##
   # change password
@@ -559,6 +565,9 @@ class @couchApp extends Events
       type        : 'DELETE'
       url         : "#{@couchDB_url}/_session"
       contentType : "application/json"
+  
+  # alias
+  logout: sign_out
   
 ##
 # Errors
