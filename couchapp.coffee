@@ -243,7 +243,7 @@ class Store
     return def
     
   # alias
-  delete: destroy
+  delete: @::destroy
     
   ##
   # cache(key, value, options = {})
@@ -535,7 +535,7 @@ class @couchApp extends Events
       contentType : "application/json"
       
   # alias
-  login: sign_in
+  login: @::sign_in
   
   ##
   # change password
@@ -567,7 +567,7 @@ class @couchApp extends Events
       contentType : "application/json"
   
   # alias
-  logout: sign_out
+  logout: @::sign_out
   
 ##
 # Errors
