@@ -34,21 +34,16 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         beforeEach ->
           # fake date timestamps
           spyOn(@store, "_now").andReturn 'now'
+          spyOn(@store, "cache").andReturn 'cached_object'
       
           # keep promise, key, and stored object for assertions
           @promise = @store.save 'document', '123', { name: 'test' }
-          [@key, object_string] = @store._setItem.mostRecentCall.args
-          @object = JSON.parse object_string
 
-        it "should save a document with key '123'", ->
-          expect(@key).toBe 'document/123'
-
-        it "should save a document with name = 'test'", ->
-          expect(@object.name).toBe 'test'
+        it "should cache document", ->
+          expect(@store.cache).wasCalled()
       
         it "should add timestamps", ->
-          expect(@object.updated_at).toBe 'now'
-          expect(@object.created_at).toBe 'now'
+          expect(@store.cache).wasCalledWith 'document', '123', { name: 'test', created_at: 'now', updated_at: 'now' }
       
         _when "successful", ->
           beforeEach ->
@@ -60,17 +55,11 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             expect(@success).wasCalled()
       
           it "should pass the object to done callback", ->
-            expect(@args.name).toBe 'test'
-        
-          it "should add the id to passed object", ->
-            expect(@args.id).toBe '123'
-        
-          it "should add the id to passed object", ->
-            expect(@args.type).toBe 'document'
+            expect(@args).toBe 'cached_object'
       
         _when "failed", ->
           beforeEach ->
-            @store._setItem.andCallFake -> throw new Error "i/o error"
+            @store.cache.andCallFake -> throw new Error "i/o error"
       
           it "should call fail callback", ->
             promise = @store.save 'document', '123', { name: 'test' }
@@ -166,6 +155,9 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     # /.save(id, type, object)
 
     describe ".load(type, id)", ->
+      beforeEach ->
+        spyOn(@store, "cache").andCallThrough()
+      
       it "should return a promise", ->
         promise = @store.load 'document', '123'
         do expect(promise.done).toBeDefined
@@ -185,10 +177,15 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             error = jasmine.createSpy 'error'
             promise.fail error
             expect(error).wasCalled()
+            
+      it "should allow to pass an object as paramter {type: 'car', id: 'abc4567'}", ->
+        @store.load {type: 'car', id: 'abc4567'}
+        expect(@store.cache).wasCalled()
+      
         
       _when "object can be found", ->
         beforeEach ->
-          spyOn(@store, "cache").andReturn name: 'test'
+          @store.cache.andReturn name: 'test'
 
           @promise = @store.load 'document', 'abc4567'
           @success = jasmine.createSpy 'success'
@@ -198,15 +195,9 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         it "should call the done callback", ->
           expect(@success).wasCalled()
       
-        it "should set id attribute", ->
-          expect(@object.id).toBe 'abc4567'
-    
-        it "should set type attribute", ->
-          expect(@object.type).toBe 'document'
-      
       _when "object cannot be found", ->
         beforeEach ->
-          spyOn(@store, "cache").andReturn false
+          @store.cache.andReturn false
       
           @promise = @store.load 'document', 'abc4567'
           @error = jasmine.createSpy 'error'
@@ -222,10 +213,8 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         expect(@store._getItem.callCount).toBe 1
         
       describe "aliases", ->
-        it "should allow to use .create", ->
+        it "should allow to use .get", ->
           expect(@store.get).toBe @store.load
-        it "should allow to use .update", ->
-          expect(@store.read).toBe @store.load
       # /aliases
     # /.get(type, id)
 
@@ -274,7 +263,6 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             promise.done success
             results = success.mostRecentCall.args[0]
             expect(results.length).toBe 1
-            expect(results[0].id).toBe '123'
       
       _when "called with type = 'cat'", ->
         with_2_cats_and_3_dogs ->
@@ -286,10 +274,8 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             expect(results.length).toBe 2
             
       describe "aliases", ->
-        it "should allow to use .create", ->
+        it "should allow to use .getAll", ->
           expect(@store.getAll).toBe @store.loadAll
-        it "should allow to use .update", ->
-          expect(@store.readAll).toBe @store.loadAll
       # /aliases
     # /.loadAll(type)
 
@@ -306,6 +292,10 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           expect(@store.delete).toBe @store.destroy
       # /aliases
     # /.destroy(type, id)
+
+    describe ".cache(type, id, object)", ->
+      
+    # /.cache(type, id, object)
 
     describe ".clear()", ->
       it "should have some specs"

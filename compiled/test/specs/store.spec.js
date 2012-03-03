@@ -43,23 +43,21 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       });
       _when("id is '123', type is 'document', object is {name: 'test'}", function() {
         beforeEach(function() {
-          var object_string, _ref;
           spyOn(this.store, "_now").andReturn('now');
-          this.promise = this.store.save('document', '123', {
+          spyOn(this.store, "cache").andReturn('cached_object');
+          return this.promise = this.store.save('document', '123', {
             name: 'test'
           });
-          _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], object_string = _ref[1];
-          return this.object = JSON.parse(object_string);
         });
-        it("should save a document with key '123'", function() {
-          return expect(this.key).toBe('document/123');
-        });
-        it("should save a document with name = 'test'", function() {
-          return expect(this.object.name).toBe('test');
+        it("should cache document", function() {
+          return expect(this.store.cache).wasCalled();
         });
         it("should add timestamps", function() {
-          expect(this.object.updated_at).toBe('now');
-          return expect(this.object.created_at).toBe('now');
+          return expect(this.store.cache).wasCalledWith('document', '123', {
+            name: 'test',
+            created_at: 'now',
+            updated_at: 'now'
+          });
         });
         _when("successful", function() {
           beforeEach(function() {
@@ -71,19 +69,13 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           it("should call done callback", function() {
             return expect(this.success).wasCalled();
           });
-          it("should pass the object to done callback", function() {
-            return expect(this.args.name).toBe('test');
-          });
-          it("should add the id to passed object", function() {
-            return expect(this.args.id).toBe('123');
-          });
-          return it("should add the id to passed object", function() {
-            return expect(this.args.type).toBe('document');
+          return it("should pass the object to done callback", function() {
+            return expect(this.args).toBe('cached_object');
           });
         });
         return _when("failed", function() {
           beforeEach(function() {
-            return this.store._setItem.andCallFake(function() {
+            return this.store.cache.andCallFake(function() {
               throw new Error("i/o error");
             });
           });
@@ -216,6 +208,9 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       });
     });
     describe(".load(type, id)", function() {
+      beforeEach(function() {
+        return spyOn(this.store, "cache").andCallThrough();
+      });
       it("should return a promise", function() {
         var promise;
         promise = this.store.load('document', '123');
@@ -242,9 +237,16 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           });
         });
       });
+      it("should allow to pass an object as paramter {type: 'car', id: 'abc4567'}", function() {
+        this.store.load({
+          type: 'car',
+          id: 'abc4567'
+        });
+        return expect(this.store.cache).wasCalled();
+      });
       _when("object can be found", function() {
         beforeEach(function() {
-          spyOn(this.store, "cache").andReturn({
+          this.store.cache.andReturn({
             name: 'test'
           });
           this.promise = this.store.load('document', 'abc4567');
@@ -252,19 +254,13 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           this.promise.done(this.success);
           return this.object = this.success.mostRecentCall.args[0];
         });
-        it("should call the done callback", function() {
+        return it("should call the done callback", function() {
           return expect(this.success).wasCalled();
-        });
-        it("should set id attribute", function() {
-          return expect(this.object.id).toBe('abc4567');
-        });
-        return it("should set type attribute", function() {
-          return expect(this.object.type).toBe('document');
         });
       });
       _when("object cannot be found", function() {
         beforeEach(function() {
-          spyOn(this.store, "cache").andReturn(false);
+          this.store.cache.andReturn(false);
           this.promise = this.store.load('document', 'abc4567');
           this.error = jasmine.createSpy('error');
           return this.promise.fail(this.error);
@@ -279,11 +275,8 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         return expect(this.store._getItem.callCount).toBe(1);
       });
       return describe("aliases", function() {
-        it("should allow to use .create", function() {
+        return it("should allow to use .get", function() {
           return expect(this.store.get).toBe(this.store.load);
-        });
-        return it("should allow to use .update", function() {
-          return expect(this.store.read).toBe(this.store.load);
         });
       });
     });
@@ -340,8 +333,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
             promise = this.store.loadAll();
             promise.done(success);
             results = success.mostRecentCall.args[0];
-            expect(results.length).toBe(1);
-            return expect(results[0].id).toBe('123');
+            return expect(results.length).toBe(1);
           });
         });
       });
@@ -358,11 +350,8 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
       });
       return describe("aliases", function() {
-        it("should allow to use .create", function() {
+        return it("should allow to use .getAll", function() {
           return expect(this.store.getAll).toBe(this.store.loadAll);
-        });
-        return it("should allow to use .update", function() {
-          return expect(this.store.readAll).toBe(this.store.loadAll);
         });
       });
     });
@@ -380,6 +369,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
       });
     });
+    describe(".cache(type, id, object)", function() {});
     describe(".clear()", function() {
       return it("should have some specs");
     });

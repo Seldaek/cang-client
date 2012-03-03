@@ -19,8 +19,11 @@ define 'events', ->
   Events =
   
 
+    # ## Bind
     #
-    # `object.bind 'cheat', blame`
+    # bind a callback to an event triggerd by the object
+    #
+    #     object.bind 'cheat', blame
     #
     bind: (ev, callback) ->
       evs   = ev.split(' ')
@@ -32,18 +35,22 @@ define 'events', ->
       
       return this
 
-    #
-    # `object.one 'ground_touch', game_over`
-    #
+    # ## one
+    # 
+    # same as `bind`, but does get executed only once
+    # 
+    #     object.one 'ground_touch', game_over
     one: (ev, callback) ->
       @bind ev, ->
         @unbind(ev, arguments.callee)
         callback.apply(@, arguments)
 
 
+    # ## trigger
     #
-    # `object.trigger 'win', score: 1230`
+    # trigger an event and pass optional parameters for binding.
     #
+    #     object.trigger 'win', score: 1230
     trigger: (args...) ->
       ev = args.shift()
 
@@ -57,8 +64,14 @@ define 'events', ->
       return true
  
 
+    # ## unbind
     #
-    # `object.unbind 'move'`
+    # unbind to from all bindings, from all bindings of a specific event
+    # or from a specific binding.
+    #
+    #     object.unbind()
+    #     object.unbind 'move'
+    #     object.unbind 'move', follow
     #
     unbind: (ev, callback) ->
       unless ev

@@ -2,11 +2,11 @@
 # window.localStrage wrapper and more
 #
 
-define 'store', ['errors'], (ERROR) ->
+define 'store', ['events', 'errors'], (Events, ERROR) ->
   
   'use strict'
   
-  class Store
+  class Store extends Events
   
     # ## Constructor
     #
@@ -14,7 +14,7 @@ define 'store', ['errors'], (ERROR) ->
     
       # if browser does not support local storage persistence,
       # e.g. Safari in private mode, overite the respective methods. 
-      unless @supports_local_storage()
+      unless @is_persistent()
         @_getItem    = -> null
         @_setItem    = -> null
         @_removeItem = -> null
@@ -69,8 +69,6 @@ define 'store', ['errors'], (ERROR) ->
         promise.reject ERROR.INVALID_KEY type: type
         return promise
     
-      key = "#{type}/#{id}"
-    
       # add timestamps.
       object.created_at ||= object.updated_at = @_now()
     
@@ -79,13 +77,8 @@ define 'store', ['errors'], (ERROR) ->
       delete object.id
       delete object.type
     
-      try
-        @_setItem key, JSON.stringify object
-      
-        # assure returned object has id & type attributes
-        object.id   = id
-        object.type = type
-      
+      try 
+        object = @cache type, id, object
         promise.resolve object
       catch error
         promise.reject error
@@ -99,32 +92,29 @@ define 'store', ['errors'], (ERROR) ->
     # ## load
     #
     # loads one object from Store, specified by `type` and `id`
+    #
+    # example usage:
+    #
+    #     store.load('car', 'abc4567')
+    #     store.load({type: 'car', id: 'abc4567') 
+    #
+    #     # alias
+    #     store.get(car)
     load : (type, id) ->
       promise = @_deferred()
+      
+      if arguments.length = 1 and typeof type is 'object'
+        [type, id] = [type.type, type.id]
     
-      # catch invalid arguments
       unless typeof type is 'string' and typeof id is 'string'
-        promise.reject ERROR.INVALID_ARGUMENTS "type & id are required"
-        return promise
+        return promise.reject ERROR.INVALID_ARGUMENTS "type & id are required"
     
-      #
-      # try to read from localStorage. 
-      #
       try
         object = @cache type, id
       
-        #
-        # if object cannot be found, call the error callback
-        #
         unless object
           promise.reject ERROR.NOT_FOUND type, id
           return promise
-
-        #
-        # add id & type to returned object
-        #
-        object.id   = id
-        object.type = type
 
         promise.resolve object
       catch error
@@ -134,29 +124,29 @@ define 'store', ['errors'], (ERROR) ->
       
     # aliases
     get : @::load
-    read: @::load
+  
   
     # ## loadAll
     #
-    # loads all objects of `type`
+    # when `type` passed, return all documents from Store of that type,
+    # otherwise return all objects from Store.
+    #
+    # example usage:
+    #
+    #     store.loadAll()
+    #     store.loadAll('car')
+    #
+    #     # alias
+    #     store.getAll()
     loadAll: (type) ->
       promise = @_deferred()
       keys = @_index()
     
       try
       
-        #
-        # when type is set, return results filtered by type
-        # otherwise return them all
-        #
         results = for key in keys when (type is undefined or key.indexOf(type) is 0) and @_is_semantic_id key
           [_type, id] = key.split '/'
-        
-          object = @cache _type, id
-          object.id   = id
-          object.type = _type
-        
-          object
+          @cache _type, id
 
         promise.resolve(results)
       catch error
@@ -166,42 +156,34 @@ define 'store', ['errors'], (ERROR) ->
     
     # alias
     getAll : @::loadAll
-    readAll: @::loadAll
+    
     
     # ## Destroy
     #
-    # destroys one object specified by `type` and `id`
+    # destroys one object specified by `type` and `id`. 
+    # 
+    # when object has been synced before, mark it as deleted. 
+    # Otherwise remove it from Store.
     destroy: (type, id) ->
       promise = @_deferred()
-
-      #
-      # does object exist at aill?
-      #
+      
       object = @cache type, id
-      if object
       
-        #
-        # if object has been synched before, only mark it as deleted
-        #
-        if object._rev
-          object._deleted = true
-          @cache type, id, object
-        
-        #
-        # otherwise: kick it
-        #
-        else
-          key = "#{type}/#{id}"
-          @_removeItem key
+      unless object
+        return promise.reject ERROR.NOT_FOUND type, id
       
-          delete @_cached[key]
-          @clear_changed type, id
+      if object._rev
+        object._deleted = true
+        @cache type, id, object
       
-        promise.resolve object
       else
-        promise.reject ERROR.NOT_FOUND type, id
+        key = "#{type}/#{id}"
+        @_removeItem key
     
-      return promise
+        delete @_cached[key]
+        @clear_changed type, id
+    
+      promise.resolve object
     
     # alias
     delete: @::destroy
@@ -211,19 +193,24 @@ define 'store', ['errors'], (ERROR) ->
     # loads an object specified by `type` and `id` only once from localStorage 
     # and caches it for faster future access. Updates cache when `value` is passed.
     #
-    # Also check if object needs to be synched (dirty) or not 
+    # Also checks if object needs to be synched (dirty) or not 
     #
     # Pass `options.remote = true` when update comes from remote
-    cache : (type, id, value = false, options = {}) ->
+    cache : (type, id, update = false, options = {}) ->
       key = "#{type}/#{id}"
     
-      if value
-        @_cached[key] = value
-        @_setItem key, JSON.stringify value
+      if update
+        @_cached[key] = update
+        
+        # SPEC THAT
+        delete update.type
+        delete update.id
+        
+        @_setItem key, JSON.stringify update
         
         if options.remote
           @clear_changed type, id 
-          return value
+          return update
       
       else
         return @_cached[key] if @_cached[key]?
@@ -238,11 +225,16 @@ define 'store', ['errors'], (ERROR) ->
         @changed type, id, @_cached[key]
       else
         @clear_changed type, id
-        
+      
+      # SPEC THAT
+      @_cached[key].type = type
+      @_cached[key].id = id
+      
       @_cached[key]
   
+    # ## Clear changed 
     #
-    # 
+    # removes an object from the list of objects that are flagged to by synched (dirty)
     clear_changed: (type, id) ->
       key = "#{type}/#{id}"
     
@@ -253,61 +245,64 @@ define 'store', ['errors'], (ERROR) ->
     
       # @trigger 'dirty_change'
     
+    # ## Marked as deleted?
     #
-    # marked as deleted
-    #
-    # an object is marked as deleted, when it has a `_deleted:true` attribute
-    #
-    # 
+    # when an object gets deleted that has been synched before (`_rev` attribute),
+    # it cannot be removed from store but gets a `_deleted: true` attribute
     is_marked_as_deleted : (type, id) ->
       @cache(type, id)._deleted is true
       
+    # ## Changed
     #
-    # Store.changed(id, value)
+    # When `object` passed, mark it as changed (dirty), trigger a `dirty` event
+    # and start the dirty timeout, which triggers a `dirty_idle` event after two seconds
+    # unless another object gets marked as deleted within this timeout.
     #
-    # returns a map of dirty object id's
-    _dirty_timeout = null
-    changed: (type, id, value) ->
+    # When no `object` passed, but a type & id, it returns the respective object if it
+    # is currently marked as changed.
+    #
+    # When no arguments passed, it returns all dirty objects.
+    changed: (type, id, object) ->
       key = "#{type}/#{id}"
     
-      if value
+      if object
         
-        @_dirty[key] = value
+        @_dirty[key] = object
       
-        # @trigger 'dirty_change'
+        @trigger 'dirty_change'
         window.clearTimeout @_dirty_timeout
         @_dirty_timeout = window.setTimeout ( => 
-          # @trigger 'dirty_idle'
+          @trigger 'dirty_idle'
         ), 2000 # 2 seconds timout for `dirty_idle` event
       else
         if arguments.length
           @_dirty[key]
         else
           @_dirty
+    _dirty_timeout = null
          
+    # ## Is dirty?
     #
-    # is dirty
+    # When no arguments passed, returns `true` or `false` depending on if there are
+    # dirty objects in the store.
     #
+    # Otherwise it returns `true` or `false` for the passed object. An object is dirty
+    # if it has no `synced_at` attribute or if `synced_at` is more recent than `updated_at`
     is_dirty: (type = null, id = null) ->
       unless type
         return _(@_dirty).keys().length > 0
     
       key = "#{type}/#{id}"
         
-      # no synced_at? uuhh, that's dirty.
-      return true unless @cache(type, id).synced_at
-    
-      # no updated_at? no dirt then
-      return false unless @cache(type, id).updated_at
+      return true unless @cache(type, id).synced_at   # no synced_at? uuhh, that's dirty.
+      return false unless @cache(type, id).updated_at # no updated_at? no dirt then
     
       @cache(type, id).synced_at  = Date.parse @cache(type, id).synced_at unless @cache(type, id).synced_at instanceof Date
       @cache(type, id).updated_at = Date.parse @cache(type, id).updated_at unless @cache(type, id).updated_at instanceof Date
     
-      # we compare last sync with last updated and give sync an aditional .1 second
-      @cache(type, id).synced_at.getTime() + 100 < @cache(type, id).updated_at.getTime()
+      @cache(type, id).synced_at.getTime() < @cache(type, id).updated_at.getTime()
   
-    #
-    # Store.clear()
+    # ## Clear
     #
     # clears localStorage and cache
     clear: ()->
@@ -325,12 +320,15 @@ define 'store', ['errors'], (ERROR) ->
       return promise
     
   
+    # ## Is persistant?
     #
+    # returns `true` or `false` depending on whether localStorage is supported or not.
+    # Beware that some browsers like Safari do not support localStorage in private mode.
     #
     # inspired by this cappuccino commit
     # https://github.com/cappuccino/cappuccino/commit/063b05d9643c35b303568a28809e4eb3224f71ec
     #
-    supports_local_storage : ->
+    is_persistent : ->
     
       try 
         # pussies ... we've to put this in here. I've seen Firefox throwing `Security error: 1000`
@@ -356,9 +354,9 @@ define 'store', ['errors'], (ERROR) ->
       return true
     
     
-    # helper to generate uuids
+    # ## UUID
     #
-    # chars define all possible characters a uuid may exist of
+    # helper to generate uuids.
     uuid: (len = 7) ->
       chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('')
       radix = chars.length
@@ -367,8 +365,9 @@ define 'store', ['errors'], (ERROR) ->
       ).join('')
   
     #
+    # ## Private
+    
     # localStorage proxy methods
-    #
     _getItem    : (key)         -> window.localStorage.getItem(key)
     _setItem    : (key, value)  -> window.localStorage.setItem(key, value)
     _removeItem : (key)         -> window.localStorage.removeItem(key)
@@ -377,32 +376,25 @@ define 'store', ['errors'], (ERROR) ->
     _clear      : ()            -> window.localStorage.clear()
   
     #
-    #
     _now: -> new Date
   
-    #
     # only lowercase letters and numbers are allowed for keys
     _is_valid_key: (key) ->
       /^[a-z0-9]+$/.test key
-
+      
     _is_semantic_id: (key) ->
       /^[a-z0-9]+\/[a-z0-9]+$/.test key
     
     #
-    #
     _deferred: $.Deferred
 
-    #
     # cache of localStorage for quicker access
-    #
     _cached: {}
   
-    #
     # map of dirty objects by their ids
-    #
     _dirty: {}
   
-    #
+
     # document key index
     #
     # TODO: make this cachy
