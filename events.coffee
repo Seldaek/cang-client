@@ -2,10 +2,14 @@
 # Events
 # ------
 #
-# support for `object.bind('event', cb)`, `object.unbind('event', cb)`,
-# `object.trigger('event', args...)` and `object.one('ev', cb)`.
+# extend any Class with support for
 #
-# based on Events implementations from [Spine](http://spinejs.com/)
+# * `object.bind('event', cb)`
+# * `object.unbind('event', cb)`
+# * `object.trigger('event', args...)`
+# * `object.one('ev', cb)`
+#
+# based on [Events implementations from Spine](https://github.com/maccman/spine/blob/master/src/spine.coffee#L1)
 #
 
 define 'events', ->
@@ -14,7 +18,9 @@ define 'events', ->
   
   Events =
   
-    ##
+
+    #
+    # `object.bind 'cheat', blame`
     #
     bind: (ev, callback) ->
       evs   = ev.split(' ')
@@ -26,14 +32,17 @@ define 'events', ->
       
       return this
 
-    ##
+    #
+    # `object.one 'ground_touch', game_over`
     #
     one: (ev, callback) ->
       @bind ev, ->
         @unbind(ev, arguments.callee)
         callback.apply(@, arguments)
 
-    ##
+
+    #
+    # `object.trigger 'win', score: 1230`
     #
     trigger: (args...) ->
       ev = args.shift()
@@ -47,7 +56,9 @@ define 'events', ->
         
       return true
  
-    ##
+
+    #
+    # `object.unbind 'move'`
     #
     unbind: (ev, callback) ->
       unless ev

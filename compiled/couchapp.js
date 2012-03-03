@@ -14,26 +14,11 @@ define('couchapp', ['events', 'store'], function(Events, Store) {
       this.store = new Store(this);
     }
 
-    couchApp.prototype.uuid = function(len) {
-      var chars, i, radix;
-      if (len == null) len = 7;
-      chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('');
-      radix = chars.length;
-      return ((function() {
-        var _results;
-        _results = [];
-        for (i = 0; 0 <= len ? i < len : i > len; 0 <= len ? i++ : i--) {
-          _results.push(chars[0 | Math.random() * radix]);
-        }
-        return _results;
-      })()).join('');
-    };
-
     couchApp.prototype.sign_up = function(email, password) {
       var key, password_sha, prefix, salt, user;
       prefix = 'org.couchdb.user';
       key = "" + prefix + ":" + email;
-      salt = hex_sha1(this.uuid());
+      salt = hex_sha1(this.store.uuid());
       password_sha = hex_sha1(password + salt);
       user = {
         _id: key,

@@ -18,6 +18,7 @@
   <script src="../compiled/couchapp.js"></script>
   
   <script src="../compiled/test/specs/couchapp.spec.js"></script>
+  <script src="../compiled/test/specs/store.spec.js"></script>
 </head>
 <body>
 
@@ -26,6 +27,7 @@
     jas.addReporter(new jasmine.TrivialReporter());
     
     require([
+      'specs/store',
       'specs/couchapp'
     ], function () {
       jas.execute();

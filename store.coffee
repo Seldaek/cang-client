@@ -1,7 +1,4 @@
 #
-# Store
-# -----
-#
 # window.localStrage wrapper and more
 #
 
@@ -11,7 +8,9 @@ define 'store', ['errors'], (ERROR) ->
   
   class Store
   
-    constructor : (@couch) ->
+    # ## Constructor
+    #
+    constructor : () ->
     
       # if browser does not support local storage persistence,
       # e.g. Safari in private mode, overite the respective methods. 
@@ -23,18 +22,29 @@ define 'store', ['errors'], (ERROR) ->
         @_length     = -> 0
         @_clear      = -> null
     
-    ##
-    # save an object
+
+    # ## Save
     #
-    # extends object with `_id`, `type`, `updated_at`, `created_at`
-    # and stores it in localStorage
+    # updates or creates object in Store and adds `created_at` and `updated_at` 
+    # timestamps along the way.
+    #
+    # example usage:
+    #
+    #     # create
+    #     store.save('car', {color: 'red'})                
+    #     store.save({type: 'car', color: 'red'})
+    #
+    #     # update
+    #     store.save('car', 'abc4567', {color: 'red'})
+    #     store.save('car', {id: 'abc4567', color: 'red'}) 
+    #     store.save({type: 'car', id: 'abc4567', color: 'red'}) 
+    #
+    #     # alias
+    #     store.create(car)
+    #     store.update(car)
     save: (type, id, object) ->
-      def = @_deferred()
+      promise = @_deferred()
     
-      #
-      # if called without an id, get it from object.
-      # if called without id and type, get both from object
-      #
       switch arguments.length
         when 2
           object  = id
@@ -44,73 +54,58 @@ define 'store', ['errors'], (ERROR) ->
           type    = object.type
           id      = object.id
     
-      #
-      # catch invalid object error
-      #
       unless typeof object is 'object'
-        def.reject ERROR.INVALID_ARGUMENTS "object is #{typeof object}"
-        return def
+        promise.reject ERROR.INVALID_ARGUMENTS "object is #{typeof object}"
+        return promise
       
-      #
-      # if object has no id, generate one
-      #
-      id ||= @couch.uuid()
+      # generate an id when object is new
+      id ||= @uuid()
     
-      #
-      # validate id & type
-      #
+      # validations
       unless @_is_valid_key id
-        def.reject ERROR.INVALID_KEY id: id
-        return def
+        promise.reject ERROR.INVALID_KEY id: id
+        return promise
       unless @_is_valid_key type
-        def.reject ERROR.INVALID_KEY type: type
-        return def
+        promise.reject ERROR.INVALID_KEY type: type
+        return promise
     
-      #
-      # use semantic Ids
-      # e.g. "document/123"
-      #
       key = "#{type}/#{id}"
     
-      #
       # add timestamps.
-      #
       object.created_at ||= object.updated_at = @_now()
     
-      #
-      # remove `id` and `type` attributes.
-      # document key contains this information
-      #
+      # remove `id` and `type` attributes before saving,
+      # as the Store key contains this information
       delete object.id
       delete object.type
     
-      #
-      # try to write to localStorage. 
-      #
       try
         @_setItem key, JSON.stringify object
       
-        #
-        # add id & type to returned object
-        #
+        # assure returned object has id & type attributes
         object.id   = id
         object.type = type
       
-        def.resolve object
+        promise.resolve object
       catch error
-        def.reject error
+        promise.reject error
     
-      return def
+      return promise
     
-    ##
+    # aliases
+    create : @::save
+    update : @::save
+    
+    # ## load
     #
-    get : (type, id) ->
-      def = @_deferred()
+    # loads one object from Store, specified by `type` and `id`
+    load : (type, id) ->
+      promise = @_deferred()
     
       # catch invalid arguments
       unless typeof type is 'string' and typeof id is 'string'
-        def.reject ERROR.INVALID_ARGUMENTS "type & id are required"
-        return def
+        promise.reject ERROR.INVALID_ARGUMENTS "type & id are required"
+        return promise
     
       #
       # try to read from localStorage. 
@@ -122,8 +117,8 @@ define 'store', ['errors'], (ERROR) ->
         # if object cannot be found, call the error callback
         #
         unless object
-          def.reject ERROR.NOT_FOUND type, id
-          return def
+          promise.reject ERROR.NOT_FOUND type, id
+          return promise
 
         #
         # add id & type to returned object
@@ -131,16 +126,21 @@ define 'store', ['errors'], (ERROR) ->
         object.id   = id
         object.type = type
 
-        def.resolve object
+        promise.resolve object
       catch error
-        def.reject error
+        promise.reject error
       
-      return def
+      return promise
+      
+    # aliases
+    get : @::load
+    read: @::load
   
-    ##
+    # ## loadAll
     #
-    getAll: (type) ->
-      def = @_deferred()
+    # loads all objects of `type`
+    loadAll: (type) ->
+      promise = @_deferred()
       keys = @_index()
     
       try
@@ -158,16 +158,21 @@ define 'store', ['errors'], (ERROR) ->
         
           object
 
-        def.resolve(results)
+        promise.resolve(results)
       catch error
-        def.reject error
+        promise.reject error
     
-      return def
+      return promise
     
-    ##
+    # alias
+    getAll : @::loadAll
+    readAll: @::loadAll
+    
+    # ## Destroy
     #
+    # destroys one object specified by `type` and `id`
     destroy: (type, id) ->
-      def = @_deferred()
+      promise = @_deferred()
 
       #
       # does object exist at aill?
@@ -192,58 +197,51 @@ define 'store', ['errors'], (ERROR) ->
           delete @_cached[key]
           @clear_changed type, id
       
-        def.resolve object
+        promise.resolve object
       else
-        def.reject ERROR.NOT_FOUND type, id
+        promise.reject ERROR.NOT_FOUND type, id
     
-      return def
+      return promise
     
     # alias
     delete: @::destroy
     
-    ##
-    # cache(key, value, options = {})
+    # ## Cache
     #
-    # loads a key only once from localStorage and caches it for
-    # faster future access. When value is passed, update cache.
+    # loads an object specified by `type` and `id` only once from localStorage 
+    # and caches it for faster future access. Updates cache when `value` is passed.
     #
-    # unless options.remote is true, check if object is dirty
+    # Also check if object needs to be synched (dirty) or not 
+    #
+    # Pass `options.remote = true` when update comes from remote
     cache : (type, id, value = false, options = {}) ->
       key = "#{type}/#{id}"
     
-      #
-      #
-      #
       if value
         @_cached[key] = value
         @_setItem key, JSON.stringify value
         
+        if options.remote
+          @clear_changed type, id 
+          return value
+      
       else
         return @_cached[key] if @_cached[key]?
-      
+    
         json_string = @_getItem key
-
         if json_string
-        
-          # cache the object
           @_cached[key] = JSON.parse json_string
-        
         else
-          # cache a "not found" as well
-          @_cached[key] = false
+          @_cached[key] = false # cache a "not found" as well
     
-    
-      if options.remote
-        @clear_changed type, id
+      if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
+        @changed type, id, @_cached[key]
       else
-        if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
-          @changed type, id, @_cached[key]
-        else
-          @clear_changed type, id
+        @clear_changed type, id
         
       @_cached[key]
   
-    ##
+    #
     # 
     clear_changed: (type, id) ->
       key = "#{type}/#{id}"
@@ -255,7 +253,7 @@ define 'store', ['errors'], (ERROR) ->
     
       # @trigger 'dirty_change'
     
-    ##
+    #
     # marked as deleted
     #
     # an object is marked as deleted, when it has a `_deleted:true` attribute
@@ -264,7 +262,7 @@ define 'store', ['errors'], (ERROR) ->
     is_marked_as_deleted : (type, id) ->
       @cache(type, id)._deleted is true
       
-    ##
+    #
     # Store.changed(id, value)
     #
     # returns a map of dirty object id's
@@ -287,7 +285,7 @@ define 'store', ['errors'], (ERROR) ->
         else
           @_dirty
          
-    ##
+    #
     # is dirty
     #
     is_dirty: (type = null, id = null) ->
@@ -308,26 +306,26 @@ define 'store', ['errors'], (ERROR) ->
       # we compare last sync with last updated and give sync an aditional .1 second
       @cache(type, id).synced_at.getTime() + 100 < @cache(type, id).updated_at.getTime()
   
-    ##
+    #
     # Store.clear()
     #
     # clears localStorage and cache
     clear: ()->
-      def = @_deferred()
+      promise = @_deferred()
     
       try
         @_clear()
         @_cached = {}
         @clear_changed()
       
-        def.resolve()
+        promise.resolve()
       catch error
-        def.reject()
+        promise.reject()
       
-      return def
+      return promise
     
   
-    ##
+    #
     #
     # inspired by this cappuccino commit
     # https://github.com/cappuccino/cappuccino/commit/063b05d9643c35b303568a28809e4eb3224f71ec
@@ -357,8 +355,18 @@ define 'store', ['errors'], (ERROR) ->
       # good, good
       return true
     
+    
+    # helper to generate uuids
+    #
+    # chars define all possible characters a uuid may exist of
+    uuid: (len = 7) ->
+      chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('')
+      radix = chars.length
+      (
+        chars[ 0 | Math.random()*radix ] for i in [0...len]
+      ).join('')
   
-    ##
+    #
     # localStorage proxy methods
     #
     _getItem    : (key)         -> window.localStorage.getItem(key)
@@ -368,11 +376,11 @@ define 'store', ['errors'], (ERROR) ->
     _length     : ()            -> window.localStorage.length
     _clear      : ()            -> window.localStorage.clear()
   
-    ##
+    #
     #
     _now: -> new Date
   
-    ##
+    #
     # only lowercase letters and numbers are allowed for keys
     _is_valid_key: (key) ->
       /^[a-z0-9]+$/.test key
@@ -380,21 +388,21 @@ define 'store', ['errors'], (ERROR) ->
     _is_semantic_id: (key) ->
       /^[a-z0-9]+\/[a-z0-9]+$/.test key
     
-    ##
+    #
     #
     _deferred: $.Deferred
 
-    ##
+    #
     # cache of localStorage for quicker access
     #
     _cached: {}
   
-    ##
+    #
     # map of dirty objects by their ids
     #
     _dirty: {}
   
-    ##
+    #
     # document key index
     #
     # TODO: make this cachy

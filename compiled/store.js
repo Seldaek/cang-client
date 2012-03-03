@@ -5,8 +5,7 @@ define('store', ['errors'], function(ERROR) {
   return Store = (function() {
     var _dirty_timeout;
 
-    function Store(couch) {
-      this.couch = couch;
+    function Store() {
       if (!this.supports_local_storage()) {
         this._getItem = function() {
           return null;
@@ -30,8 +29,8 @@ define('store', ['errors'], function(ERROR) {
     }
 
     Store.prototype.save = function(type, id, object) {
-      var def, key;
-      def = this._deferred();
+      var key, promise;
+      promise = this._deferred();
       switch (arguments.length) {
         case 2:
           object = id;
@@ -43,21 +42,21 @@ define('store', ['errors'], function(ERROR) {
           id = object.id;
       }
       if (typeof object !== 'object') {
-        def.reject(ERROR.INVALID_ARGUMENTS("object is " + (typeof object)));
-        return def;
+        promise.reject(ERROR.INVALID_ARGUMENTS("object is " + (typeof object)));
+        return promise;
       }
-      id || (id = this.couch.uuid());
+      id || (id = this.uuid());
       if (!this._is_valid_key(id)) {
-        def.reject(ERROR.INVALID_KEY({
+        promise.reject(ERROR.INVALID_KEY({
           id: id
         }));
-        return def;
+        return promise;
       }
       if (!this._is_valid_key(type)) {
-        def.reject(ERROR.INVALID_KEY({
+        promise.reject(ERROR.INVALID_KEY({
           type: type
         }));
-        return def;
+        return promise;
       }
       key = "" + type + "/" + id;
       object.created_at || (object.created_at = object.updated_at = this._now());
@@ -67,38 +66,46 @@ define('store', ['errors'], function(ERROR) {
         this._setItem(key, JSON.stringify(object));
         object.id = id;
         object.type = type;
-        def.resolve(object);
+        promise.resolve(object);
       } catch (error) {
-        def.reject(error);
+        promise.reject(error);
       }
-      return def;
+      return promise;
     };
 
-    Store.prototype.get = function(type, id) {
-      var def, object;
-      def = this._deferred();
+    Store.prototype.create = Store.prototype.save;
+
+    Store.prototype.update = Store.prototype.save;
+
+    Store.prototype.load = function(type, id) {
+      var object, promise;
+      promise = this._deferred();
       if (!(typeof type === 'string' && typeof id === 'string')) {
-        def.reject(ERROR.INVALID_ARGUMENTS("type & id are required"));
-        return def;
+        promise.reject(ERROR.INVALID_ARGUMENTS("type & id are required"));
+        return promise;
       }
       try {
         object = this.cache(type, id);
         if (!object) {
-          def.reject(ERROR.NOT_FOUND(type, id));
-          return def;
+          promise.reject(ERROR.NOT_FOUND(type, id));
+          return promise;
         }
         object.id = id;
         object.type = type;
-        def.resolve(object);
+        promise.resolve(object);
       } catch (error) {
-        def.reject(error);
+        promise.reject(error);
       }
-      return def;
+      return promise;
     };
 
-    Store.prototype.getAll = function(type) {
-      var def, id, key, keys, object, results, _type;
-      def = this._deferred();
+    Store.prototype.get = Store.prototype.load;
+
+    Store.prototype.read = Store.prototype.load;
+
+    Store.prototype.loadAll = function(type) {
+      var id, key, keys, object, promise, results, _type;
+      promise = this._deferred();
       keys = this._index();
       try {
         results = (function() {
@@ -117,16 +124,20 @@ define('store', ['errors'], function(ERROR) {
           }
           return _results;
         }).call(this);
-        def.resolve(results);
+        promise.resolve(results);
       } catch (error) {
-        def.reject(error);
+        promise.reject(error);
       }
-      return def;
+      return promise;
     };
 
+    Store.prototype.getAll = Store.prototype.loadAll;
+
+    Store.prototype.readAll = Store.prototype.loadAll;
+
     Store.prototype.destroy = function(type, id) {
-      var def, key, object;
-      def = this._deferred();
+      var key, object, promise;
+      promise = this._deferred();
       object = this.cache(type, id);
       if (object) {
         if (object._rev) {
@@ -138,11 +149,11 @@ define('store', ['errors'], function(ERROR) {
           delete this._cached[key];
           this.clear_changed(type, id);
         }
-        def.resolve(object);
+        promise.resolve(object);
       } else {
-        def.reject(ERROR.NOT_FOUND(type, id));
+        promise.reject(ERROR.NOT_FOUND(type, id));
       }
-      return def;
+      return promise;
     };
 
     Store.prototype["delete"] = Store.prototype.destroy;
@@ -155,6 +166,10 @@ define('store', ['errors'], function(ERROR) {
       if (value) {
         this._cached[key] = value;
         this._setItem(key, JSON.stringify(value));
+        if (options.remote) {
+          this.clear_changed(type, id);
+          return value;
+        }
       } else {
         if (this._cached[key] != null) return this._cached[key];
         json_string = this._getItem(key);
@@ -164,14 +179,10 @@ define('store', ['errors'], function(ERROR) {
           this._cached[key] = false;
         }
       }
-      if (options.remote) {
-        this.clear_changed(type, id);
+      if (this.is_dirty(type, id) || this.is_marked_as_deleted(type, id)) {
+        this.changed(type, id, this._cached[key]);
       } else {
-        if (this.is_dirty(type, id) || this.is_marked_as_deleted(type, id)) {
-          this.changed(type, id, this._cached[key]);
-        } else {
-          this.clear_changed(type, id);
-        }
+        this.clear_changed(type, id);
       }
       return this._cached[key];
     };
@@ -227,17 +238,17 @@ define('store', ['errors'], function(ERROR) {
     };
 
     Store.prototype.clear = function() {
-      var def;
-      def = this._deferred();
+      var promise;
+      promise = this._deferred();
       try {
         this._clear();
         this._cached = {};
         this.clear_changed();
-        def.resolve();
+        promise.resolve();
       } catch (error) {
-        def.reject();
+        promise.reject();
       }
-      return def;
+      return promise;
     };
 
     Store.prototype.supports_local_storage = function() {
@@ -250,6 +261,21 @@ define('store', ['errors'], function(ERROR) {
         return false;
       }
       return true;
+    };
+
+    Store.prototype.uuid = function(len) {
+      var chars, i, radix;
+      if (len == null) len = 7;
+      chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('');
+      radix = chars.length;
+      return ((function() {
+        var _results;
+        _results = [];
+        for (i = 0; 0 <= len ? i < len : i > len; 0 <= len ? i++ : i--) {
+          _results.push(chars[0 | Math.random() * radix]);
+        }
+        return _results;
+      })()).join('');
     };
 
     Store.prototype._getItem = function(key) {

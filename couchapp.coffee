@@ -1,17 +1,16 @@
-##
+#
 # couchApp
 # --------
 #
 # the door to world domination (apps)
 #
-
 define 'couchapp', ['events', 'store'], (Events, Store) ->
   
   'use strict'
 
   class couchApp extends Events
   
-    ##
+    #
     # initialization
     #
     constructor : (@couchDB_url) ->
@@ -21,19 +20,8 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
       @couchDB_url = @couchDB_url.replace /\/+$/, ''
     
       @store = new Store this
-
-    ##
-    # helper to generate uuids
-    #
-    # chars define all possible characters a uuid may exist of
-    uuid: (len = 7) ->
-      chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('')
-      radix = chars.length
-      (
-        chars[ 0 | Math.random()*radix ] for i in [0...len]
-      ).join('')
   
-    ##
+    #
     # sign up with email & password
     #
     # uses standard couchDB API to create a new document in _users db.
@@ -49,7 +37,7 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
       prefix  = 'org.couchdb.user'
       key     = "#{prefix}:#{email}"
     
-      salt          = hex_sha1 @uuid()
+      salt          = hex_sha1 @store.uuid()
       password_sha  = hex_sha1 password + salt
     
       user = 
@@ -67,7 +55,7 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
         contentType : "application/json"
      
   
-    ##
+    #
     # sign in with email & password
     #
     # uses standard couchDB API to create a new user session (POST /_session)
@@ -93,7 +81,7 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
     # alias
     login: @::sign_in
   
-    ##
+    #
     # change password
     #
     # to be done.
@@ -106,7 +94,7 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
       # 3. PUT user doc
     
   
-    ##
+    #
     # sign out 
     #
     # uses standard couchDB API to destroy a user session (DELETE /_session)

@@ -1,3 +1,4 @@
+fs      = require 'fs'
 {print} = require 'util'
 {spawn} = require 'child_process'
 
@@ -39,3 +40,11 @@ task 'test', 'test', ->
     
 task 'autotest', 'autotest', ->
   build( test, true)
+  
+task 'docs', 'create docs from code', ->
+  fs.readdir '.', (err, contents) ->
+    files = (file for file in contents when /\.coffee$/.test file)
+    docco = spawn 'docco', files
+    docco.stdout.on 'data', (data) -> print data.toString()
+    docco.stderr.on 'data', (data) -> print data.toString()
+    docco.on 'exit', (status) -> callback?() if status is 0
