@@ -1,7 +1,8 @@
-(function() {
-  var Events,
-    __slice = Array.prototype.slice;
+var __slice = Array.prototype.slice;
 
+define('events', function() {
+  'use strict';
+  var Events;
   Events = {
     bind: function(ev, callback) {
       var calls, evs, name, _i, _len;
@@ -55,7 +56,5 @@
       return this;
     }
   };
-
-  if (typeof module !== "undefined" && module !== null) module.exports = Events;
-
-}).call(this);
+  return Events;
+});

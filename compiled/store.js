@@ -1,64 +1,8 @@
-(function() {
-  var Events, INVALID_ARGUMENTS_ERROR, INVALID_KEY_ERROR, NOT_FOUND_ERROR, Store,
-    __slice = Array.prototype.slice,
-    __hasProp = Object.prototype.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  Events = {
-    bind: function(ev, callback) {
-      var calls, evs, name, _i, _len;
-      evs = ev.split(' ');
-      calls = this.hasOwnProperty('_callbacks') && this._callbacks || (this._callbacks = {});
-      for (_i = 0, _len = evs.length; _i < _len; _i++) {
-        name = evs[_i];
-        calls[name] || (calls[name] = []);
-        calls[name].push(callback);
-      }
-      return this;
-    },
-    one: function(ev, callback) {
-      return this.bind(ev, function() {
-        this.unbind(ev, arguments.callee);
-        return callback.apply(this, arguments);
-      });
-    },
-    trigger: function() {
-      var args, callback, ev, list, _i, _len, _ref;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      ev = args.shift();
-      list = this.hasOwnProperty('_callbacks') && ((_ref = this._callbacks) != null ? _ref[ev] : void 0);
-      if (!list) return;
-      for (_i = 0, _len = list.length; _i < _len; _i++) {
-        callback = list[_i];
-        if (callback.apply(this, args) === false) break;
-      }
-      return true;
-    },
-    unbind: function(ev, callback) {
-      var cb, i, list, _len, _ref;
-      if (!ev) {
-        this._callbacks = {};
-        return this;
-      }
-      list = (_ref = this._callbacks) != null ? _ref[ev] : void 0;
-      if (!list) return this;
-      if (!callback) {
-        delete this._callbacks[ev];
-        return this;
-      }
-      for (i = 0, _len = list.length; i < _len; i++) {
-        cb = list[i];
-        if (!(cb === callback)) continue;
-        list = list.slice();
-        list.splice(i, 1);
-        this._callbacks[ev] = list;
-        break;
-      }
-      return this;
-    }
-  };
-
-  Store = (function() {
+define('store', ['errors'], function(ERROR) {
+  'use strict';
+  var Store;
+  return Store = (function() {
     var _dirty_timeout;
 
     function Store(couch) {
@@ -99,18 +43,18 @@
           id = object.id;
       }
       if (typeof object !== 'object') {
-        def.reject(INVALID_ARGUMENTS_ERROR("object is " + (typeof object)));
+        def.reject(ERROR.INVALID_ARGUMENTS("object is " + (typeof object)));
         return def;
       }
       id || (id = this.couch.uuid());
       if (!this._is_valid_key(id)) {
-        def.reject(INVALID_KEY_ERROR({
+        def.reject(ERROR.INVALID_KEY({
           id: id
         }));
         return def;
       }
       if (!this._is_valid_key(type)) {
-        def.reject(INVALID_KEY_ERROR({
+        def.reject(ERROR.INVALID_KEY({
           type: type
         }));
         return def;
@@ -134,13 +78,13 @@
       var def, object;
       def = this._deferred();
       if (!(typeof type === 'string' && typeof id === 'string')) {
-        def.reject(INVALID_ARGUMENTS_ERROR("type & id are required"));
+        def.reject(ERROR.INVALID_ARGUMENTS("type & id are required"));
         return def;
       }
       try {
         object = this.cache(type, id);
         if (!object) {
-          def.reject(NOT_FOUND_ERROR(type, id));
+          def.reject(ERROR.NOT_FOUND(type, id));
           return def;
         }
         object.id = id;
@@ -196,7 +140,7 @@
         }
         def.resolve(object);
       } else {
-        def.reject(NOT_FOUND_ERROR(type, id));
+        def.reject(ERROR.NOT_FOUND(type, id));
       }
       return def;
     };
@@ -362,100 +306,4 @@
     return Store;
 
   })();
-
-  this.couchApp = (function(_super) {
-
-    __extends(couchApp, _super);
-
-    function couchApp(couchDB_url) {
-      this.couchDB_url = couchDB_url;
-      this.couchDB_url = this.couchDB_url.replace(/\/+$/, '');
-      this.store = new Store(this);
-    }
-
-    couchApp.prototype.uuid = function(len) {
-      var chars, i, radix;
-      if (len == null) len = 7;
-      chars = '0123456789abcdefghijklmnopqrstuvwxyz'.split('');
-      radix = chars.length;
-      return ((function() {
-        var _results;
-        _results = [];
-        for (i = 0; 0 <= len ? i < len : i > len; 0 <= len ? i++ : i--) {
-          _results.push(chars[0 | Math.random() * radix]);
-        }
-        return _results;
-      })()).join('');
-    };
-
-    couchApp.prototype.sign_up = function(email, password) {
-      var key, password_sha, prefix, salt, user;
-      prefix = 'org.couchdb.user';
-      key = "" + prefix + ":" + email;
-      salt = hex_sha1(this.uuid());
-      password_sha = hex_sha1(password + salt);
-      user = {
-        _id: key,
-        name: email,
-        type: 'user',
-        roles: [],
-        salt: salt,
-        password_sha: password_sha
-      };
-      return $.ajax({
-        type: 'PUT',
-        url: "" + this.couchDB_url + "/_users/" + (encodeURIComponent(key)),
-        data: JSON.stringify(user),
-        contentType: "application/json"
-      });
-    };
-
-    couchApp.prototype.sign_in = function(email, password) {
-      var creds;
-      creds = JSON.stringify({
-        name: email,
-        password: password
-      });
-      return $.ajax({
-        type: 'POST',
-        url: "" + this.couchDB_url + "/_session",
-        data: creds,
-        contentType: "application/json"
-      });
-    };
-
-    couchApp.prototype.login = couchApp.prototype.sign_in;
-
-    couchApp.prototype.change_password = function(email) {
-      return alert('change password is not yet implementd');
-    };
-
-    couchApp.prototype.sign_out = function() {
-      return $.ajax({
-        type: 'DELETE',
-        url: "" + this.couchDB_url + "/_session",
-        contentType: "application/json"
-      });
-    };
-
-    couchApp.prototype.logout = couchApp.prototype.sign_out;
-
-    return couchApp;
-
-  })(Events);
-
-  INVALID_KEY_ERROR = function(id_or_type) {
-    var key;
-    key = id_or_type.id ? 'id' : 'type';
-    return new Error("invalid " + key + " '" + id_or_type[key] + "': numbers and lowercase letters allowed only");
-  };
-
-  INVALID_ARGUMENTS_ERROR = function(msg) {
-    return new Error(msg);
-  };
-
-  NOT_FOUND_ERROR = function(type, id) {
-    return new Error("" + type + " with " + id + " could not be found");
-  };
-
-}).call(this);
+});

@@ -4,9 +4,9 @@
 timeout = null
 build = (callback, watch = false) ->
   if watch
-    coffee = spawn 'coffee', ['-c', '-o', 'lib', '-w', '.']
+    coffee = spawn 'coffee', ['-c', '-b', '-o', 'compiled', '-w', '.']
   else
-    coffee = spawn 'coffee', ['-c', '-o', 'lib', '.']
+    coffee = spawn 'coffee', ['-c', '-b', '-o', 'compiled', '.']
   
   coffee.stderr.on 'data', (data) ->
     process.stderr.write data.toString()
@@ -21,7 +21,7 @@ build = (callback, watch = false) ->
     callback?() if code is 0
 
 test = ->
-  phantom = spawn 'phantomjs', ['lib/phantomjs_test_runner.coffee', 'test.html']
+  phantom = spawn 'phantomjs', ['test/lib/phantomjs_test_runner.coffee', 'test/index.html']
   
   phantom.stderr.on 'data', (data) ->
     process.stderr.write data.toString()

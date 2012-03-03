@@ -1,6 +1,6 @@
-(function() {
 
-  describe("couchApp", function() {
+define('specs/couchapp', ['couchapp'], function(couchApp) {
+  return describe("couchApp", function() {
     beforeEach(function() {
       this.app = new couchApp('http://my.cou.ch');
       spyOn($, "ajax").andReturn($.Deferred());
@@ -434,5 +434,4 @@
       });
     });
   });
-
-}).call(this);
+});

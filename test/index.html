@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jasmine Test Runner</title>
+  <link rel="stylesheet" type="text/css" href="lib/jasmine-1.1.0/jasmine.css">
+  
+  <script src="lib/jasmine-1.1.0/jasmine.js"></script>
+  <script src="lib/jasmine-1.1.0/jasmine-html.js"></script>
+  <script src="lib/jasmine-helpers.js"></script>
+
+  <script src="../vendor/require-1.0.7.js"></script>
+  <script src="../vendor/jquery-1.7.1.min.js"></script>
+  <script src="../vendor/sha1.js"></script>
+
+  <script src="../compiled/errors.js"></script>
+  <script src="../compiled/events.js"></script>
+  <script src="../compiled/store.js"></script>
+  <script src="../compiled/couchapp.js"></script>
+  
+  <script src="../compiled/test/specs/couchapp.spec.js"></script>
+</head>
+<body>
+
+  <script>
+    jas = jasmine.getEnv()
+    jas.addReporter(new jasmine.TrivialReporter());
+    
+    require([
+      'specs/couchapp'
+    ], function () {
+      jas.execute();
+    });
+  </script>
+</body>
+</html>
