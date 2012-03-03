@@ -28,15 +28,17 @@ define 'specs/couchapp', ['couchapp'], (couchApp) ->
       it "should set Content-Type to application/json", ->
         expect(@args.contentType).toBe 'application/json'
     
+      it "should have set _id to 'org.couchdb.user:joe@example.com'", ->
+        expect(@data._id).toBe 'org.couchdb.user:joe@example.com'
+      
+      it "should have set name to 'joe@example.com", ->
+        expect(@data.name).toBe 'joe@example.com'
+        
       it "should have set type to 'user", ->
         expect(@data.type).toBe 'user'
-      
-      it "should set a salt", ->
-        expect(@data.salt).toMatch /[0-9a-f]{40}/
-      
-      it "should set a password_sha hash", ->
-        expect(@data.password_sha).toMatch /[0-9a-f]{40}/      
-        expect(@data.password_sha).toBe hex_sha1 'secret' + @data.salt
+
+      it "should pass password", ->
+        expect(@data.password).toBe 'secret'
     # /.sign_up(email, password)
   
     describe ".sign_in(email, password)", ->

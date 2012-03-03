@@ -24,15 +24,17 @@ define('specs/couchapp', ['couchapp'], function(couchApp) {
       it("should set Content-Type to application/json", function() {
         return expect(this.args.contentType).toBe('application/json');
       });
+      it("should have set _id to 'org.couchdb.user:joe@example.com'", function() {
+        return expect(this.data._id).toBe('org.couchdb.user:joe@example.com');
+      });
+      it("should have set name to 'joe@example.com", function() {
+        return expect(this.data.name).toBe('joe@example.com');
+      });
       it("should have set type to 'user", function() {
         return expect(this.data.type).toBe('user');
       });
-      it("should set a salt", function() {
-        return expect(this.data.salt).toMatch(/[0-9a-f]{40}/);
-      });
-      return it("should set a password_sha hash", function() {
-        expect(this.data.password_sha).toMatch(/[0-9a-f]{40}/);
-        return expect(this.data.password_sha).toBe(hex_sha1('secret' + this.data.salt));
+      return it("should pass password", function() {
+        return expect(this.data.password).toBe('secret');
       });
     });
     describe(".sign_in(email, password)", function() {

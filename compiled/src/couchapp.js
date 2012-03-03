@@ -15,18 +15,15 @@ define('couchapp', ['events', 'store'], function(Events, Store) {
     }
 
     couchApp.prototype.sign_up = function(email, password) {
-      var key, password_sha, prefix, salt, user;
+      var key, prefix, user;
       prefix = 'org.couchdb.user';
       key = "" + prefix + ":" + email;
-      salt = hex_sha1(this.store.uuid());
-      password_sha = hex_sha1(password + salt);
       user = {
         _id: key,
         name: email,
         type: 'user',
         roles: [],
-        salt: salt,
-        password_sha: password_sha
+        password: password
       };
       return $.ajax({
         type: 'PUT',

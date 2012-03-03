@@ -25,16 +25,12 @@ address. (joe@example.com => joe</em>example_com, tbd)</p>
       <span class="nv">prefix  = </span><span class="s1">&#39;org.couchdb.user&#39;</span>
       <span class="nv">key     = </span><span class="s2">&quot;#{prefix}:#{email}&quot;</span>
     
-      <span class="nv">salt          = </span><span class="nx">hex_sha1</span> <span class="nx">@store</span><span class="p">.</span><span class="nx">uuid</span><span class="p">()</span>
-      <span class="nv">password_sha  = </span><span class="nx">hex_sha1</span> <span class="nx">password</span> <span class="o">+</span> <span class="nx">salt</span>
-    
       <span class="nv">user = </span>
         <span class="nv">_id           : </span><span class="nx">key</span>
         <span class="nv">name          : </span><span class="nx">email</span>
         <span class="nv">type          : </span><span class="s1">&#39;user&#39;</span>
         <span class="nv">roles         : </span><span class="p">[]</span>
-        <span class="nv">salt          : </span><span class="nx">salt</span>
-        <span class="nv">password_sha  : </span><span class="nx">password_sha</span>
+        <span class="nv">password      : </span><span class="nx">password</span>
     
       <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span>
         <span class="nv">type        : </span><span class="s1">&#39;PUT&#39;</span>

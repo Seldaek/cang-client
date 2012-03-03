@@ -37,16 +37,12 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
       prefix  = 'org.couchdb.user'
       key     = "#{prefix}:#{email}"
     
-      salt          = hex_sha1 @store.uuid()
-      password_sha  = hex_sha1 password + salt
-    
       user = 
         _id           : key
         name          : email
         type          : 'user'
         roles         : []
-        salt          : salt
-        password_sha  : password_sha
+        password      : password
     
       $.ajax
         type        : 'PUT'

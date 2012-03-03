@@ -41,9 +41,15 @@ task 'test', 'test', ->
 task 'autotest', 'autotest', ->
   build( test, true)
   
+task 'build', 'build couchapp.min.js', ->
+  build = spawn 'r.js', ['-o', 'name=couchapp', 'baseUrl=./compiled/src', 'out=couchapp.min.js']
+  build.stdout.on 'data', (data) -> print data.toString()
+  build.stderr.on 'data', (data) -> print data.toString()
+  build.on 'exit', (status) -> callback?() if status is 0
+  
 task 'docs', 'create docs from code', ->
-  fs.readdir '.', (err, contents) ->
-    files = (file for file in contents when /\.coffee$/.test file)
+  fs.readdir 'src', (err, contents) ->
+    files = ("src/#{file}" for file in contents when /\.coffee$/.test file)
     docco = spawn 'docco', files
     docco.stdout.on 'data', (data) -> print data.toString()
     docco.stderr.on 'data', (data) -> print data.toString()
