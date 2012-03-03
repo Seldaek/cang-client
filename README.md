@@ -1,15 +1,12 @@
-Let there be couchCapp: and there was couchCapp.
-
 API
 ===
-
-(to be implemented)
 
 
 Setup
 -----
 
 ```javascript
+couchApp = require('couchapp')
 couchDB_endpoint = 'http://worlddominatorapp.iriscouch.com';
 app = new couchApp(couchDB_endpoint);
 ```
@@ -223,3 +220,17 @@ Future Ideas
 * searching
 * payments
 * ... ?
+
+
+Dependencies
+------------
+
+couchApp depends on jQuery/[zepto](http://zeptojs.com/) and [require.js](http://requirejs.org) 
+
+
+Contribute
+==========
+
+When you feel like contributing, I highly recommend to install [PhantomJS](http://www.phantomjs.org/) for automated, headless testing. Run `$ cake autotest` to have test running in the background while hacking.
+
+When you're done with changes, make sure to run `$ r.js -o name=couchapp baseUrl=./compiled out=couchapp.min.js` to update the concatenated & minified js file for production use.
