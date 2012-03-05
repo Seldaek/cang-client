@@ -51,7 +51,7 @@ app.sign_in('joe@example.com', 'secret')
 ### Change password
 
 ```javascript
-app.change_password('new_secret')
+app.change_password('current_secret', 'new_secret')
 
   .done( function(user) { } ) 
   .fail( function(err)  { } )
@@ -93,7 +93,7 @@ Data Storage / Sync
 helper to generate unique IDs that you can use to store your objects.
 
 ```javascript
-uuid = app.uuid()
+uuid = app.store.uuid(length)
 ```
 
 
@@ -102,14 +102,14 @@ uuid = app.uuid()
 create or update an object.
 
 ```javascript
-// create a new rule
+// create a new object
 type = 'rule'
 app.store.save( type, {name: "rule the world"} )
   
   .done ( function(new_object) { } )
   .fail ( function(err)        { } )
   
-// update an existing rule
+// update an existing object
 id   = 'abc4567'
 type = 'rule'
 app.store.save( type, id, {name: "rule the world"} )
@@ -125,24 +125,24 @@ app.store.save( {name: "rule the world", type: "rule", id: "abc4567"} )
 ```
 
 
-### Get
+### Load
 
 load an existing object
 
 ```javascript
-app.store.get( type, id )
+app.store.load( type, id )
 
   .done ( function(object) { } )
   .fail ( function(err)    { } )
 ```
 
 
-### Get All
+### Load all
 
 load all objects available or from a specific type
 
 ```javascript
-app.store.getAll( type )
+app.store.loadAll( type )
 
   .done ( function(objects) { } )
   .fail ( function(err)     { } )
@@ -154,7 +154,7 @@ app.store.getAll( type )
 delete an existing object
 
 ```javascript
-app.store.destroy( type, id )
+app.store.delete( type, id )
 
   .done ( function(deleted_object) { } )
   .fail ( function(err)            { } )
@@ -200,7 +200,7 @@ email = {
   body    : "we can do it!\nSigned, Joe"
 }
 
-app.send_email( email )
+app.email.send( email )
   
   // successfully synched to server
   .progress ( function(email) { } )
