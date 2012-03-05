@@ -82,12 +82,8 @@ define 'couchapp', ['events', 'store'], (Events, Store) ->
     #
     # to be done.
     #
-    change_password : (email) ->
+    change_password : (current_password, new_password) ->
       alert('change password is not yet implementd')
-    
-      # 1. GET user doc
-      # 2. update salt + password_sha
-      # 3. PUT user doc
     
   
     #
