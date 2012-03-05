@@ -14,10 +14,12 @@
   <script src="../compiled/src/errors.js"></script>
   <script src="../compiled/src/events.js"></script>
   <script src="../compiled/src/store.js"></script>
+  <script src="../compiled/src/account.js"></script>
   <script src="../compiled/src/couchapp.js"></script>
   
   <script src="../compiled/test/specs/couchapp.spec.js"></script>
   <script src="../compiled/test/specs/store.spec.js"></script>
+  <script src="../compiled/test/specs/account.spec.js"></script>
 </head>
 <body>
 
@@ -27,6 +29,7 @@
     
     require([
       'specs/store',
+      'specs/account',
       'specs/couchapp'
     ], function () {
       jas.execute();

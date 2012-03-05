@@ -1,7 +1,7 @@
 var __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-define('couchapp', ['events', 'store'], function(Events, Store) {
+define('couchapp', ['events', 'store', 'account'], function(Events, Store, Account) {
   'use strict';
   var couchApp;
   return couchApp = (function(_super) {
@@ -12,56 +12,8 @@ define('couchapp', ['events', 'store'], function(Events, Store) {
       this.couchDB_url = couchDB_url;
       this.couchDB_url = this.couchDB_url.replace(/\/+$/, '');
       this.store = new Store(this);
+      this.account = new Account(this);
     }
-
-    couchApp.prototype.sign_up = function(email, password) {
-      var key, prefix, user;
-      prefix = 'org.couchdb.user';
-      key = "" + prefix + ":" + email;
-      user = {
-        _id: key,
-        name: email,
-        type: 'user',
-        roles: [],
-        password: password
-      };
-      return $.ajax({
-        type: 'PUT',
-        url: "" + this.couchDB_url + "/_users/" + (encodeURIComponent(key)),
-        data: JSON.stringify(user),
-        contentType: "application/json"
-      });
-    };
-
-    couchApp.prototype.sign_in = function(email, password) {
-      var creds;
-      creds = JSON.stringify({
-        name: email,
-        password: password
-      });
-      return $.ajax({
-        type: 'POST',
-        url: "" + this.couchDB_url + "/_session",
-        data: creds,
-        contentType: "application/json"
-      });
-    };
-
-    couchApp.prototype.login = couchApp.prototype.sign_in;
-
-    couchApp.prototype.change_password = function(email) {
-      return alert('change password is not yet implementd');
-    };
-
-    couchApp.prototype.sign_out = function() {
-      return $.ajax({
-        type: 'DELETE',
-        url: "" + this.couchDB_url + "/_session",
-        contentType: "application/json"
-      });
-    };
-
-    couchApp.prototype.logout = couchApp.prototype.sign_out;
 
     return couchApp;
 

@@ -19,7 +19,7 @@ Accounts / Sessions
 ### Sign Up
 
 ```javascript
-app.sign_up('joe@example.com', 'secret')
+app.account.sign_up('joe@example.com', 'secret')
 
   .done( function(user) {
     user.email // 'joe@example.com'
@@ -38,7 +38,7 @@ app.sign_up('joe@example.com', 'secret')
 ### Sign In
 
 ```javascript
-app.sign_in('joe@example.com', 'secret')
+app.account.sign_in('joe@example.com', 'secret')
 
   .done( function(user) {
     // data sync kicks in
@@ -51,7 +51,7 @@ app.sign_in('joe@example.com', 'secret')
 ### Change password
 
 ```javascript
-app.change_password('current_secret', 'new_secret')
+app.account.change_password('current_secret', 'new_secret')
 
   .done( function(user) { } ) 
   .fail( function(err)  { } )
@@ -60,7 +60,7 @@ app.change_password('current_secret', 'new_secret')
 ### Sign Out
 
 ```javascript
-app.sign_out()
+app.account.sign_out()
 
   .done( function() {
     // session ends, local data gets cleaned up
@@ -74,7 +74,7 @@ app.sign_out()
 ### Forgot Password
 
 ```javascript
-app.forgot_password('joe@example.com')
+app.account.forgot_password('joe@example.com')
 
   .done( function() {
     alert( "Link has been sent to joe@example.com")

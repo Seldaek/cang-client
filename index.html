@@ -20,28 +20,32 @@
     couchDB_endpoint = 'http://corscouch.example.com';
     app = new couchApp(couchDB_endpoint);
     
+    // 
+    // Account 
+    //
+    
     // sign up
-    app.sign_up('joe@example.com', 'secret')
+    app.account.sign_up('joe@example.com', 'secret')
       .done( function(user) { } ) 
       .fail( function(err)  { } )
       
     // sign in
-    app.sign_in('joe@example.com', 'secret')
+    app.account.sign_in('joe@example.com', 'secret')
       .done( function(user) { } ) 
       .fail( function(err)  { } )
       
     // sign out
-    app.sign_out()
+    app.account.sign_out()
       .done( function(user) { } ) 
       .fail( function(err)  { } )
     
     // change password (coming soon)
-    app.change_password('current_secret', 'new_secret')
+    app.account.change_password('current_secret', 'new_secret')
       .done( function(user) { } ) 
       .fail( function(err)  { } )
       
     // forgot password (coming soon)
-    app.forgot_password('joe@example.com')
+    app.account.forgot_password('joe@example.com')
       .done( function(user) { } ) 
       .fail( function(err)  { } )
       
