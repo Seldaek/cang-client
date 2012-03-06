@@ -4,7 +4,7 @@
 #
 # the door to world domination (apps)
 #
-define 'couchapp', ['events', 'store', 'account'], (Events, Store, Account) ->
+define 'couchapp', ['events', 'store', 'account', 'remote'], (Events, Store, Account, Remote) ->
   
   'use strict'
 
@@ -18,5 +18,6 @@ define 'couchapp', ['events', 'store', 'account'], (Events, Store, Account) ->
       # remove trailing slash(es)
       @couchDB_url = @couchDB_url.replace /\/+$/, ''
     
-      @store   = new Store this
+      @store   = new Store   this
       @account = new Account this
+      @remote  = new Remote  this
