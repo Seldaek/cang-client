@@ -16,8 +16,7 @@ define 'events', ->
   
   'use strict'
   
-  Events =
-  
+  class Events
 
     # ## Bind
     #
@@ -32,11 +31,9 @@ define 'events', ->
       for name in evs
         calls[name] or= []
         calls[name].push(callback)
-      
-      return this
     
     # alias
-    # on: Events.bind
+    on: @::bind
 
     # ## one
     # 
@@ -95,5 +92,3 @@ define 'events', ->
         break
       
       return this
-  
-  Events

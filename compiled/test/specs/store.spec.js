@@ -20,10 +20,9 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       this.store = new Store(this.app);
       spyOn(this.store, "_setObject").andCallThrough();
       spyOn(this.store, "_getObject").andCallThrough();
-      spyOn(this.store, "_getItem").andCallThrough();
-      spyOn(this.store, "_setItem").andCallThrough();
-      spyOn(this.store, "_removeItem").andCallThrough();
-      return spyOn(this.store, "_clear").andCallThrough();
+      spyOn(this.store.db, "getItem").andCallThrough();
+      spyOn(this.store.db, "setItem").andCallThrough();
+      return spyOn(this.store.db, "clear").andCallThrough();
     });
     describe(".save(type, id, object)", function() {
       it("should return a promise", function() {
@@ -112,7 +111,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
             type: 'document',
             name: 'test'
           });
-          return _ref = this.store._setItem.mostRecentCall.args, key = _ref[0], this.object = _ref[1], _ref;
+          return _ref = this.store.db.setItem.mostRecentCall.args, key = _ref[0], this.object = _ref[1], _ref;
         });
         it("should store the object without the id attribute", function() {
           return expect(this.object.id).toBeUndefined();
@@ -156,7 +155,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
             promise = this.store.save('document', {
               name: 'test'
             });
-            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
+            return _ref = this.store.db.setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should generate an id", function() {
             return expect(this.key).toMatch(/^document\/[a-z0-9]{7}$/);
@@ -169,7 +168,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
               name: 'test',
               id: 'exists'
             });
-            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
+            return _ref = this.store.db.setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should get the id", function() {
             return expect(this.key).toBe('document/exists');
@@ -184,7 +183,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
               name: 'test',
               type: 'document'
             });
-            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
+            return _ref = this.store.db.setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should generate an id and get the type from object", function() {
             return expect(this.key).toMatch(/^document\/[a-z0-9]{7}$/);
@@ -198,7 +197,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
               type: 'document',
               id: 'exists'
             });
-            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
+            return _ref = this.store.db.setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should get id and type form object", function() {
             return expect(this.key).toBe('document/exists');
@@ -279,7 +278,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       it("should cache the object after the first get", function() {
         this.store.load('document', 'abc4567');
         this.store.load('document', 'abc4567');
-        return expect(this.store._getItem.callCount).toBe(1);
+        return expect(this.store.db.getItem.callCount).toBe(1);
       });
       return describe("aliases", function() {
         return it("should allow to use .get", function() {
@@ -362,7 +361,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
       });
     });
-    describe(".destroy(type, id)", function() {
+    describe(".delete(type, id)", function() {
       it("should return a promise", function() {
         var promise;
         promise = this.store.destroy('document', '123');
@@ -371,7 +370,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       });
       it("should have more specs");
       return describe("aliases", function() {
-        return it("should allow to use .create", function() {
+        return it("should allow to use .destroy", function() {
           return expect(this.store["delete"]).toBe(this.store.destroy);
         });
       });
@@ -389,7 +388,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           this.store.cache('couch', '123', {
             color: 'red'
           });
-          return expect(this.store._setItem).wasCalledWith('couch/123', '{"color":"red"}');
+          return expect(this.store.db.setItem).wasCalledWith('couch/123', '{"color":"red"}');
         });
         return _when("`options.remote = true` passed", function() {
           return it("should clear changed object", function() {
@@ -411,7 +410,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           });
           return it("should not load it from localStorage", function() {
             this.store.cache('couch', '123');
-            return expect(this.store._getItem).wasNotCalled();
+            return expect(this.store.db.getItem).wasNotCalled();
           });
         });
         return _and("object is not yet cached", function() {
@@ -507,7 +506,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       });
       it("should clear localStorage", function() {
         this.store.clear();
-        return expect(this.store._clear).wasCalled();
+        return expect(this.store.db.clear).wasCalled();
       });
       it("should clear chache", function() {
         this.store._cached = 'funky';

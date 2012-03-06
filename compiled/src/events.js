@@ -3,25 +3,33 @@ var __slice = Array.prototype.slice;
 define('events', function() {
   'use strict';
   var Events;
-  Events = {
-    bind: function(ev, callback) {
-      var calls, evs, name, _i, _len;
+  return Events = (function() {
+
+    function Events() {}
+
+    Events.prototype.bind = function(ev, callback) {
+      var calls, evs, name, _i, _len, _results;
       evs = ev.split(' ');
       calls = this.hasOwnProperty('_callbacks') && this._callbacks || (this._callbacks = {});
+      _results = [];
       for (_i = 0, _len = evs.length; _i < _len; _i++) {
         name = evs[_i];
         calls[name] || (calls[name] = []);
-        calls[name].push(callback);
+        _results.push(calls[name].push(callback));
       }
-      return this;
-    },
-    one: function(ev, callback) {
+      return _results;
+    };
+
+    Events.prototype.on = Events.prototype.bind;
+
+    Events.prototype.one = function(ev, callback) {
       return this.bind(ev, function() {
         this.unbind(ev, arguments.callee);
         return callback.apply(this, arguments);
       });
-    },
-    trigger: function() {
+    };
+
+    Events.prototype.trigger = function() {
       var args, callback, ev, list, _i, _len, _ref;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       ev = args.shift();
@@ -32,8 +40,9 @@ define('events', function() {
         if (callback.apply(this, args) === false) break;
       }
       return true;
-    },
-    unbind: function(ev, callback) {
+    };
+
+    Events.prototype.unbind = function(ev, callback) {
       var cb, i, list, _len, _ref;
       if (!ev) {
         this._callbacks = {};
@@ -54,7 +63,9 @@ define('events', function() {
         break;
       }
       return this;
-    }
-  };
-  return Events;
+    };
+
+    return Events;
+
+  })();
 });

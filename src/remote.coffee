@@ -11,12 +11,12 @@ define 'remote', ['errors'], (ERROR) ->
   
   class Remote
   
-  
     # ## Constructor
     #
     constructor : (@app) ->
       
       @app.on 'store:dirty:idle', @push_changes
+      @app.on 'remote:change',    @_handle_changes
       
     # ## Listen to Changes
     #
@@ -43,36 +43,50 @@ define 'remote', ['errors'], (ERROR) ->
         url:          "/db/account/_bulk_docs"
         contentType:  'application/json'
         data:         JSON.stringify(docs: docs)
+        success     : @_handle_changes
       
-      promise = $.ajax(params)
-      promise.done (response) =>
-        # TODO: make app.store parse the passed objects correctly
-        #       e.g. rename `_id` to `id` etc
-        @app.store(object, remote: true) for object in response
+      $.ajax(params)
       
-  # ## Private
+    # ## Get / Set seq
+    #
+    # the `seq` number gets passed to couchDB's `_changes` feed.
+    get_seq : ->
+      0
+    set_seq : ->
+      null
+      
+    # ## Private
   
-  _valid_special_attributes:
-    '_id'      : 1
-    '_rev'     : 1
-    '_deleted' : 1
+    _valid_special_attributes:
+      '_id'      : 1
+      '_rev'     : 1
+      '_deleted' : 1
   
-  #
-  # parse object for remote storage. All attributes starting with an 
-  # `underscore` do not get synchronized despite the special attributes
-  # `_id`, `_rev` and `_deleted`
-  # 
-  # Also `id` attribute gets renamed to `_id`
-  #
-  _parse_for_remote: (obj) ->
-    attributes = $.extend obj
+    #
+    # parse object for remote storage. All attributes starting with an 
+    # `underscore` do not get synchronized despite the special attributes
+    # `_id`, `_rev` and `_deleted`
+    # 
+    # Also `id` attribute gets renamed to `_id`
+    #
+    _parse_for_remote: (obj) ->
+      attributes = $.extend obj
     
-    for attr of attributes
-      next if @_valid_special_attributes[attr]
-      next unless /^_/.test attr
-      delete attributes[attr]
+      for attr of attributes
+        next if @_valid_special_attributes[attr]
+        next unless /^_/.test attr
+        delete attributes[attr]
       
-    attributes
+      attributes
   
-  #
-  _deferred: $.Deferred
+    #
+    # handle changes from remote
+    #
+    _handle_changes: (response) =>
+      # TODO: make app.store parse the passed objects correctly
+      #       e.g. rename `_id` to `id` etc
+      @app.store(object, remote: true) for object in response
+    
+  
+    #
+    _deferred: $.Deferred

@@ -16,13 +16,22 @@ define 'store', ['errors'], (ERROR) ->
       # if browser does not support local storage persistence,
       # e.g. Safari in private mode, overite the respective methods. 
       unless @is_persistent()
-        @_getItem    = -> null
-        @_setItem    = -> null
-        @_removeItem = -> null
-        @_key        = -> null
-        @_length     = -> 0
-        @_clear      = -> null
+        @db =
+          getItem    : -> null
+          setItem    : -> null
+          removeItem : -> null
+          key        : -> null
+          length     : -> 0
+          clear      : -> null
     
+    # localStorage proxy
+    db: 
+      getItem    : (key)         -> window.localStorage.getItem(key)
+      setItem    : (key, value)  -> window.localStorage.setItem key, value
+      removeItem : (key)         -> window.localStorage.removeItem(key)
+      key        : (nr)          -> window.localStorage.key(nr)    
+      length     : ()            -> window.localStorage.length
+      clear      : ()            -> window.localStorage.clear()
 
     # ## Save
     #
@@ -179,7 +188,7 @@ define 'store', ['errors'], (ERROR) ->
       
       else
         key = "#{type}/#{id}"
-        @_removeItem key
+        @db.removeItem key
     
         delete @_cached[key]
         @clear_changed type, id
@@ -292,7 +301,7 @@ define 'store', ['errors'], (ERROR) ->
       promise = @_deferred()
     
       try
-        @_clear()
+        @db.clear()
         @_cached = {}
         @clear_changed()
       
@@ -352,24 +361,16 @@ define 'store', ['errors'], (ERROR) ->
     
     # ## Private
     
-    # localStorage proxy methods
-    _getItem    : (key)         -> window.localStorage.getItem(key)
-    _setItem    : (key, value)  -> window.localStorage.setItem key, value
-    _removeItem : (key)         -> window.localStorage.removeItem(key)
-    _key        : (nr)          -> window.localStorage.key(nr)
-    _length     : ()            -> window.localStorage.length
-    _clear      : ()            -> window.localStorage.clear()
-    
     # more advanced localStorage wrappers to load/store objects
     _setObject  : (type, id, object) ->
       key = "#{type}/#{id}"
       store = $.extend {}, object
       delete store.type
       delete store.id
-      @_setItem key, JSON.stringify store
+      @db.setItem key, JSON.stringify store
     _getObject  : (type, id) ->
       key = "#{type}/#{id}"
-      json = @_getItem(key)
+      json = @db.getItem(key)
       if json
         obj = JSON.parse(json)
         obj.type  = type
@@ -402,4 +403,4 @@ define 'store', ['errors'], (ERROR) ->
     #
     # TODO: make this cachy
     _index: ->
-      @_key(i) for i in [0...@_length()]
+      @db.key(i) for i in [0...@db.length()]

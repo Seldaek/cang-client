@@ -12,10 +12,10 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       spyOn(@store, "_setObject").andCallThrough()
       spyOn(@store, "_getObject").andCallThrough()
       
-      spyOn(@store, "_getItem").andCallThrough()
-      spyOn(@store, "_setItem").andCallThrough()
-      spyOn(@store, "_removeItem").andCallThrough()
-      spyOn(@store, "_clear").andCallThrough()
+      spyOn(@store.db, "getItem").andCallThrough()
+      spyOn(@store.db, "setItem").andCallThrough()
+      # spyOn(@store, "_removeItem").andCallThrough()
+      spyOn(@store.db, "clear").andCallThrough()
 
     describe ".save(type, id, object)", ->
       it "should return a promise", ->
@@ -82,7 +82,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       
           # keep promise, key, and stored object for assertions
           @store.save 'document', '123', {id: '123', type: 'document', name: 'test'}
-          [key, @object] = @store._setItem.mostRecentCall.args
+          [key, @object] = @store.db.setItem.mostRecentCall.args
     
         it "should store the object without the id attribute", ->
           expect(@object.id).toBeUndefined()
@@ -115,7 +115,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save 'document', { name: 'test' }
-            [@key, @object] = @store._setItem.mostRecentCall.args
+            [@key, @object] = @store.db.setItem.mostRecentCall.args
       
           it "should generate an id", ->
             expect(@key).toMatch /^document\/[a-z0-9]{7}$/
@@ -124,7 +124,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save 'document', { name: 'test', id: 'exists' }
-            [@key, @object] = @store._setItem.mostRecentCall.args
+            [@key, @object] = @store.db.setItem.mostRecentCall.args
         
           it "should get the id", ->
             expect(@key).toBe 'document/exists'
@@ -134,7 +134,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document'
-            [@key, @object] = @store._setItem.mostRecentCall.args
+            [@key, @object] = @store.db.setItem.mostRecentCall.args
       
           it "should generate an id and get the type from object", ->
             expect(@key).toMatch /^document\/[a-z0-9]{7}$/
@@ -143,7 +143,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document', id: 'exists'
-            [@key, @object] = @store._setItem.mostRecentCall.args
+            [@key, @object] = @store.db.setItem.mostRecentCall.args
         
           it "should get id and type form object", ->
             expect(@key).toBe 'document/exists'
@@ -212,7 +212,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         @store.load 'document', 'abc4567'
         @store.load 'document', 'abc4567'
     
-        expect(@store._getItem.callCount).toBe 1
+        expect(@store.db.getItem.callCount).toBe 1
         
       describe "aliases", ->
         it "should allow to use .get", ->
@@ -281,7 +281,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       # /aliases
     # /.loadAll(type)
 
-    describe ".destroy(type, id)", ->
+    describe ".delete(type, id)", ->
       it "should return a promise", ->
         promise = @store.destroy 'document', '123'
         do expect(promise.done).toBeDefined
@@ -290,7 +290,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       it "should have more specs"
       
       describe "aliases", ->
-        it "should allow to use .create", ->
+        it "should allow to use .destroy", ->
           expect(@store.delete).toBe @store.destroy
       # /aliases
     # /.destroy(type, id)
@@ -306,7 +306,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       _when "object passed", ->
         it "should write the object to localStorage, but without type & id attributes", ->
           @store.cache('couch', '123', color: 'red')
-          expect(@store._setItem).wasCalledWith 'couch/123', '{"color":"red"}'
+          expect(@store.db.setItem).wasCalledWith 'couch/123', '{"color":"red"}'
           
         _when "`options.remote = true` passed", ->
           it "should clear changed object", ->
@@ -320,7 +320,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           
           it "should not load it from localStorage", ->
             @store.cache 'couch', '123'
-            expect(@store._getItem).wasNotCalled()
+            expect(@store.db.getItem).wasNotCalled()
             
         _and "object is not yet cached", ->
           beforeEach ->
@@ -391,7 +391,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         
       it "should clear localStorage", ->
         @store.clear()
-        do expect(@store._clear).wasCalled
+        do expect(@store.db.clear).wasCalled
       
       it "should clear chache", ->
         @store._cached = 'funky'

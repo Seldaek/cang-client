@@ -13,8 +13,7 @@
   
   <span class="s1">&#39;use strict&#39;</span>
   
-  <span class="nv">Events =</span>
-  </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Bind</h2>
+  <span class="k">class</span> <span class="nx">Events</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Bind</h2>
 
 <p>bind a callback to an event triggerd by the object</p>
 
@@ -26,10 +25,7 @@
       <span class="k">for</span> <span class="nx">name</span> <span class="k">in</span> <span class="nx">evs</span>
         <span class="nx">calls</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">or=</span> <span class="p">[]</span>
         <span class="nx">calls</span><span class="p">[</span><span class="nx">name</span><span class="p">].</span><span class="nx">push</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span>
-      
-      <span class="k">return</span> <span class="k">this</span>
-    </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>alias
-on: Events.bind</p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>one</h2>
+    </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>alias</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kc">on</span><span class="o">:</span> <span class="err">@</span><span class="o">::</span><span class="nx">bind</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>one</h2>
 
 <p>same as <code>bind</code>, but does get executed only once</p>
 
@@ -80,7 +76,5 @@ object.unbind 'move', follow
         <span class="k">break</span>
       
       <span class="k">return</span> <span class="k">this</span>
-  
-  <span class="nx">Events</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

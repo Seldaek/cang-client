@@ -7,26 +7,49 @@ define('store', ['errors'], function(ERROR) {
     function Store(app) {
       this.app = app;
       if (!this.is_persistent()) {
-        this._getItem = function() {
-          return null;
-        };
-        this._setItem = function() {
-          return null;
-        };
-        this._removeItem = function() {
-          return null;
-        };
-        this._key = function() {
-          return null;
-        };
-        this._length = function() {
-          return 0;
-        };
-        this._clear = function() {
-          return null;
+        this.db = {
+          getItem: function() {
+            return null;
+          },
+          setItem: function() {
+            return null;
+          },
+          removeItem: function() {
+            return null;
+          },
+          key: function() {
+            return null;
+          },
+          length: function() {
+            return 0;
+          },
+          clear: function() {
+            return null;
+          }
         };
       }
     }
+
+    Store.prototype.db = {
+      getItem: function(key) {
+        return window.localStorage.getItem(key);
+      },
+      setItem: function(key, value) {
+        return window.localStorage.setItem(key, value);
+      },
+      removeItem: function(key) {
+        return window.localStorage.removeItem(key);
+      },
+      key: function(nr) {
+        return window.localStorage.key(nr);
+      },
+      length: function() {
+        return window.localStorage.length;
+      },
+      clear: function() {
+        return window.localStorage.clear();
+      }
+    };
 
     Store.prototype.save = function(type, id, object) {
       var promise;
@@ -135,7 +158,7 @@ define('store', ['errors'], function(ERROR) {
         this.cache(type, id, object);
       } else {
         key = "" + type + "/" + id;
-        this._removeItem(key);
+        this.db.removeItem(key);
         delete this._cached[key];
         this.clear_changed(type, id);
       }
@@ -231,7 +254,7 @@ define('store', ['errors'], function(ERROR) {
       var promise;
       promise = this._deferred();
       try {
-        this._clear();
+        this.db.clear();
         this._cached = {};
         this.clear_changed();
         promise.resolve();
@@ -268,43 +291,19 @@ define('store', ['errors'], function(ERROR) {
       })()).join('');
     };
 
-    Store.prototype._getItem = function(key) {
-      return window.localStorage.getItem(key);
-    };
-
-    Store.prototype._setItem = function(key, value) {
-      return window.localStorage.setItem(key, value);
-    };
-
-    Store.prototype._removeItem = function(key) {
-      return window.localStorage.removeItem(key);
-    };
-
-    Store.prototype._key = function(nr) {
-      return window.localStorage.key(nr);
-    };
-
-    Store.prototype._length = function() {
-      return window.localStorage.length;
-    };
-
-    Store.prototype._clear = function() {
-      return window.localStorage.clear();
-    };
-
     Store.prototype._setObject = function(type, id, object) {
       var key, store;
       key = "" + type + "/" + id;
       store = $.extend({}, object);
       delete store.type;
       delete store.id;
-      return this._setItem(key, JSON.stringify(store));
+      return this.db.setItem(key, JSON.stringify(store));
     };
 
     Store.prototype._getObject = function(type, id) {
       var json, key, obj;
       key = "" + type + "/" + id;
-      json = this._getItem(key);
+      json = this.db.getItem(key);
       if (json) {
         obj = JSON.parse(json);
         obj.type = type;
@@ -336,8 +335,8 @@ define('store', ['errors'], function(ERROR) {
     Store.prototype._index = function() {
       var i, _ref, _results;
       _results = [];
-      for (i = 0, _ref = this._length(); 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-        _results.push(this._key(i));
+      for (i = 0, _ref = this.db.length(); 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+        _results.push(this.db.key(i));
       }
       return _results;
     };
