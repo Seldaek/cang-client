@@ -315,7 +315,21 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     # /.changed(type, id, value)
 
     describe ".is_marked_as_deleted(type, id)", ->
-      it "should have some specs"
+      _when "object 'couch/123' is marked as deleted", ->
+        beforeEach ->
+          spyOn(@store, "cache").andReturn _deleted: true
+        
+        it "should return true", ->
+          @store.is_marked_as_deleted('couch', '123')
+          
+      _when "object 'couch/123' isn't marked as deleted", ->
+        beforeEach ->
+          spyOn(@store, "cache").andReturn {}
+          
+        it "should return false", ->
+          @store.is_marked_as_deleted('couch', '123')
+        
+        
     # /.is_marked_as_deleted(type, id)
 
     describe ".clear_changed(type, id)", ->

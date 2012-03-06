@@ -237,7 +237,7 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
         this.clear_changed();
         promise.resolve();
       } catch (error) {
-        promise.reject();
+        promise.reject(error);
       }
       return promise;
     };

@@ -393,7 +393,24 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       return it("should have some specs");
     });
     describe(".is_marked_as_deleted(type, id)", function() {
-      return it("should have some specs");
+      _when("object 'couch/123' is marked as deleted", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "cache").andReturn({
+            _deleted: true
+          });
+        });
+        return it("should return true", function() {
+          return this.store.is_marked_as_deleted('couch', '123');
+        });
+      });
+      return _when("object 'couch/123' isn't marked as deleted", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "cache").andReturn({});
+        });
+        return it("should return false", function() {
+          return this.store.is_marked_as_deleted('couch', '123');
+        });
+      });
     });
     describe(".clear_changed(type, id)", function() {
       _when("type & id passed", function() {

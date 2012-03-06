@@ -322,7 +322,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       
         promise.resolve()
       catch error
-        promise.reject()
+        promise.reject(error)
       
       return promise
     
