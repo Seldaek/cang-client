@@ -214,7 +214,7 @@ define 'store', ['errors'], (ERROR) ->
         @_cached[key] = @_getObject type, id
     
       if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
-        @changed type, id, @_cached[key]
+        @mark_as_changed type, id, @_cached[key]
       else
         @clear_changed type, id
       
@@ -242,35 +242,20 @@ define 'store', ['errors'], (ERROR) ->
     # it cannot be removed from store but gets a `_deleted: true` attribute
     is_marked_as_deleted : (type, id) ->
       @cache(type, id)._deleted is true
-      
-      
-    # ## Changed
-    #
-    # When `object` passed, marks it as changed (dirty), triggers a `store:dirty` event
-    # and starts the dirty timeout, which triggers a `store:dirty:idle` event after two seconds
-    # unless another object gets marked as deleted within this timeout.
-    #
-    # When no `object` passed, but a type & id, it returns the respective object if it
-    # is currently marked as changed.
-    #
-    # When no arguments passed, it returns all dirty objects.
-    changed: (type, id, object) ->
-      key = "#{type}/#{id}"
     
-      if object
-        @_dirty[key] = object
-        @app.trigger 'store:dirty'
-        
-        timeout = 2000 # 2 seconds timout before triggering the `store:dirty:idle` event
-        window.clearTimeout @_dirty_timeout
-        @_dirty_timeout = window.setTimeout ( => @app.trigger 'store:dirty:idle' ), timeout
-        
-      else
-        if arguments.length
-          @_dirty[key]
-        else
-          @_dirty
-         
+    # ## Mark as changed
+    #
+    # Marks object as changed (dirty). Triggers a `store:dirty` event immediately and a 
+    # `store:dirty:idle` event once there is no change within 2 seconds
+    mark_as_changed: (type, id, object) ->
+      key = "#{type}/#{id}"
+      
+      @_dirty[key] = object
+      @app.trigger 'store:dirty'
+      
+      timeout = 2000 # 2 seconds timout before triggering the `store:dirty:idle` event
+      window.clearTimeout @_dirty_timeout
+      @_dirty_timeout = window.setTimeout ( => @app.trigger 'store:dirty:idle' ), timeout
          
     # ## Is dirty?
     #

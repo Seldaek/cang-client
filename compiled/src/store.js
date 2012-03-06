@@ -164,7 +164,7 @@ define('store', ['errors'], function(ERROR) {
         this._cached[key] = this._getObject(type, id);
       }
       if (this.is_dirty(type, id) || this.is_marked_as_deleted(type, id)) {
-        this.changed(type, id, this._cached[key]);
+        this.mark_as_changed(type, id, this._cached[key]);
       } else {
         this.clear_changed(type, id);
       }
@@ -186,25 +186,17 @@ define('store', ['errors'], function(ERROR) {
       return this.cache(type, id)._deleted === true;
     };
 
-    Store.prototype.changed = function(type, id, object) {
+    Store.prototype.mark_as_changed = function(type, id, object) {
       var key, timeout,
         _this = this;
       key = "" + type + "/" + id;
-      if (object) {
-        this._dirty[key] = object;
-        this.app.trigger('store:dirty');
-        timeout = 2000;
-        window.clearTimeout(this._dirty_timeout);
-        return this._dirty_timeout = window.setTimeout((function() {
-          return _this.app.trigger('store:dirty:idle');
-        }), timeout);
-      } else {
-        if (arguments.length) {
-          return this._dirty[key];
-        } else {
-          return this._dirty;
-        }
-      }
+      this._dirty[key] = object;
+      this.app.trigger('store:dirty');
+      timeout = 2000;
+      window.clearTimeout(this._dirty_timeout);
+      return this._dirty_timeout = window.setTimeout((function() {
+        return _this.app.trigger('store:dirty:idle');
+      }), timeout);
     };
 
     Store.prototype.is_dirty = function(type, id) {

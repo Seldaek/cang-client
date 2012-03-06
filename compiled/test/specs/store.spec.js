@@ -378,7 +378,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
     });
     describe(".cache(type, id, object)", function() {
       beforeEach(function() {
-        spyOn(this.store, "changed");
+        spyOn(this.store, "mark_as_changed");
         spyOn(this.store, "clear_changed");
         spyOn(this.store, "is_dirty");
         spyOn(this.store, "is_marked_as_deleted");
@@ -449,7 +449,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
         return it("should mark it as changed", function() {
           this.store.cache('couch', '123');
-          return expect(this.store.changed).wasCalledWith('couch', '123', {
+          return expect(this.store.mark_as_changed).wasCalledWith('couch', '123', {
             color: 'red',
             type: 'couch',
             id: '123'
@@ -475,7 +475,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           });
           return it("should mark it as changed", function() {
             this.store.cache('couch', '123');
-            return expect(this.store.changed).wasCalledWith('couch', '123', {
+            return expect(this.store.mark_as_changed).wasCalledWith('couch', '123', {
               color: 'red',
               type: 'couch',
               id: '123'
@@ -590,62 +590,34 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
       });
     });
-    describe(".changed(type, id, object)", function() {
+    describe(".mark_as_changed(type, id, object)", function() {
       beforeEach(function() {
         this.store._dirty = {};
         spyOn(window, "setTimeout").andReturn('new_timeout');
         spyOn(window, "clearTimeout");
-        return spyOn(this.app, "trigger");
-      });
-      _when("object passed", function() {
-        beforeEach(function() {
-          return this.store.changed('couch', '123', {
-            color: 'red'
-          });
-        });
-        it("should add it to the dirty list", function() {
-          return expect(this.store._dirty['couch/123'].color).toBe('red');
-        });
-        it("should should trigger an `store:dirty` event", function() {
-          return expect(this.app.trigger).wasCalledWith('store:dirty');
-        });
-        it("should start dirty timeout for 2 seconds", function() {
-          var args;
-          args = window.setTimeout.mostRecentCall.args;
-          expect(args[1]).toBe(2000);
-          return expect(this.store._dirty_timeout).toBe('new_timeout');
-        });
-        return it("should clear dirty timeout", function() {
-          this.store._dirty_timeout = 'timeout';
-          this.store.changed('couch', '123', {
-            color: 'red'
-          });
-          return expect(window.clearTimeout).wasCalledWith('timeout');
+        spyOn(this.app, "trigger");
+        return this.store.mark_as_changed('couch', '123', {
+          color: 'red'
         });
       });
-      _when("no object passed", function() {
-        it("should return true if the object is dirty", function() {
-          var res;
-          this.store._dirty['couch/123'] = {
-            color: 'red'
-          };
-          res = this.store.changed('couch', '123');
-          return expect(res).toBeTruthy();
-        });
-        return it("should return false if the object isn't dirty", function() {
-          var res;
-          delete this.store._dirty['couch/123'];
-          res = this.store.changed('couch', '123');
-          return expect(res).toBeFalsy();
-        });
+      it("should add it to the dirty list", function() {
+        return expect(this.store._dirty['couch/123'].color).toBe('red');
       });
-      return _when("no arguments passed", function() {
-        return it("should return all dirty objects", function() {
-          var res;
-          this.store._dirty = 'so so dirty';
-          res = this.store.changed();
-          return expect(res).toBe('so so dirty');
+      it("should should trigger an `store:dirty` event", function() {
+        return expect(this.app.trigger).wasCalledWith('store:dirty');
+      });
+      it("should start dirty timeout for 2 seconds", function() {
+        var args;
+        args = window.setTimeout.mostRecentCall.args;
+        expect(args[1]).toBe(2000);
+        return expect(this.store._dirty_timeout).toBe('new_timeout');
+      });
+      return it("should clear dirty timeout", function() {
+        this.store._dirty_timeout = 'timeout';
+        this.store.mark_as_changed('couch', '123', {
+          color: 'red'
         });
+        return expect(window.clearTimeout).wasCalledWith('timeout');
       });
     });
     describe(".is_marked_as_deleted(type, id)", function() {

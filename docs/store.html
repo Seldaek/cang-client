@@ -181,7 +181,7 @@ and caches it for faster future access. Updates cache when <code>value</code> is
         <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@_getObject</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span>
     
       <span class="k">if</span> <span class="nx">@is_dirty</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span> <span class="o">or</span> <span class="nx">@is_marked_as_deleted</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
-        <span class="nx">@changed</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+        <span class="nx">@mark_as_changed</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
       <span class="k">else</span>
         <span class="nx">@clear_changed</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span>
       
@@ -205,33 +205,18 @@ and triggers a <code>store:dirty</code> event</p>             </td>             
 <p>when an object gets deleted that has been synched before (<code>_rev</code> attribute),
 it cannot be removed from store but gets a <code>_deleted: true</code> attribute</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">is_marked_as_deleted : </span><span class="nf">(type, id) -&gt;</span>
       <span class="nx">@cache</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">).</span><span class="nx">_deleted</span> <span class="o">is</span> <span class="kc">true</span>
-      
-      </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <h2>Changed</h2>
+    </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <h2>Mark as changed</h2>
 
-<p>When <code>object</code> passed, marks it as changed (dirty), triggers a <code>store:dirty</code> event
-and starts the dirty timeout, which triggers a <code>store:dirty:idle</code> event after two seconds
-unless another object gets marked as deleted within this timeout.</p>
-
-<p>When no <code>object</code> passed, but a type &amp; id, it returns the respective object if it
-is currently marked as changed.</p>
-
-<p>When no arguments passed, it returns all dirty objects.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">changed: </span><span class="nf">(type, id, object) -&gt;</span>
+<p>Marks object as changed (dirty). Triggers a <code>store:dirty</code> event immediately and a 
+<code>store:dirty:idle</code> event once there is no change within 2 seconds</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">mark_as_changed: </span><span class="nf">(type, id, object) -&gt;</span>
       <span class="nv">key = </span><span class="s2">&quot;#{type}/#{id}&quot;</span>
-    
-      <span class="k">if</span> <span class="nx">object</span>
-        <span class="nx">@_dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">object</span>
-        <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;store:dirty&#39;</span>
-        
-        <span class="nv">timeout = </span><span class="mi">2000</span> <span class="c1"># 2 seconds timout before triggering the `store:dirty:idle` event</span>
-        <span class="nb">window</span><span class="p">.</span><span class="nx">clearTimeout</span> <span class="nx">@_dirty_timeout</span>
-        <span class="vi">@_dirty_timeout = </span><span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;store:dirty:idle&#39;</span> <span class="p">),</span> <span class="nx">timeout</span>
-        
-      <span class="k">else</span>
-        <span class="k">if</span> <span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span>
-          <span class="nx">@_dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
-        <span class="k">else</span>
-          <span class="nx">@_dirty</span>
-         
+      
+      <span class="nx">@_dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">object</span>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;store:dirty&#39;</span>
+      
+      <span class="nv">timeout = </span><span class="mi">2000</span> <span class="c1"># 2 seconds timout before triggering the `store:dirty:idle` event</span>
+      <span class="nb">window</span><span class="p">.</span><span class="nx">clearTimeout</span> <span class="nx">@_dirty_timeout</span>
+      <span class="vi">@_dirty_timeout = </span><span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;store:dirty:idle&#39;</span> <span class="p">),</span> <span class="nx">timeout</span>
          </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <h2>Is dirty?</h2>
 
 <p>When no arguments passed, returns <code>true</code> or <code>false</code> depending on if there are
