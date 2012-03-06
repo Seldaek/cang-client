@@ -10,13 +10,12 @@ define 'couchapp', ['events', 'store', 'account'], (Events, Store, Account) ->
 
   class couchApp extends Events
   
+    # ## initialization
     #
-    # initialization
-    #
+    # Inits the couchApp, a couchDB URL needs to be passed
     constructor : (@couchDB_url) ->
     
       # remove trailing slash(es)
-      # TODO: SPEC me
       @couchDB_url = @couchDB_url.replace /\/+$/, ''
     
       @store   = new Store this

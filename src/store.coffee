@@ -8,6 +8,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
   
   class Store
   
+  
     # ## Constructor
     #
     constructor : (@app) ->
@@ -88,6 +89,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     # aliases
     create : @::save
     update : @::save
+    
     
     # ## load
     #
@@ -188,6 +190,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     # alias
     delete: @::destroy
     
+    
     # ## Cache
     #
     # loads an object specified by `type` and `id` only once from localStorage 
@@ -232,6 +235,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       
       @_cached[key]
   
+  
     # ## Clear changed 
     #
     # removes an object from the list of objects that are flagged to by synched (dirty)
@@ -245,12 +249,14 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     
       @app.trigger 'dirty_change'
     
+    
     # ## Marked as deleted?
     #
     # when an object gets deleted that has been synched before (`_rev` attribute),
     # it cannot be removed from store but gets a `_deleted: true` attribute
     is_marked_as_deleted : (type, id) ->
       @cache(type, id)._deleted is true
+      
       
     # ## Changed
     #
@@ -281,6 +287,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
           @_dirty
     _dirty_timeout = null
          
+         
     # ## Is dirty?
     #
     # When no arguments passed, returns `true` or `false` depending on if there are
@@ -301,6 +308,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       @cache(type, id).updated_at = Date.parse @cache(type, id).updated_at unless @cache(type, id).updated_at instanceof Date
     
       @cache(type, id).synced_at.getTime() < @cache(type, id).updated_at.getTime()
+  
   
     # ## Clear
     #

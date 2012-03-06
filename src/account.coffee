@@ -8,9 +8,11 @@ define 'account', ->
   
   class Account
   
+  
     # ## Constructor
     #
     constructor : (@app) ->
+      
 
     #
     # sign up with email & password
@@ -57,6 +59,7 @@ define 'account', ->
 
     # alias
     login: @::sign_in
+
 
     #
     # change password
