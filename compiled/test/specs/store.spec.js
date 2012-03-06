@@ -384,7 +384,46 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       return it("should have some specs");
     });
     describe(".clear()", function() {
-      return it("should have some specs");
+      beforeEach(function() {
+        return spyOn(this.store, "_deferred").andReturn({
+          resolve: jasmine.createSpy('resolve'),
+          reject: jasmine.createSpy('reject')
+        });
+      });
+      it("should return a promise", function() {
+        var promise;
+        promise = this.store.clear();
+        return expect(promise).toBe(this.store._deferred());
+      });
+      it("should clear localStorage", function() {
+        this.store.clear();
+        return expect(this.store._clear).wasCalled();
+      });
+      it("should clear chache", function() {
+        this.store._cached = 'funky';
+        this.store.clear();
+        return expect($.isEmptyObject(this.store._cached)).toBeTruthy();
+      });
+      it("should clear dirty docs", function() {
+        spyOn(this.store, "clear_changed");
+        this.store.clear();
+        return expect(this.store.clear_changed).wasCalled();
+      });
+      it("should resolve promise", function() {
+        this.store.clear();
+        return expect(this.store._deferred().resolve).wasCalled();
+      });
+      return _when("an error occurs", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "clear_changed").andCallFake(function() {
+            throw new Error('ooops');
+          });
+        });
+        return it("should reject the promise", function() {
+          this.store.clear();
+          return expect(this.store._deferred().reject).wasCalled();
+        });
+      });
     });
     describe(".is_dirty(type, id)", function() {
       _when("no arguments passed", function() {

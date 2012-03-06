@@ -303,7 +303,42 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     # /.cache(type, id, object)
 
     describe ".clear()", ->
-      it "should have some specs"
+      beforeEach ->
+
+        spyOn(@store, "_deferred").andReturn
+          resolve: jasmine.createSpy 'resolve'
+          reject:  jasmine.createSpy 'reject'
+      
+      
+      it "should return a promise", ->
+        promise = @store.clear()
+        expect(promise).toBe @store._deferred()
+        
+      it "should clear localStorage", ->
+        @store.clear()
+        do expect(@store._clear).wasCalled
+      
+      it "should clear chache", ->
+        @store._cached = 'funky'
+        @store.clear()      
+        expect($.isEmptyObject @store._cached).toBeTruthy()
+
+      it "should clear dirty docs", ->
+        spyOn(@store, "clear_changed")
+        @store.clear()      
+        do expect(@store.clear_changed).wasCalled
+        
+      it "should resolve promise", ->
+        @store.clear()      
+        do expect(@store._deferred().resolve).wasCalled
+      
+      _when "an error occurs", ->
+        beforeEach ->
+          spyOn(@store, "clear_changed").andCallFake -> throw new Error('ooops')
+        
+        it "should reject the promise", ->
+          @store.clear()      
+          do expect(@store._deferred().reject).wasCalled
     # /.clear()
 
     describe ".is_dirty(type, id)", ->
