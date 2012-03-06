@@ -505,11 +505,6 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           
         it "should return the two docs", ->
           expect(@store.changed_docs().length).toBe 2
-        
-        
-        
-        
-        
     # /.changed_docs()
 
     describe ".is_marked_as_deleted(type, id)", ->

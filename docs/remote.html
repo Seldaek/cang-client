@@ -9,8 +9,48 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
   
   </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Constructor</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">constructor : </span><span class="nf">(@app) -&gt;</span>
       
+      <span class="nx">@app</span><span class="p">.</span><span class="kc">on</span> <span class="s1">&#39;store:dirty:idle&#39;</span><span class="p">,</span> <span class="nx">@push_changes</span>
       </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>Listen to Changes</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">listen_to_changes : </span><span class="o">-&gt;</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>make a longpoll ajax requests and react on the changes
+coming from remote</p>             </td>             <td class="code">               <div class="highlight"><pre>      
+      </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>Push changes</h2>
+
+<p>Gets changed objects from store and pushes it to couch
+using the <code>_bulk_docs</code> API</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">push_changes : </span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="o">=&gt;</span>
       
-      </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>Push changes</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">push_changes : </span><span class="o">-&gt;</span>
+      <span class="nv">docs    = </span><span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">changed_docs</span><span class="p">()</span>
+      <span class="k">return</span> <span class="nx">@_deferred</span><span class="p">().</span><span class="nx">resolve</span><span class="p">([])</span> <span class="k">if</span> <span class="nx">docs</span><span class="p">.</span><span class="nx">lenght</span> <span class="o">is</span> <span class="mi">0</span>
+        
+      <span class="nv">docs = </span><span class="nx">@_parse_for_remote</span> <span class="nx">doc</span> <span class="k">for</span> <span class="nx">doc</span> <span class="k">in</span> <span class="nx">docs</span>
+      
+      <span class="nv">params =</span>
+        <span class="nv">type: </span>        <span class="s1">&#39;POST&#39;</span>
+        <span class="nv">dataType: </span>    <span class="s1">&#39;json&#39;</span>
+        <span class="nv">url: </span>         <span class="s2">&quot;/db/account/_bulk_docs&quot;</span>
+        <span class="nv">contentType: </span> <span class="s1">&#39;application/json&#39;</span>
+        <span class="nv">data: </span>        <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nv">docs: </span><span class="nx">docs</span><span class="p">)</span>
+      
+      <span class="nv">promise = </span><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span>
+      <span class="nx">promise</span><span class="p">.</span><span class="nx">done</span> <span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">=&gt;</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>TODO: make app.store parse the passed objects correctly
+      e.g. rename <code>_id</code> to <code>id</code> etc</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">(</span><span class="nx">object</span><span class="p">,</span> <span class="nv">remote: </span><span class="kc">true</span><span class="p">)</span> <span class="k">for</span> <span class="nx">object</span> <span class="k">in</span> <span class="nx">response</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <h2>Private</h2>             </td>             <td class="code">               <div class="highlight"><pre>  
+  <span class="nv">_valid_special_attributes:</span>
+    <span class="s1">&#39;_id&#39;</span>      <span class="o">:</span> <span class="mi">1</span>
+    <span class="s1">&#39;_rev&#39;</span>     <span class="o">:</span> <span class="mi">1</span>
+    <span class="s1">&#39;_deleted&#39;</span> <span class="o">:</span> <span class="mi">1</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>parse object for remote storage. All attributes starting with an 
+<code>underscore</code> do not get synchronized despite the special attributes
+<code>_id</code>, <code>_rev</code> and <code>_deleted</code></p>
+
+<p>Also <code>id</code> attribute gets renamed to <code>_id</code></p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_parse_for_remote: </span><span class="nf">(obj) -&gt;</span>
+    <span class="nv">attributes = </span><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">obj</span>
+    
+    <span class="k">for</span> <span class="nx">attr</span> <span class="k">of</span> <span class="nx">attributes</span>
+      <span class="nx">next</span> <span class="k">if</span> <span class="nx">@_valid_special_attributes</span><span class="p">[</span><span class="nx">attr</span><span class="p">]</span>
+      <span class="nx">next</span> <span class="nx">unless</span> <span class="sr">/^_/</span><span class="p">.</span><span class="nx">test</span> <span class="nx">attr</span>
+      <span class="k">delete</span> <span class="nx">attributes</span><span class="p">[</span><span class="nx">attr</span><span class="p">]</span>
+      
+    <span class="nx">attributes</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">_deferred: </span><span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

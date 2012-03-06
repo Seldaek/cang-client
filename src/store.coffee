@@ -347,8 +347,8 @@ define 'store', ['errors'], (ERROR) ->
         chars[ 0 | Math.random()*radix ] for i in [0...len]
       ).join('')
   
-  
-    # --------------------------------------------------------------------------  
+    
+    
     
     # ## Private
     
