@@ -16,14 +16,38 @@ define 'remote', ['errors'], (ERROR) ->
     constructor : (@app) ->
       
       @app.on 'store:dirty:idle', @push_changes
-      @app.on 'remote:change',    @_handle_changes
       
     # ## Listen to Changes
     #
-    listen_to_changes : ->
+    connect : ->
       
-      # make a longpoll ajax requests and react on the changes
-      # coming from remote
+      return if @_connected
+      do @pull_changes
+      
+    #
+    disconnect : ->
+      @_connected = false
+      @_changes_request.abort() if @_changes_request
+    
+    # 
+    # get changes
+    #
+    # a.k.a. make a longpoll AJAX request to CouchDB's `_changes` feed.
+    #
+    pull_changes: ->
+      @_connected = true
+      
+      @_changes_request = $.ajax
+        type:         'GET'
+        dataType:     'json'
+        processData:  false
+        url:          @_changes_url()
+        contentType:  'application/json'
+        success:      @_changes_success
+        error:        @_changes_error
+      
+      window.clearTimeout @_changes_request_timeout
+      @_changes_request_timeout = window.setTimeout @_restart_changes_request, 59000 # 59 sec
       
       
     # ## Push changes
@@ -38,11 +62,11 @@ define 'remote', ['errors'], (ERROR) ->
       docs = @_parse_for_remote doc for doc in docs
       
       params =
-        type:         'POST'
-        dataType:     'json'
-        url:          "/db/account/_bulk_docs"
-        contentType:  'application/json'
-        data:         JSON.stringify(docs: docs)
+        type        : 'POST'
+        dataType    : 'json'
+        url         : "/db/account/_bulk_docs"
+        contentType : 'application/json'
+        data        : JSON.stringify(docs: docs)
         success     : @_handle_changes
       
       $.ajax(params)
@@ -50,13 +74,84 @@ define 'remote', ['errors'], (ERROR) ->
     # ## Get / Set seq
     #
     # the `seq` number gets passed to couchDB's `_changes` feed.
-    get_seq : ->
-      0
-    set_seq : ->
-      null
+    # 
+    get_seq :       -> @_seq ||= @store.db.getItem('_couch.remote.seq') or 0
+    set_seq : (seq) -> @_seq   = @store.db.setItem '_couch.remote.seq', seq
       
     # ## Private
+    
+    ##
+    # changes url
+    #
+    # long poll url with heartbeat = 10 seconds
+    #
+    _changes_url : ->
+      since = @get_seq()
+      db    = 'joe_example_com' # TODO
+
+      "/#{db}/_changes?heartbeat=10000&feed=longpoll&since=#{since}"
+    
+    # request gets restarted automaticcally in @_changes_error
+    _restart_changes_request: => @_changes_request?.abort()
+      
+    #
+    # changes success handler 
+    #
+    # handle the incoming changes, then send the next request
+    #
+    _changes_success : (response) ->
+      
+      return unless @_connected
+      @_handle_changes(response)
+      do @pull_changes
+      
+    # 
+    # changes error handler 
+    #
+    # when there is a change, trigger event, 
+    # then check for another change
+    #
+    _changes_error : (xhr, error, resp) ->
+      return unless @is_active()
+      return if @is_offline()
+    
+      switch xhr.status
+    
+        # This happens when users session got invalidated on server
+        when 403
+          @trigger 'error:unauthorized'
+          @stop()
+        
+        # the 404 comes, when the requested DB of the User has been removed. 
+        # Should really not happen. 
+        # 
+        # BUT: it might also happen that the profileDB is not ready yet. 
+        #      Therefore, we try it again in 3 seconds
+        when 404
+          # @trigger 'error:unknown'
+          # @stop()
+          window.setTimeout (=> @_getChanges()), @_changes_timeout(3000)
+        
+        # Please server, don't give us these
+        when 500
+          @trigger 'error:server'
+          @stop()
+        
+        # usually a 0, which stands for timeout or server not reachable.
+        else
+          if xhr.statusText is 'abort'
+            # manual abort after 59sec. reload changes directly.
+            @_getChanges()
+          else        
+            # oops. This might be caused by an unreachable server.
+            # let's trigger cache update to double check
+            App.AutoUpdate.check() unless App.AutoUpdate.status() is 'checking'
+            window.setTimeout (=> @_getChanges()), @_changes_timeout()
+            @_double_changes_timeout()
+      
+    _changes_error
   
+    # map of valid couchDB doc attributes starting with an underscore
     _valid_special_attributes:
       '_id'      : 1
       '_rev'     : 1
