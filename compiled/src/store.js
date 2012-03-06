@@ -217,7 +217,7 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
       var key;
       if (type == null) type = null;
       if (id == null) id = null;
-      if (!type) return _(this._dirty).keys().length > 0;
+      if (!type) return $.isEmptyObject(this._dirty);
       key = "" + type + "/" + id;
       if (!this.cache(type, id).synced_at) return true;
       if (!this.cache(type, id).updated_at) return false;

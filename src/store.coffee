@@ -293,17 +293,17 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     # dirty objects in the store.
     #
     # Otherwise it returns `true` or `false` for the passed object. An object is dirty
-    # if it has no `synced_at` attribute or if `synced_at` is more recent than `updated_at`
+    # if it has no `synced_at` attribute or if `updated_at` is more recent than `synced_at`
     is_dirty: (type = null, id = null) ->
       unless type
-        return _(@_dirty).keys().length > 0
+        return $.isEmptyObject @_dirty
     
       key = "#{type}/#{id}"
-        
-      return true unless @cache(type, id).synced_at   # no synced_at? uuhh, that's dirty.
+      
+      return true  unless @cache(type, id).synced_at  # no synced_at? uuhh, that's dirty.
       return false unless @cache(type, id).updated_at # no updated_at? no dirt then
     
-      @cache(type, id).synced_at  = Date.parse @cache(type, id).synced_at unless @cache(type, id).synced_at instanceof Date
+      @cache(type, id).synced_at  = Date.parse @cache(type, id).synced_at  unless @cache(type, id).synced_at  instanceof Date
       @cache(type, id).updated_at = Date.parse @cache(type, id).updated_at unless @cache(type, id).updated_at instanceof Date
     
       @cache(type, id).synced_at.getTime() < @cache(type, id).updated_at.getTime()

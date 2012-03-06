@@ -387,7 +387,59 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       return it("should have some specs");
     });
     describe(".is_dirty(type, id)", function() {
-      return it("should have some specs");
+      _when("no arguments passed", function() {
+        return it("returns true when there are no dirty documents", function() {
+          this.store._dirty = {};
+          return expect(this.store.is_dirty()).toBeTruthy();
+        });
+      });
+      return _when("type & id passed", function() {
+        _and("object was not yet synced", function() {
+          beforeEach(function() {
+            return spyOn(this.store, "cache").andReturn({
+              synced_at: void 0
+            });
+          });
+          return it("should return true", function() {
+            return expect(this.store.is_dirty('couch', '123')).toBeTruthy();
+          });
+        });
+        return _and("object was synced", function() {
+          _and("object was not updated yet", function() {
+            beforeEach(function() {
+              return spyOn(this.store, "cache").andReturn({
+                synced_at: new Date(0),
+                updated_at: void 0
+              });
+            });
+            return it("should return false", function() {
+              return expect(this.store.is_dirty('couch', '123')).toBeFalsy();
+            });
+          });
+          _and("object was updated at the same time", function() {
+            beforeEach(function() {
+              return spyOn(this.store, "cache").andReturn({
+                synced_at: new Date(0),
+                updated_at: new Date(0)
+              });
+            });
+            return it("should return false", function() {
+              return expect(this.store.is_dirty('couch', '123')).toBeFalsy();
+            });
+          });
+          return _and("object was updated later", function() {
+            beforeEach(function() {
+              return spyOn(this.store, "cache").andReturn({
+                synced_at: new Date(0),
+                updated_at: new Date(1)
+              });
+            });
+            return it("should return true", function() {
+              return expect(this.store.is_dirty('couch', '123')).toBeTruthy();
+            });
+          });
+        });
+      });
     });
     describe(".changed(type, id, object)", function() {
       beforeEach(function() {

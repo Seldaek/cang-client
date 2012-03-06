@@ -307,7 +307,48 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     # /.clear()
 
     describe ".is_dirty(type, id)", ->
-      it "should have some specs"
+      _when "no arguments passed", ->
+        it "returns true when there are no dirty documents", ->
+          @store._dirty ={}
+          expect(@store.is_dirty()).toBeTruthy()
+          
+      _when "type & id passed", ->
+        _and "object was not yet synced", ->
+          beforeEach ->
+            spyOn(@store, "cache").andReturn synced_at: undefined
+          
+          it "should return true", ->
+            do expect(@store.is_dirty 'couch', '123').toBeTruthy
+        
+        _and "object was synced", ->
+          _and "object was not updated yet", ->
+            beforeEach ->
+              spyOn(@store, "cache").andReturn 
+                synced_at : new Date(0)
+                updated_at: undefined
+            
+            it "should return false", ->
+              do expect(@store.is_dirty 'couch', '123').toBeFalsy
+              
+          _and "object was updated at the same time", ->
+            beforeEach ->
+              spyOn(@store, "cache").andReturn 
+                synced_at : new Date(0)
+                updated_at: new Date(0)
+                
+            it "should return false", ->
+              do expect(@store.is_dirty 'couch', '123').toBeFalsy
+              
+          _and "object was updated later", ->
+            beforeEach ->
+              spyOn(@store, "cache").andReturn 
+                synced_at : new Date(0)
+                updated_at: new Date(1)
+                
+            it "should return true", ->
+              do expect(@store.is_dirty 'couch', '123').toBeTruthy
+            
+            
     # /.is_dirty(type, id)
 
     describe ".changed(type, id, object)", ->
@@ -354,11 +395,6 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           @store._dirty = 'so so dirty'
           res = @store.changed()
           expect(res).toBe 'so so dirty'
-        
-          
-        
-        
-        
     # /.changed(type, id, value)
 
     describe ".is_marked_as_deleted(type, id)", ->
