@@ -1,12 +1,13 @@
 define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
   
-  app_mock = 
+  class app_mock
     uuid    : -> 'abc',
     trigger : ->
   
   describe "Store", ->  
     beforeEach ->
-      @store = new Store app_mock
+      @app = new app_mock 
+      @store = new Store @app
       
       spyOn(@store, "_getItem").andCallThrough()
       spyOn(@store, "_setItem").andCallThrough()
@@ -298,7 +299,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     # /.destroy(type, id)
 
     describe ".cache(type, id, object)", ->
-      
+      it "should have some specs"
     # /.cache(type, id, object)
 
     describe ".clear()", ->
@@ -317,8 +318,25 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       it "should have some specs"
     # /.is_marked_as_deleted(type, id)
 
-    describe ".clear_changed()", ->
-      it "should have some specs"
+    describe ".clear_changed(type, id)", ->
+      _when "type & id passed", ->
+        it "should remove the respective object from the dirty list", ->
+          @store._dirty['couch/123'] = {color: 'red'}
+          @store.clear_changed 'couch', 123
+          expect(@store._dirty['couch/123']).toBeUndefined()
+      
+      _when "no arguments passed", ->
+        it "should remove all objects from the dirty list", ->
+          @store._dirty =
+            'couch/123': color: 'red'
+            'couch/456': color: 'green'
+          @store.clear_changed()
+          expect(JSON.stringify @store._dirty).toBe '{}'
+        
+      it "should trigger a `store:dirty` event", ->
+        spyOn(@app, "trigger")
+        @store.clear_changed()
+        expect(@app.trigger).wasCalledWith 'store:dirty'
     # /.clear_changed()
     
     describe ".uuid(num = 7)", ->

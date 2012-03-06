@@ -239,15 +239,16 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     # ## Clear changed 
     #
     # removes an object from the list of objects that are flagged to by synched (dirty)
+    # and triggers a `store:dirty` event
     clear_changed: (type, id) ->
-      key = "#{type}/#{id}"
     
-      if key
+      if type and id
+        key = "#{type}/#{id}"
         delete @_dirty[key]
       else
         @_dirty = {}
     
-      @app.trigger 'dirty_change'
+      @app.trigger 'store:dirty'
     
     
     # ## Marked as deleted?
@@ -260,8 +261,8 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       
     # ## Changed
     #
-    # When `object` passed, mark it as changed (dirty), trigger a `dirty` event
-    # and start the dirty timeout, which triggers a `dirty_idle` event after two seconds
+    # When `object` passed, marks it as changed (dirty), triggers a `store:dirty` event
+    # and starts the dirty timeout, which triggers a `store:dirty:idle` event after two seconds
     # unless another object gets marked as deleted within this timeout.
     #
     # When no `object` passed, but a type & id, it returns the respective object if it
@@ -272,20 +273,18 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       key = "#{type}/#{id}"
     
       if object
-        
         @_dirty[key] = object
-      
-        @app.trigger 'dirty_change'
+        
         window.clearTimeout @_dirty_timeout
         @_dirty_timeout = window.setTimeout ( => 
-          @app.trigger 'dirty_idle'
+          @app.trigger 'store:dirty:idle'
         ), 2000 # 2 seconds timout for `dirty_idle` event
+        
       else
         if arguments.length
           @_dirty[key]
         else
           @_dirty
-    _dirty_timeout = null
          
          
     # ## Is dirty?

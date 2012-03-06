@@ -1,15 +1,23 @@
 
 define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
   var app_mock;
-  app_mock = {
-    uuid: function() {
+  app_mock = (function() {
+
+    function app_mock() {}
+
+    app_mock.prototype.uuid = function() {
       return 'abc';
-    },
-    trigger: function() {}
-  };
+    };
+
+    app_mock.prototype.trigger = function() {};
+
+    return app_mock;
+
+  })();
   return describe("Store", function() {
     beforeEach(function() {
-      this.store = new Store(app_mock);
+      this.app = new app_mock;
+      this.store = new Store(this.app);
       spyOn(this.store, "_getItem").andCallThrough();
       spyOn(this.store, "_setItem").andCallThrough();
       spyOn(this.store, "_removeItem").andCallThrough();
@@ -372,7 +380,9 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
       });
     });
-    describe(".cache(type, id, object)", function() {});
+    describe(".cache(type, id, object)", function() {
+      return it("should have some specs");
+    });
     describe(".clear()", function() {
       return it("should have some specs");
     });
@@ -385,8 +395,35 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
     describe(".is_marked_as_deleted(type, id)", function() {
       return it("should have some specs");
     });
-    describe(".clear_changed()", function() {
-      return it("should have some specs");
+    describe(".clear_changed(type, id)", function() {
+      _when("type & id passed", function() {
+        return it("should remove the respective object from the dirty list", function() {
+          this.store._dirty['couch/123'] = {
+            color: 'red'
+          };
+          this.store.clear_changed('couch', 123);
+          return expect(this.store._dirty['couch/123']).toBeUndefined();
+        });
+      });
+      _when("no arguments passed", function() {
+        return it("should remove all objects from the dirty list", function() {
+          this.store._dirty = {
+            'couch/123': {
+              color: 'red'
+            },
+            'couch/456': {
+              color: 'green'
+            }
+          };
+          this.store.clear_changed();
+          return expect(JSON.stringify(this.store._dirty)).toBe('{}');
+        });
+      });
+      return it("should trigger a `store:dirty` event", function() {
+        spyOn(this.app, "trigger");
+        this.store.clear_changed();
+        return expect(this.app.trigger).wasCalledWith('store:dirty');
+      });
     });
     return describe(".uuid(num = 7)", function() {
       it("should default to a length of 7", function() {

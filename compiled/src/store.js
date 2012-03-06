@@ -3,7 +3,6 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
   'use strict';
   var Store;
   return Store = (function() {
-    var _dirty_timeout;
 
     function Store(app) {
       this.app = app;
@@ -180,13 +179,13 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
 
     Store.prototype.clear_changed = function(type, id) {
       var key;
-      key = "" + type + "/" + id;
-      if (key) {
+      if (type && id) {
+        key = "" + type + "/" + id;
         delete this._dirty[key];
       } else {
         this._dirty = {};
       }
-      return this.app.trigger('dirty_change');
+      return this.app.trigger('store:dirty');
     };
 
     Store.prototype.is_marked_as_deleted = function(type, id) {
@@ -199,10 +198,9 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
       key = "" + type + "/" + id;
       if (object) {
         this._dirty[key] = object;
-        this.app.trigger('dirty_change');
         window.clearTimeout(this._dirty_timeout);
         return this._dirty_timeout = window.setTimeout((function() {
-          return _this.app.trigger('dirty_idle');
+          return _this.app.trigger('store:dirty:idle');
         }), 2000);
       } else {
         if (arguments.length) {
@@ -212,8 +210,6 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
         }
       }
     };
-
-    _dirty_timeout = null;
 
     Store.prototype.is_dirty = function(type, id) {
       var key;
