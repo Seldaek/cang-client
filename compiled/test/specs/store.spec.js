@@ -381,7 +381,116 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       });
     });
     describe(".cache(type, id, object)", function() {
-      return it("should have some specs");
+      beforeEach(function() {
+        spyOn(this.store, "changed");
+        spyOn(this.store, "clear_changed");
+        spyOn(this.store, "is_dirty");
+        spyOn(this.store, "is_marked_as_deleted");
+        return this.store._cached = {};
+      });
+      _when("object passed", function() {
+        it("should write the object to localStorage, but without type & id attributes", function() {
+          this.store.cache('couch', '123', {
+            color: 'red'
+          });
+          return expect(this.store._setItem).wasCalledWith('couch/123', '{"color":"red"}');
+        });
+        return _when("`options.remote = true` passed", function() {
+          return it("should clear changed object", function() {
+            this.store.cache('couch', '123', {
+              color: 'red'
+            }, {
+              remote: true
+            });
+            return expect(this.store.clear_changed).wasCalledWith('couch', '123');
+          });
+        });
+      });
+      _when("no object passed", function() {
+        _and("object is already cached", function() {
+          beforeEach(function() {
+            return this.store._cached['couch/123'] = {
+              color: 'red'
+            };
+          });
+          return it("should not load it from localStorage", function() {
+            this.store.cache('couch', '123');
+            return expect(this.store._getItem).wasNotCalled();
+          });
+        });
+        return _and("object is not yet cached", function() {
+          beforeEach(function() {
+            return delete this.store._cached['couch/123'];
+          });
+          _and("object does exist in localStorage", function() {
+            beforeEach(function() {
+              return this.store._getItem.andReturn('{"color":"red"}');
+            });
+            return it("should cache it for future", function() {
+              this.store.cache('couch', '123');
+              return expect(this.store._cached['couch/123'].color).toBe('red');
+            });
+          });
+          return _and("object does not exist in localStorage", function() {
+            beforeEach(function() {
+              return this.store._getItem.andReturn(null);
+            });
+            return it("should cache it for future", function() {
+              this.store.cache('couch', '123');
+              return expect(this.store._cached['couch/123']).toBe(false);
+            });
+          });
+        });
+      });
+      _when("object is dirty", function() {
+        beforeEach(function() {
+          return this.store.is_dirty.andReturn(true);
+        });
+        return it("should mark it as changed", function() {
+          this.store.cache('couch', '123');
+          return expect(this.store.changed).wasCalledWith('couch', '123', {
+            color: 'red',
+            type: 'couch',
+            id: '123'
+          });
+        });
+      });
+      _when("object is not dirty", function() {
+        beforeEach(function() {
+          return this.store.is_dirty.andReturn(false);
+        });
+        _and("not marked as deleted", function() {
+          beforeEach(function() {
+            return this.store.is_marked_as_deleted.andReturn(false);
+          });
+          return it("should clean it", function() {
+            this.store.cache('couch', '123');
+            return expect(this.store.clear_changed).wasCalledWith('couch', '123');
+          });
+        });
+        return _but("marked as deleted", function() {
+          beforeEach(function() {
+            return this.store.is_marked_as_deleted.andReturn(true);
+          });
+          return it("should mark it as changed", function() {
+            this.store.cache('couch', '123');
+            return expect(this.store.changed).wasCalledWith('couch', '123', {
+              color: 'red',
+              type: 'couch',
+              id: '123'
+            });
+          });
+        });
+      });
+      return it("should return the object including type & id attrbiutes", function() {
+        var obj;
+        obj = this.store.cache('couch', '123', {
+          color: 'red'
+        });
+        expect(obj.color).toBe('red');
+        expect(obj.type).toBe('couch');
+        return expect(obj.id).toBe('123');
+      });
     });
     describe(".clear()", function() {
       beforeEach(function() {

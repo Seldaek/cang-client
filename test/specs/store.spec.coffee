@@ -299,7 +299,82 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     # /.destroy(type, id)
 
     describe ".cache(type, id, object)", ->
-      it "should have some specs"
+      beforeEach ->
+        spyOn(@store, "changed")
+        spyOn(@store, "clear_changed")
+        spyOn(@store, "is_dirty")
+        spyOn(@store, "is_marked_as_deleted")
+        @store._cached = {}
+        
+      _when "object passed", ->
+        it "should write the object to localStorage, but without type & id attributes", ->
+          @store.cache('couch', '123', color: 'red')
+          expect(@store._setItem).wasCalledWith 'couch/123', '{"color":"red"}'
+          
+        _when "`options.remote = true` passed", ->
+          it "should clear changed object", ->
+            @store.cache('couch', '123', {color: 'red'}, remote: true)
+            expect(@store.clear_changed).wasCalledWith 'couch', '123'
+      
+      _when "no object passed", ->
+        _and "object is already cached", ->
+          beforeEach ->
+            @store._cached['couch/123'] = color: 'red'
+          
+          it "should not load it from localStorage", ->
+            @store.cache 'couch', '123'
+            expect(@store._getItem).wasNotCalled()
+            
+        _and "object is not yet cached", ->
+          beforeEach ->
+            delete @store._cached['couch/123']
+          
+          _and "object does exist in localStorage", ->
+            beforeEach ->
+              @store._getItem.andReturn '{"color":"red"}'
+            
+            it "should cache it for future", ->
+              @store.cache 'couch', '123'
+              expect(@store._cached['couch/123'].color).toBe 'red'
+            
+          _and "object does not exist in localStorage", ->
+            beforeEach ->
+              @store._getItem.andReturn null
+            
+            it "should cache it for future", ->
+              @store.cache 'couch', '123'
+              expect(@store._cached['couch/123']).toBe false
+      
+      _when "object is dirty", ->
+        beforeEach -> @store.is_dirty.andReturn true
+        
+        it "should mark it as changed", ->
+          @store.cache 'couch', '123'
+          expect(@store.changed).wasCalledWith 'couch', '123', color: 'red', type: 'couch', id: '123'
+      
+      _when "object is not dirty", ->
+        beforeEach -> @store.is_dirty.andReturn false
+        
+        _and "not marked as deleted", ->
+          beforeEach -> @store.is_marked_as_deleted.andReturn false
+          
+          it "should clean it", ->
+            @store.cache 'couch', '123'
+            expect(@store.clear_changed).wasCalledWith 'couch', '123'
+            
+        _but "marked as deleted", ->
+          beforeEach -> @store.is_marked_as_deleted.andReturn true
+        
+          it "should mark it as changed", ->
+            @store.cache 'couch', '123'
+            expect(@store.changed).wasCalledWith 'couch', '123', color: 'red', type: 'couch', id: '123'
+      
+      it "should return the object including type & id attrbiutes", ->
+        obj = @store.cache 'couch', '123', color: 'red'
+        expect(obj.color).toBe  'red'
+        expect(obj.type).toBe   'couch'
+        expect(obj.id).toBe     '123'
+      
     # /.cache(type, id, object)
 
     describe ".clear()", ->
@@ -308,7 +383,6 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         spyOn(@store, "_deferred").andReturn
           resolve: jasmine.createSpy 'resolve'
           reject:  jasmine.createSpy 'reject'
-      
       
       it "should return a promise", ->
         promise = @store.clear()

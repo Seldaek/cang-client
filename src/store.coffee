@@ -198,22 +198,22 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     #
     # Also checks if object needs to be synched (dirty) or not 
     #
-    # Pass `options.remote = true` when update comes from remote
-    cache : (type, id, update = false, options = {}) ->
+    # Pass `options.remote = true` when object comes from remote
+    cache : (type, id, object = false, options = {}) ->
       key = "#{type}/#{id}"
     
-      if update
-        @_cached[key] = update
+      if object
+        @_cached[key] = object
         
         # SPEC THAT
-        delete update.type
-        delete update.id
+        delete object.type
+        delete object.id
         
-        @_setItem key, JSON.stringify update
+        @_setItem key, JSON.stringify object
         
         if options.remote
           @clear_changed type, id 
-          return update
+          return true
       
       else
         return @_cached[key] if @_cached[key]?

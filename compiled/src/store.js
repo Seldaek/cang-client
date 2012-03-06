@@ -144,19 +144,19 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
 
     Store.prototype["delete"] = Store.prototype.destroy;
 
-    Store.prototype.cache = function(type, id, update, options) {
+    Store.prototype.cache = function(type, id, object, options) {
       var json_string, key;
-      if (update == null) update = false;
+      if (object == null) object = false;
       if (options == null) options = {};
       key = "" + type + "/" + id;
-      if (update) {
-        this._cached[key] = update;
-        delete update.type;
-        delete update.id;
-        this._setItem(key, JSON.stringify(update));
+      if (object) {
+        this._cached[key] = object;
+        delete object.type;
+        delete object.id;
+        this._setItem(key, JSON.stringify(object));
         if (options.remote) {
           this.clear_changed(type, id);
-          return update;
+          return true;
         }
       } else {
         if (this._cached[key] != null) return this._cached[key];
