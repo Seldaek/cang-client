@@ -6,11 +6,11 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
   
   'use strict'
   
-  class Store extends Events
+  class Store
   
     # ## Constructor
     #
-    constructor : () ->
+    constructor : (@app) ->
     
       # if browser does not support local storage persistence,
       # e.g. Safari in private mode, overite the respective methods. 
@@ -243,7 +243,7 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       else
         @_dirty = {}
     
-      # @trigger 'dirty_change'
+      @app.trigger 'dirty_change'
     
     # ## Marked as deleted?
     #
@@ -269,10 +269,10 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
         
         @_dirty[key] = object
       
-        @trigger 'dirty_change'
+        @app.trigger 'dirty_change'
         window.clearTimeout @_dirty_timeout
         @_dirty_timeout = window.setTimeout ( => 
-          @trigger 'dirty_idle'
+          @app.trigger 'dirty_idle'
         ), 2000 # 2 seconds timout for `dirty_idle` event
       else
         if arguments.length
@@ -364,7 +364,9 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
         chars[ 0 | Math.random()*radix ] for i in [0...len]
       ).join('')
   
-    #
+  
+    # --------------------------------------------------------------------------  
+    
     # ## Private
     
     # localStorage proxy methods

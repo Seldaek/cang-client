@@ -1,12 +1,15 @@
 
 define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
+  var app_mock;
+  app_mock = {
+    uuid: function() {
+      return 'abc';
+    },
+    trigger: function() {}
+  };
   return describe("Store", function() {
     beforeEach(function() {
-      this.store = new Store({
-        uuid: function() {
-          return 'abc';
-        }
-      });
+      this.store = new Store(app_mock);
       spyOn(this.store, "_getItem").andCallThrough();
       spyOn(this.store, "_setItem").andCallThrough();
       spyOn(this.store, "_removeItem").andCallThrough();

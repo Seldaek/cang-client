@@ -1,15 +1,12 @@
-var __hasProp = Object.prototype.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
 define('store', ['events', 'errors'], function(Events, ERROR) {
   'use strict';
   var Store;
-  return Store = (function(_super) {
+  return Store = (function() {
     var _dirty_timeout;
 
-    __extends(Store, _super);
-
-    function Store() {
+    function Store(app) {
+      this.app = app;
       if (!this.is_persistent()) {
         this._getItem = function() {
           return null;
@@ -185,10 +182,11 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
       var key;
       key = "" + type + "/" + id;
       if (key) {
-        return delete this._dirty[key];
+        delete this._dirty[key];
       } else {
-        return this._dirty = {};
+        this._dirty = {};
       }
+      return this.app.trigger('dirty_change');
     };
 
     Store.prototype.is_marked_as_deleted = function(type, id) {
@@ -201,10 +199,10 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
       key = "" + type + "/" + id;
       if (object) {
         this._dirty[key] = object;
-        this.trigger('dirty_change');
+        this.app.trigger('dirty_change');
         window.clearTimeout(this._dirty_timeout);
         return this._dirty_timeout = window.setTimeout((function() {
-          return _this.trigger('dirty_idle');
+          return _this.app.trigger('dirty_idle');
         }), 2000);
       } else {
         if (arguments.length) {
@@ -328,5 +326,5 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
 
     return Store;
 
-  })(Events);
+  })();
 });

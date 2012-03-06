@@ -19,25 +19,13 @@ define('account', function() {
         roles: [],
         password: password
       };
-      return $.ajax({
-        type: 'PUT',
-        url: "" + this.app.couchDB_url + "/_users/" + (encodeURIComponent(key)),
-        data: JSON.stringify(user),
-        contentType: "application/json"
-      });
+      return this._request('PUT', "/_users/" + (encodeURIComponent(key)), user);
     };
 
     Account.prototype.sign_in = function(email, password) {
-      var creds;
-      creds = JSON.stringify({
+      return this._request('POST', '/_session', {
         name: email,
         password: password
-      });
-      return $.ajax({
-        type: 'POST',
-        url: "" + this.app.couchDB_url + "/_session",
-        data: creds,
-        contentType: "application/json"
       });
     };
 
@@ -48,14 +36,27 @@ define('account', function() {
     };
 
     Account.prototype.sign_out = function() {
-      return $.ajax({
-        type: 'DELETE',
-        url: "" + this.app.couchDB_url + "/_session",
-        contentType: "application/json"
-      });
+      return this._request('DELETE', '/_session');
     };
 
     Account.prototype.logout = Account.prototype.sign_out;
+
+    Account.prototype._request = function(type, path, data) {
+      var options;
+      options = {
+        type: type,
+        url: "" + this.app.couchDB_url + path,
+        xhrFields: {
+          withCredentials: true
+        },
+        crossDomain: true
+      };
+      if (data) options.data = JSON.stringify(data);
+      if (type === 'PUT' || type === 'POST') {
+        options.contentType = "application/json";
+      }
+      return $.ajax(options);
+    };
 
     return Account;
 

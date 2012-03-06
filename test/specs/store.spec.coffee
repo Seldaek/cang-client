@@ -1,8 +1,12 @@
 define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
   
+  app_mock = 
+    uuid    : -> 'abc',
+    trigger : ->
+  
   describe "Store", ->  
     beforeEach ->
-      @store = new Store uuid: -> 'abc'
+      @store = new Store app_mock
       
       spyOn(@store, "_getItem").andCallThrough()
       spyOn(@store, "_setItem").andCallThrough()

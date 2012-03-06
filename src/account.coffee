@@ -11,9 +11,6 @@ define 'account', ->
     # ## Constructor
     #
     constructor : (@app) ->
-      
-      #
-    
 
     #
     # sign up with email & password
@@ -38,11 +35,7 @@ define 'account', ->
         roles         : []
         password      : password
 
-      $.ajax
-        type        : 'PUT'
-        url         : "#{@app.couchDB_url}/_users/#{encodeURIComponent key}"
-        data        : JSON.stringify user
-        contentType : "application/json"
+      @_request 'PUT', "/_users/#{encodeURIComponent key}", user
 
 
     #
@@ -58,15 +51,9 @@ define 'account', ->
     #
     sign_in : (email, password) ->
 
-      creds = JSON.stringify
-                name      : email
-                password  : password
-
-      $.ajax
-        type        : 'POST'
-        url         : "#{@app.couchDB_url}/_session"
-        data        : creds
-        contentType : "application/json"
+      @_request 'POST', '/_session',
+        name      : email
+        password  : password
 
     # alias
     login: @::sign_in
@@ -91,10 +78,27 @@ define 'account', ->
     # * return a custom promise
     #
     sign_out: ->
-      $.ajax
-        type        : 'DELETE'
-        url         : "#{@app.couchDB_url}/_session"
-        contentType : "application/json"
+      @_request 'DELETE', '/_session'
 
     # alias
     logout: @::sign_out
+    
+    
+    # --------------------------------------------------------------------------  
+    
+    # ## Private
+    
+    _request: (type, path, data) ->
+      options =
+        type        : type
+        url         : "#{@app.couchDB_url}#{path}"
+        xhrFields   : withCredentials: true
+        crossDomain : true
+        
+      if data
+        options.data = JSON.stringify data
+      
+      if type is 'PUT' or type is 'POST'
+        options.contentType = "application/json"
+      
+      $.ajax options
