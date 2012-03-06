@@ -310,8 +310,55 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       it "should have some specs"
     # /.is_dirty(type, id)
 
-    describe ".changed(type, id, value)", ->
-      it "should have some specs"
+    describe ".changed(type, id, object)", ->
+      beforeEach ->
+        @store._dirty = {}
+        
+        spyOn(window, "setTimeout").andReturn 'new_timeout'
+        spyOn(window, "clearTimeout")
+        spyOn(@app, "trigger")
+      
+      _when "object passed", ->
+        beforeEach ->
+          @store.changed 'couch', '123', color: 'red'
+        
+        it "should add it to the dirty list", ->
+          expect(@store._dirty['couch/123'].color).toBe 'red'
+          
+        it "should should trigger an `store:dirty` event", ->
+          expect(@app.trigger).wasCalledWith 'store:dirty'
+          
+        it "should start dirty timeout for 2 seconds", ->
+          args = window.setTimeout.mostRecentCall.args
+          expect(args[1]).toBe 2000
+          expect(@store._dirty_timeout).toBe 'new_timeout'
+          
+        it "should clear dirty timeout", ->
+          @store._dirty_timeout = 'timeout'
+          @store.changed 'couch', '123', color: 'red'
+          expect(window.clearTimeout).wasCalledWith 'timeout'
+      
+      _when "no object passed", ->
+        it "should return true if the object is dirty", ->
+          @store._dirty['couch/123'] = color: 'red'
+          res = @store.changed 'couch', '123'
+          expect(res).toBeTruthy()
+          
+        it "should return false if the object isn't dirty", ->
+          delete @store._dirty['couch/123']
+          res = @store.changed 'couch', '123'
+          expect(res).toBeFalsy()
+          
+      _when "no arguments passed", ->
+        it "should return all dirty objects", ->
+          @store._dirty = 'so so dirty'
+          res = @store.changed()
+          expect(res).toBe 'so so dirty'
+        
+          
+        
+        
+        
     # /.changed(type, id, value)
 
     describe ".is_marked_as_deleted(type, id)", ->

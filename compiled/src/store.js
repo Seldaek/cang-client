@@ -193,15 +193,17 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
     };
 
     Store.prototype.changed = function(type, id, object) {
-      var key,
+      var key, timeout,
         _this = this;
       key = "" + type + "/" + id;
       if (object) {
         this._dirty[key] = object;
+        this.app.trigger('store:dirty');
+        timeout = 2000;
         window.clearTimeout(this._dirty_timeout);
         return this._dirty_timeout = window.setTimeout((function() {
           return _this.app.trigger('store:dirty:idle');
-        }), 2000);
+        }), timeout);
       } else {
         if (arguments.length) {
           return this._dirty[key];

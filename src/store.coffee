@@ -274,11 +274,11 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     
       if object
         @_dirty[key] = object
+        @app.trigger 'store:dirty'
         
+        timeout = 2000 # 2 seconds timout before triggering the `store:dirty:idle` event
         window.clearTimeout @_dirty_timeout
-        @_dirty_timeout = window.setTimeout ( => 
-          @app.trigger 'store:dirty:idle'
-        ), 2000 # 2 seconds timout for `dirty_idle` event
+        @_dirty_timeout = window.setTimeout ( => @app.trigger 'store:dirty:idle' ), timeout
         
       else
         if arguments.length
