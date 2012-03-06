@@ -1,11 +1,23 @@
 
 define('specs/account', ['account'], function(Account) {
+  var app_mock;
+  app_mock = (function() {
+
+    function app_mock() {}
+
+    app_mock.prototype.couchDB_url = 'http://my.cou.ch';
+
+    app_mock.prototype.trigger = function() {};
+
+    return app_mock;
+
+  })();
   return describe("couchApp", function() {
     beforeEach(function() {
-      this.account = new Account({
-        couchDB_url: 'http://my.cou.ch'
-      });
-      return spyOn($, "ajax").andReturn($.Deferred());
+      this.app = new app_mock;
+      this.account = new Account(this.app);
+      spyOn($, "ajax").andReturn($.Deferred());
+      return spyOn(this.app, "trigger");
     });
     describe(".sign_up(email, password)", function() {
       beforeEach(function() {
@@ -30,8 +42,23 @@ define('specs/account', ['account'], function(Account) {
       it("should have set type to 'user", function() {
         return expect(this.data.type).toBe('user');
       });
-      return it("should pass password", function() {
+      it("should pass password", function() {
         return expect(this.data.password).toBe('secret');
+      });
+      return _when("sign_up successful", function() {
+        beforeEach(function() {
+          return $.ajax.andCallFake(function(options) {
+            return options.success();
+          });
+        });
+        it("should trigger `account:sign_up` event", function() {
+          this.account.sign_up('joe@example.com', 'secret');
+          return expect(this.app.trigger).wasCalledWith('account:sign_up');
+        });
+        return it("should trigger `account:sign_up` event", function() {
+          this.account.sign_up('joe@example.com', 'secret');
+          return expect(this.app.trigger).wasCalledWith('account:sign_in');
+        });
       });
     });
     describe(".sign_in(email, password)", function() {
@@ -48,8 +75,19 @@ define('specs/account', ['account'], function(Account) {
       it("should send email as name parameter", function() {
         return expect(this.data.name).toBe('joe@example.com');
       });
-      return it("should send password", function() {
+      it("should send password", function() {
         return expect(this.data.password).toBe('secret');
+      });
+      return _when("sign_up successful", function() {
+        beforeEach(function() {
+          return $.ajax.andCallFake(function(options) {
+            return options.success();
+          });
+        });
+        return it("should trigger `account:sign_up` event", function() {
+          this.account.sign_in('joe@example.com', 'secret');
+          return expect(this.app.trigger).wasCalledWith('account:sign_in');
+        });
       });
     });
     describe(".change_password(email, password)", function() {
@@ -60,10 +98,21 @@ define('specs/account', ['account'], function(Account) {
         this.account.sign_out();
         return this.args = $.ajax.mostRecentCall.args[0];
       });
-      return it("should send a DELETE request to http://my.cou.ch/_session", function() {
+      it("should send a DELETE request to http://my.cou.ch/_session", function() {
         expect($.ajax).wasCalled();
         expect(this.args.type).toBe('DELETE');
         return expect(this.args.url).toBe('http://my.cou.ch/_session');
+      });
+      return _when("sign_up successful", function() {
+        beforeEach(function() {
+          return $.ajax.andCallFake(function(options) {
+            return options.success();
+          });
+        });
+        return it("should trigger `account:sign_up` event", function() {
+          this.account.sign_out('joe@example.com', 'secret');
+          return expect(this.app.trigger).wasCalledWith('account:sign_out');
+        });
       });
     });
   });

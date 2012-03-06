@@ -14,8 +14,7 @@ define 'account', ->
     constructor : (@app) ->
       
 
-    #
-    # sign up with email & password
+    # ## sign up with email & password
     #
     # uses standard couchDB API to create a new document in _users db.
     # The backend will automatically create a userDB based on the email
@@ -31,17 +30,21 @@ define 'account', ->
       key     = "#{prefix}:#{email}"
 
       user = 
-        _id           : key
-        name          : email
-        type          : 'user'
-        roles         : []
-        password      : password
+        _id       : key
+        name      : email
+        type      : 'user'
+        roles     : []
+        password  : password
+        
+      options =
+        success   : => 
+          @app.trigger 'account:sign_up'
+          @app.trigger 'account:sign_in'
 
-      @_request 'PUT', "/_users/#{encodeURIComponent key}", user
+      @_request 'PUT', "/_users/#{encodeURIComponent key}", user, options
 
 
-    #
-    # sign in with email & password
+    # ## sign in with email & password
     #
     # uses standard couchDB API to create a new user session (POST /_session)
     #
@@ -53,16 +56,20 @@ define 'account', ->
     #
     sign_in : (email, password) ->
 
-      @_request 'POST', '/_session',
+      creds = 
         name      : email
         password  : password
+        
+      options = 
+        success : => @app.trigger 'account:sign_in'
+        
+      @_request 'POST', '/_session', creds, options
 
     # alias
     login: @::sign_in
 
 
-    #
-    # change password
+    # ## change password
     #
     # to be done.
     #
@@ -70,8 +77,7 @@ define 'account', ->
       alert('change password is not yet implementd')
 
 
-    #
-    # sign out 
+    # ## sign out 
     #
     # uses standard couchDB API to destroy a user session (DELETE /_session)
     #
@@ -81,7 +87,11 @@ define 'account', ->
     # * return a custom promise
     #
     sign_out: ->
-      @_request 'DELETE', '/_session'
+      options =
+        success   : => 
+          @app.trigger 'account:sign_out'
+      
+      @_request 'DELETE', '/_session', null, options
 
     # alias
     logout: @::sign_out
@@ -91,12 +101,13 @@ define 'account', ->
     
     # ## Private
     
-    _request: (type, path, data) ->
+    _request: (type, path, data, _options = {}) ->
       options =
         type        : type
         url         : "#{@app.couchDB_url}#{path}"
         xhrFields   : withCredentials: true
         crossDomain : true
+      options = $.extend options, _options
         
       if data
         options.data = JSON.stringify data

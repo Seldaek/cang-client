@@ -9,7 +9,8 @@ define('account', function() {
     }
 
     Account.prototype.sign_up = function(email, password) {
-      var key, prefix, user;
+      var key, options, prefix, user,
+        _this = this;
       prefix = 'org.couchdb.user';
       key = "" + prefix + ":" + email;
       user = {
@@ -19,14 +20,28 @@ define('account', function() {
         roles: [],
         password: password
       };
-      return this._request('PUT', "/_users/" + (encodeURIComponent(key)), user);
+      options = {
+        success: function() {
+          _this.app.trigger('account:sign_up');
+          return _this.app.trigger('account:sign_in');
+        }
+      };
+      return this._request('PUT', "/_users/" + (encodeURIComponent(key)), user, options);
     };
 
     Account.prototype.sign_in = function(email, password) {
-      return this._request('POST', '/_session', {
+      var creds, options,
+        _this = this;
+      creds = {
         name: email,
         password: password
-      });
+      };
+      options = {
+        success: function() {
+          return _this.app.trigger('account:sign_in');
+        }
+      };
+      return this._request('POST', '/_session', creds, options);
     };
 
     Account.prototype.login = Account.prototype.sign_in;
@@ -36,13 +51,21 @@ define('account', function() {
     };
 
     Account.prototype.sign_out = function() {
-      return this._request('DELETE', '/_session');
+      var options,
+        _this = this;
+      options = {
+        success: function() {
+          return _this.app.trigger('account:sign_out');
+        }
+      };
+      return this._request('DELETE', '/_session', null, options);
     };
 
     Account.prototype.logout = Account.prototype.sign_out;
 
-    Account.prototype._request = function(type, path, data) {
+    Account.prototype._request = function(type, path, data, _options) {
       var options;
+      if (_options == null) _options = {};
       options = {
         type: type,
         url: "" + this.app.couchDB_url + path,
@@ -51,6 +74,7 @@ define('account', function() {
         },
         crossDomain: true
       };
+      options = $.extend(options, _options);
       if (data) options.data = JSON.stringify(data);
       if (type === 'PUT' || type === 'POST') {
         options.contentType = "application/json";

@@ -1,11 +1,18 @@
 define 'specs/account', ['account'], (Account) ->
   
+  class app_mock
+    couchDB_url : 'http://my.cou.ch'
+    trigger     : ->
+  
+  
   describe "couchApp", ->
     beforeEach ->
-      @account = new Account couchDB_url: 'http://my.cou.ch'
+      @app = new app_mock
+      @account = new Account @app
     
       # requests
       spyOn($, "ajax").andReturn $.Deferred()
+      spyOn(@app, "trigger")
   
     describe ".sign_up(email, password)", ->
       beforeEach ->
@@ -32,6 +39,18 @@ define 'specs/account', ['account'], (Account) ->
 
       it "should pass password", ->
         expect(@data.password).toBe 'secret'
+        
+      _when "sign_up successful", ->
+        beforeEach ->
+          $.ajax.andCallFake (options) -> options.success()
+        
+        it "should trigger `account:sign_up` event", ->
+          @account.sign_up('joe@example.com', 'secret')
+          expect(@app.trigger).wasCalledWith 'account:sign_up'
+          
+        it "should trigger `account:sign_up` event", ->
+          @account.sign_up('joe@example.com', 'secret')
+          expect(@app.trigger).wasCalledWith 'account:sign_in'
     # /.sign_up(email, password)
   
     describe ".sign_in(email, password)", ->
@@ -50,11 +69,19 @@ define 'specs/account', ['account'], (Account) ->
     
       it "should send password", ->
         expect(@data.password).toBe 'secret'
+        
+      _when "sign_up successful", ->
+        beforeEach ->
+          $.ajax.andCallFake (options) -> options.success()
+          
+        it "should trigger `account:sign_up` event", ->
+          @account.sign_in('joe@example.com', 'secret')
+          expect(@app.trigger).wasCalledWith 'account:sign_in'
     # /.sign_in(email, password)
   
     describe ".change_password(email, password)", ->
       it "should have some specs"
-    # /.sign_up(email, password)
+    # /.change_password(email, password)
   
     describe ".sign_out()", ->
       beforeEach ->
@@ -65,5 +92,13 @@ define 'specs/account', ['account'], (Account) ->
         expect($.ajax).wasCalled()
         expect(@args.type).toBe 'DELETE'
         expect(@args.url).toBe  'http://my.cou.ch/_session'
+        
+      _when "sign_up successful", ->
+        beforeEach ->
+          $.ajax.andCallFake (options) -> options.success()
+          
+        it "should trigger `account:sign_up` event", ->
+          @account.sign_out('joe@example.com', 'secret')
+          expect(@app.trigger).wasCalledWith 'account:sign_out'
     # /.sign_in(email, password)
   # /couchApp
