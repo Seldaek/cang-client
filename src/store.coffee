@@ -168,7 +168,6 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     # Otherwise remove it from Store.
     destroy: (type, id) ->
       promise = @_deferred()
-      
       object = @cache type, id
       
       unless object
@@ -203,13 +202,8 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       key = "#{type}/#{id}"
     
       if object
-        @_cached[key] = object
-        
-        # SPEC THAT
-        delete object.type
-        delete object.id
-        
-        @_setItem key, JSON.stringify object
+        @_cached[key] = $.extend object, type: type, id: id
+        @_setObject type, id, object
         
         if options.remote
           @clear_changed type, id 
@@ -217,21 +211,12 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
       
       else
         return @_cached[key] if @_cached[key]?
-    
-        json_string = @_getItem key
-        if json_string
-          @_cached[key] = JSON.parse json_string
-        else
-          @_cached[key] = false # cache a "not found" as well
+        @_cached[key] = @_getObject type, id
     
       if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
         @changed type, id, @_cached[key]
       else
         @clear_changed type, id
-      
-      # SPEC THAT
-      @_cached[key].type = type
-      @_cached[key].id = id
       
       @_cached[key]
   
@@ -378,11 +363,29 @@ define 'store', ['events', 'errors'], (Events, ERROR) ->
     
     # localStorage proxy methods
     _getItem    : (key)         -> window.localStorage.getItem(key)
-    _setItem    : (key, value)  -> window.localStorage.setItem(key, value)
+    _setItem    : (key, value)  -> window.localStorage.setItem key, value
     _removeItem : (key)         -> window.localStorage.removeItem(key)
     _key        : (nr)          -> window.localStorage.key(nr)
     _length     : ()            -> window.localStorage.length
     _clear      : ()            -> window.localStorage.clear()
+    
+    # more advanced localStorage wrappers to load/store objects
+    _setObject  : (type, id, object) ->
+      key = "#{type}/#{id}"
+      store = $.extend {}, object
+      delete store.type
+      delete store.id
+      @_setItem key, JSON.stringify store
+    _getObject  : (type, id) ->
+      key = "#{type}/#{id}"
+      json = @_getItem(key)
+      if json
+        obj = JSON.parse(json)
+        obj.type  = type
+        obj.id    = id
+        obj
+      else
+        false
   
     #
     _now: -> new Date

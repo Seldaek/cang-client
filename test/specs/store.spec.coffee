@@ -9,6 +9,9 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       @app = new app_mock 
       @store = new Store @app
       
+      spyOn(@store, "_setObject").andCallThrough()
+      spyOn(@store, "_getObject").andCallThrough()
+      
       spyOn(@store, "_getItem").andCallThrough()
       spyOn(@store, "_setItem").andCallThrough()
       spyOn(@store, "_removeItem").andCallThrough()
@@ -79,8 +82,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
       
           # keep promise, key, and stored object for assertions
           @store.save 'document', '123', {id: '123', type: 'document', name: 'test'}
-          [key, object_string] = @store._setItem.mostRecentCall.args
-          @object = JSON.parse object_string
+          [key, @object] = @store._setItem.mostRecentCall.args
     
         it "should store the object without the id attribute", ->
           expect(@object.id).toBeUndefined()
@@ -90,8 +92,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
   
       it "should not overwrite created_at attribute", ->
         @store.save 'document', '123', { created_at: 'check12'  }
-        [key, object_string] = @store._setItem.mostRecentCall.args
-        object = JSON.parse object_string
+        [type, id, object] = @store._setObject.mostRecentCall.args
         expect(object.created_at).toBe 'check12'
     
       it "should allow numbers and lowercase letters for for type & id only", ->
@@ -114,8 +115,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save 'document', { name: 'test' }
-            [@key, object_string] = @store._setItem.mostRecentCall.args
-            @object = JSON.parse object_string
+            [@key, @object] = @store._setItem.mostRecentCall.args
       
           it "should generate an id", ->
             expect(@key).toMatch /^document\/[a-z0-9]{7}$/
@@ -124,8 +124,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save 'document', { name: 'test', id: 'exists' }
-            [@key, object_string] = @store._setItem.mostRecentCall.args
-            @object = JSON.parse object_string
+            [@key, @object] = @store._setItem.mostRecentCall.args
         
           it "should get the id", ->
             expect(@key).toBe 'document/exists'
@@ -135,8 +134,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document'
-            [@key, object_string] = @store._setItem.mostRecentCall.args
-            @object = JSON.parse object_string
+            [@key, @object] = @store._setItem.mostRecentCall.args
       
           it "should generate an id and get the type from object", ->
             expect(@key).toMatch /^document\/[a-z0-9]{7}$/
@@ -145,8 +143,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document', id: 'exists'
-            [@key, object_string] = @store._setItem.mostRecentCall.args
-            @object = JSON.parse object_string
+            [@key, @object] = @store._setItem.mostRecentCall.args
         
           it "should get id and type form object", ->
             expect(@key).toBe 'document/exists'
@@ -331,7 +328,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           
           _and "object does exist in localStorage", ->
             beforeEach ->
-              @store._getItem.andReturn '{"color":"red"}'
+              @store._getObject.andReturn color: 'red'
             
             it "should cache it for future", ->
               @store.cache 'couch', '123'
@@ -339,11 +336,15 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             
           _and "object does not exist in localStorage", ->
             beforeEach ->
-              @store._getItem.andReturn null
+              @store._getObject.andReturn false
             
             it "should cache it for future", ->
               @store.cache 'couch', '123'
               expect(@store._cached['couch/123']).toBe false
+              
+            it "should return false", ->
+              expect(@store.cache 'couch', '123').toBe false
+            
       
       _when "object is dirty", ->
         beforeEach -> @store.is_dirty.andReturn true
@@ -369,7 +370,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             @store.cache 'couch', '123'
             expect(@store.changed).wasCalledWith 'couch', '123', color: 'red', type: 'couch', id: '123'
       
-      it "should return the object including type & id attrbiutes", ->
+      it "should return the object including type & id attributes", ->
         obj = @store.cache 'couch', '123', color: 'red'
         expect(obj.color).toBe  'red'
         expect(obj.type).toBe   'couch'
@@ -520,8 +521,6 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           
         it "should return false", ->
           @store.is_marked_as_deleted('couch', '123')
-        
-        
     # /.is_marked_as_deleted(type, id)
 
     describe ".clear_changed(type, id)", ->
@@ -537,7 +536,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
             'couch/123': color: 'red'
             'couch/456': color: 'green'
           @store.clear_changed()
-          expect(JSON.stringify @store._dirty).toBe '{}'
+          do expect($.isEmptyObject @store._dirty).toBeTruthy
         
       it "should trigger a `store:dirty` event", ->
         spyOn(@app, "trigger")

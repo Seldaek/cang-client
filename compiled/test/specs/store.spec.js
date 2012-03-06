@@ -18,6 +18,8 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
     beforeEach(function() {
       this.app = new app_mock;
       this.store = new Store(this.app);
+      spyOn(this.store, "_setObject").andCallThrough();
+      spyOn(this.store, "_getObject").andCallThrough();
       spyOn(this.store, "_getItem").andCallThrough();
       spyOn(this.store, "_setItem").andCallThrough();
       spyOn(this.store, "_removeItem").andCallThrough();
@@ -103,15 +105,14 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       });
       _when("id is '123', type is 'document', object is {id: '123', type: 'document', name: 'test'}", function() {
         beforeEach(function() {
-          var key, object_string, _ref;
+          var key, _ref;
           spyOn(this.store, "_now").andReturn('now');
           this.store.save('document', '123', {
             id: '123',
             type: 'document',
             name: 'test'
           });
-          _ref = this.store._setItem.mostRecentCall.args, key = _ref[0], object_string = _ref[1];
-          return this.object = JSON.parse(object_string);
+          return _ref = this.store._setItem.mostRecentCall.args, key = _ref[0], this.object = _ref[1], _ref;
         });
         it("should store the object without the id attribute", function() {
           return expect(this.object.id).toBeUndefined();
@@ -121,12 +122,11 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
       });
       it("should not overwrite created_at attribute", function() {
-        var key, object, object_string, _ref;
+        var id, object, type, _ref;
         this.store.save('document', '123', {
           created_at: 'check12'
         });
-        _ref = this.store._setItem.mostRecentCall.args, key = _ref[0], object_string = _ref[1];
-        object = JSON.parse(object_string);
+        _ref = this.store._setObject.mostRecentCall.args, type = _ref[0], id = _ref[1], object = _ref[2];
         return expect(object.created_at).toBe('check12');
       });
       it("should allow numbers and lowercase letters for for type & id only", function() {
@@ -152,12 +152,11 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       _when("called without id", function() {
         _and("object has no id", function() {
           beforeEach(function() {
-            var object_string, promise, _ref;
+            var promise, _ref;
             promise = this.store.save('document', {
               name: 'test'
             });
-            _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], object_string = _ref[1];
-            return this.object = JSON.parse(object_string);
+            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should generate an id", function() {
             return expect(this.key).toMatch(/^document\/[a-z0-9]{7}$/);
@@ -165,13 +164,12 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
         return _and("object has an id", function() {
           beforeEach(function() {
-            var object_string, promise, _ref;
+            var promise, _ref;
             promise = this.store.save('document', {
               name: 'test',
               id: 'exists'
             });
-            _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], object_string = _ref[1];
-            return this.object = JSON.parse(object_string);
+            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should get the id", function() {
             return expect(this.key).toBe('document/exists');
@@ -181,13 +179,12 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
       _when("called without type and id", function() {
         _and("object has no id", function() {
           beforeEach(function() {
-            var object_string, promise, _ref;
+            var promise, _ref;
             promise = this.store.save({
               name: 'test',
               type: 'document'
             });
-            _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], object_string = _ref[1];
-            return this.object = JSON.parse(object_string);
+            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should generate an id and get the type from object", function() {
             return expect(this.key).toMatch(/^document\/[a-z0-9]{7}$/);
@@ -195,14 +192,13 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         });
         return _and("object has an id", function() {
           beforeEach(function() {
-            var object_string, promise, _ref;
+            var promise, _ref;
             promise = this.store.save({
               name: 'test',
               type: 'document',
               id: 'exists'
             });
-            _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], object_string = _ref[1];
-            return this.object = JSON.parse(object_string);
+            return _ref = this.store._setItem.mostRecentCall.args, this.key = _ref[0], this.object = _ref[1], _ref;
           });
           return it("should get id and type form object", function() {
             return expect(this.key).toBe('document/exists');
@@ -424,7 +420,9 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           });
           _and("object does exist in localStorage", function() {
             beforeEach(function() {
-              return this.store._getItem.andReturn('{"color":"red"}');
+              return this.store._getObject.andReturn({
+                color: 'red'
+              });
             });
             return it("should cache it for future", function() {
               this.store.cache('couch', '123');
@@ -433,11 +431,14 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           });
           return _and("object does not exist in localStorage", function() {
             beforeEach(function() {
-              return this.store._getItem.andReturn(null);
+              return this.store._getObject.andReturn(false);
             });
-            return it("should cache it for future", function() {
+            it("should cache it for future", function() {
               this.store.cache('couch', '123');
               return expect(this.store._cached['couch/123']).toBe(false);
+            });
+            return it("should return false", function() {
+              return expect(this.store.cache('couch', '123')).toBe(false);
             });
           });
         });
@@ -482,7 +483,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
           });
         });
       });
-      return it("should return the object including type & id attrbiutes", function() {
+      return it("should return the object including type & id attributes", function() {
         var obj;
         obj = this.store.cache('couch', '123', {
           color: 'red'
@@ -688,7 +689,7 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
             }
           };
           this.store.clear_changed();
-          return expect(JSON.stringify(this.store._dirty)).toBe('{}');
+          return expect($.isEmptyObject(this.store._dirty)).toBeTruthy();
         });
       });
       return it("should trigger a `store:dirty` event", function() {

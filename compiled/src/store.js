@@ -145,35 +145,29 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
     Store.prototype["delete"] = Store.prototype.destroy;
 
     Store.prototype.cache = function(type, id, object, options) {
-      var json_string, key;
+      var key;
       if (object == null) object = false;
       if (options == null) options = {};
       key = "" + type + "/" + id;
       if (object) {
-        this._cached[key] = object;
-        delete object.type;
-        delete object.id;
-        this._setItem(key, JSON.stringify(object));
+        this._cached[key] = $.extend(object, {
+          type: type,
+          id: id
+        });
+        this._setObject(type, id, object);
         if (options.remote) {
           this.clear_changed(type, id);
           return true;
         }
       } else {
         if (this._cached[key] != null) return this._cached[key];
-        json_string = this._getItem(key);
-        if (json_string) {
-          this._cached[key] = JSON.parse(json_string);
-        } else {
-          this._cached[key] = false;
-        }
+        this._cached[key] = this._getObject(type, id);
       }
       if (this.is_dirty(type, id) || this.is_marked_as_deleted(type, id)) {
         this.changed(type, id, this._cached[key]);
       } else {
         this.clear_changed(type, id);
       }
-      this._cached[key].type = type;
-      this._cached[key].id = id;
       return this._cached[key];
     };
 
@@ -293,6 +287,29 @@ define('store', ['events', 'errors'], function(Events, ERROR) {
 
     Store.prototype._clear = function() {
       return window.localStorage.clear();
+    };
+
+    Store.prototype._setObject = function(type, id, object) {
+      var key, store;
+      key = "" + type + "/" + id;
+      store = $.extend({}, object);
+      delete store.type;
+      delete store.id;
+      return this._setItem(key, JSON.stringify(store));
+    };
+
+    Store.prototype._getObject = function(type, id) {
+      var json, key, obj;
+      key = "" + type + "/" + id;
+      json = this._getItem(key);
+      if (json) {
+        obj = JSON.parse(json);
+        obj.type = type;
+        obj.id = id;
+        return obj;
+      } else {
+        return false;
+      }
     };
 
     Store.prototype._now = function() {
