@@ -620,6 +620,35 @@ define('specs/store', ['store', 'couchapp'], function(Store, couchApp) {
         return expect(window.clearTimeout).wasCalledWith('timeout');
       });
     });
+    describe(".changed_docs()", function() {
+      _when("there are no changed docs", function() {
+        beforeEach(function() {
+          return this.store._dirty = {};
+        });
+        return it("should return an empty array", function() {
+          expect($.isArray(this.store.changed_docs())).toBeTruthy();
+          return expect(this.store.changed_docs().length).toBe(0);
+        });
+      });
+      return _when("there are 2 dirty docs", function() {
+        beforeEach(function() {
+          return this.store._dirty = [
+            {
+              type: 'couch',
+              id: '123',
+              color: 'red'
+            }, {
+              type: 'couch',
+              id: '456',
+              color: 'green'
+            }
+          ];
+        });
+        return it("should return the two docs", function() {
+          return expect(this.store.changed_docs().length).toBe(2);
+        });
+      });
+    });
     describe(".is_marked_as_deleted(type, id)", function() {
       _when("object 'couch/123' is marked as deleted", function() {
         beforeEach(function() {

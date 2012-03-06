@@ -256,6 +256,12 @@ define 'store', ['errors'], (ERROR) ->
       timeout = 2000 # 2 seconds timout before triggering the `store:dirty:idle` event
       window.clearTimeout @_dirty_timeout
       @_dirty_timeout = window.setTimeout ( => @app.trigger 'store:dirty:idle' ), timeout
+      
+    # ## changed docs
+    #
+    # returns an Array of all dirty documents
+    changed_docs: -> 
+      object for key, object of @_dirty
          
     # ## Is dirty?
     #

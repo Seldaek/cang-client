@@ -199,6 +199,17 @@ define('store', ['errors'], function(ERROR) {
       }), timeout);
     };
 
+    Store.prototype.changed_docs = function() {
+      var key, object, _ref, _results;
+      _ref = this._dirty;
+      _results = [];
+      for (key in _ref) {
+        object = _ref[key];
+        _results.push(object);
+      }
+      return _results;
+    };
+
     Store.prototype.is_dirty = function(type, id) {
       var key;
       if (type == null) type = null;

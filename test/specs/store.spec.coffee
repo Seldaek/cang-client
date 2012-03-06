@@ -486,6 +486,31 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         @store.mark_as_changed 'couch', '123', color: 'red'
         expect(window.clearTimeout).wasCalledWith 'timeout'
     # /.mark_as_changed(type, id, object)
+    
+    describe ".changed_docs()", ->
+      _when "there are no changed docs", ->
+        beforeEach ->
+          @store._dirty = {}
+          
+        it "should return an empty array", ->
+          expect($.isArray @store.changed_docs()).toBeTruthy()
+          expect(@store.changed_docs().length).toBe 0
+          
+      _when "there are 2 dirty docs", ->
+        beforeEach ->
+          @store._dirty = [
+            { type: 'couch', id: '123', color: 'red'}
+            { type: 'couch', id: '456', color: 'green'}
+          ]
+          
+        it "should return the two docs", ->
+          expect(@store.changed_docs().length).toBe 2
+        
+        
+        
+        
+        
+    # /.changed_docs()
 
     describe ".is_marked_as_deleted(type, id)", ->
       _when "object 'couch/123' is marked as deleted", ->
