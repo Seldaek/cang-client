@@ -34,6 +34,9 @@ define 'events', ->
         calls[name].push(callback)
       
       return this
+    
+    # alias
+    on: @::bind
 
     # ## one
     # 

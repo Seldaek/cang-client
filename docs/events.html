@@ -27,7 +27,8 @@
         <span class="nx">calls</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">or=</span> <span class="p">[]</span>
         <span class="nx">calls</span><span class="p">[</span><span class="nx">name</span><span class="p">].</span><span class="nx">push</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span>
       
-      <span class="k">return</span> <span class="k">this</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>one</h2>
+      <span class="k">return</span> <span class="k">this</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>alias</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kc">on</span><span class="o">:</span> <span class="err">@</span><span class="o">::</span><span class="nx">bind</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>one</h2>
 
 <p>same as <code>bind</code>, but does get executed only once</p>
 
@@ -35,7 +36,7 @@
 </code></pre>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">one: </span><span class="nf">(ev, callback) -&gt;</span>
       <span class="nx">@bind</span> <span class="nx">ev</span><span class="p">,</span> <span class="o">-&gt;</span>
         <span class="nx">@unbind</span><span class="p">(</span><span class="nx">ev</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">.</span><span class="nx">callee</span><span class="p">)</span>
-        <span class="nx">callback</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="err">@</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>trigger</h2>
+        <span class="nx">callback</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="err">@</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>trigger</h2>
 
 <p>trigger an event and pass optional parameters for binding.</p>
 
@@ -51,7 +52,7 @@
           <span class="k">break</span>
         
       <span class="k">return</span> <span class="kc">true</span>
- </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>unbind</h2>
+ </pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <h2>unbind</h2>
 
 <p>unbind to from all bindings, from all bindings of a specific event
 or from a specific binding.</p>
