@@ -18,12 +18,7 @@ define 'account', ->
     #
     # uses standard couchDB API to create a new document in _users db.
     # The backend will automatically create a userDB based on the email
-    # address. (joe@example.com => joe_example_com, tbd)
-    #
-    # TODO:
-    #
-    # * start synchronization with userDB
-    # * return a custom promise
+    # address.
     #
     sign_up : (email, password) ->
       prefix  = 'org.couchdb.user'
@@ -47,12 +42,6 @@ define 'account', ->
     # ## sign in with email & password
     #
     # uses standard couchDB API to create a new user session (POST /_session)
-    #
-    # TODO: 
-    #
-    # * make sessions persistant, as of now, cooky won't be sent on successive requests
-    # * start synchronization with userDB
-    # * return a custom promise
     #
     sign_in : (email, password) ->
 
@@ -80,11 +69,6 @@ define 'account', ->
     # ## sign out 
     #
     # uses standard couchDB API to destroy a user session (DELETE /_session)
-    #
-    # TODO:
-    #
-    # * stop synchronization
-    # * return a custom promise
     #
     sign_out: ->
       options =

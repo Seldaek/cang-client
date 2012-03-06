@@ -552,4 +552,4 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         it "should generate an id with length = 5", ->
           expect(@store.uuid(5).length).toBe 5
     # /.uuid(num)
-  # /.store
+  # /Store

@@ -1,5 +1,5 @@
 
-define('store', ['events', 'errors'], function(Events, ERROR) {
+define('store', ['errors'], function(ERROR) {
   'use strict';
   var Store;
   return Store = (function() {

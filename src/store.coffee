@@ -2,7 +2,7 @@
 # window.localStrage wrapper and more
 #
 
-define 'store', ['events', 'errors'], (Events, ERROR) ->
+define 'store', ['errors'], (ERROR) ->
   
   'use strict'
   

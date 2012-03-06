@@ -1,4 +1,4 @@
-<!DOCTYPE html>  <html> <head>   <title>account.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="account.html">                 account.coffee               </a>                                           <a class="source" href="couchapp.html">                 couchapp.coffee               </a>                                           <a class="source" href="errors.html">                 errors.coffee               </a>                                           <a class="source" href="events.html">                 events.coffee               </a>                                           <a class="source" href="store.html">                 store.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               account.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>               <p>window.localStrage wrapper and more</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">define</span> <span class="s1">&#39;account&#39;</span><span class="p">,</span> <span class="o">-&gt;</span>
+<!DOCTYPE html>  <html> <head>   <title>account.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="account.html">                 account.coffee               </a>                                           <a class="source" href="couchapp.html">                 couchapp.coffee               </a>                                           <a class="source" href="errors.html">                 errors.coffee               </a>                                           <a class="source" href="events.html">                 events.coffee               </a>                                           <a class="source" href="remote.html">                 remote.coffee               </a>                                           <a class="source" href="store.html">                 store.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               account.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>               <p>window.localStrage wrapper and more</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">define</span> <span class="s1">&#39;account&#39;</span><span class="p">,</span> <span class="o">-&gt;</span>
   
   <span class="s1">&#39;use strict&#39;</span>
   
@@ -7,16 +7,9 @@
   </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Constructor</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">constructor : </span><span class="nf">(@app) -&gt;</span>
       </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>sign up with email &amp; password</h2>
 
-<p>uses standard couchDB API to create a new document in <em>users db.
+<p>uses standard couchDB API to create a new document in _users db.
 The backend will automatically create a userDB based on the email
-address. (joe@example.com => joe</em>example_com, tbd)</p>
-
-<p>TODO:</p>
-
-<ul>
-<li>start synchronization with userDB</li>
-<li>return a custom promise</li>
-</ul>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_up : </span><span class="nf">(email, password) -&gt;</span>
+address.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_up : </span><span class="nf">(email, password) -&gt;</span>
       <span class="nv">prefix  = </span><span class="s1">&#39;org.couchdb.user&#39;</span>
       <span class="nv">key     = </span><span class="s2">&quot;#{prefix}:#{email}&quot;</span>
 
@@ -34,15 +27,7 @@ address. (joe@example.com => joe</em>example_com, tbd)</p>
 
       <span class="nx">@_request</span> <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s2">&quot;/_users/#{encodeURIComponent key}&quot;</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">options</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>sign in with email &amp; password</h2>
 
-<p>uses standard couchDB API to create a new user session (POST /_session)</p>
-
-<p>TODO: </p>
-
-<ul>
-<li>make sessions persistant, as of now, cooky won't be sent on successive requests</li>
-<li>start synchronization with userDB</li>
-<li>return a custom promise</li>
-</ul>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_in : </span><span class="nf">(email, password) -&gt;</span>
+<p>uses standard couchDB API to create a new user session (POST /_session)</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_in : </span><span class="nf">(email, password) -&gt;</span>
 
       <span class="nv">creds = </span>
         <span class="nv">name      : </span><span class="nx">email</span>
@@ -56,14 +41,7 @@ address. (joe@example.com => joe</em>example_com, tbd)</p>
 <p>to be done.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">change_password : </span><span class="nf">(current_password, new_password) -&gt;</span>
       <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;change password is not yet implementd&#39;</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <h2>sign out</h2>
 
-<p>uses standard couchDB API to destroy a user session (DELETE /_session)</p>
-
-<p>TODO:</p>
-
-<ul>
-<li>stop synchronization</li>
-<li>return a custom promise</li>
-</ul>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_out: </span><span class="o">-&gt;</span>
+<p>uses standard couchDB API to destroy a user session (DELETE /_session)</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_out: </span><span class="o">-&gt;</span>
       <span class="nv">options =</span>
         <span class="nv">success   : </span><span class="o">=&gt;</span> 
           <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_out&#39;</span>
