@@ -1,6 +1,6 @@
 fs      = require 'fs'
 {print} = require 'util'
-{spawn} = require 'child_process'
+{spawn, exec} = require 'child_process'
 
 timeout = null
 build = (callback, watch = false) ->
@@ -54,3 +54,7 @@ task 'docs', 'create docs from code', ->
     docco.stdout.on 'data', (data) -> print data.toString()
     docco.stderr.on 'data', (data) -> print data.toString()
     docco.on 'exit', (status) -> callback?() if status is 0
+    
+task 'all', 'one cake to rule them all', ->
+  exec 'cake compile && cake build && cake docs', (err) ->
+    throw err if err
