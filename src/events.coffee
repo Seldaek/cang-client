@@ -36,7 +36,7 @@ define 'events', ->
       return this
     
     # alias
-    on: @::bind
+    # on: Events.bind
 
     # ## one
     # 

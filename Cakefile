@@ -29,7 +29,7 @@ test = ->
   phantom.stdout.on 'data', (data) ->
     print data.toString()
 
-task 'build', 'Build lib/', ->
+task 'compile', 'Build lib/', ->
   build()
 
 task 'watch', 'Build lib/ and watch for changes', ->
