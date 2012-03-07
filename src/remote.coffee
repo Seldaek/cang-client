@@ -17,20 +17,22 @@ define 'remote', ['errors'], (ERROR) ->
       
       @app.on 'store:dirty:idle', @push_changes
       
-    # ## Listen to Changes
+    # ## Connect
     #
+    # start pulling changes from the userDB
     connect : ->
       
       return if @_connected
       do @pull_changes
       
+    # ## Disconnect
     #
+    # stop pulling changes from the userDB
     disconnect : ->
       @_connected = false
       @_changes_request.abort() if @_changes_request
     
-    # 
-    # get changes
+    # ## pull changes
     #
     # a.k.a. make a longpoll AJAX request to CouchDB's `_changes` feed.
     #
@@ -52,7 +54,7 @@ define 'remote', ['errors'], (ERROR) ->
       
     # ## Push changes
     #
-    # Gets changed objects from store and pushes it to couch
+    # Push locally changed objects to userDB using the
     # using the `_bulk_docs` API
     push_changes : (options) =>
       
@@ -78,9 +80,11 @@ define 'remote', ['errors'], (ERROR) ->
     get_seq :       -> @_seq ||= @store.db.getItem('_couch.remote.seq') or 0
     set_seq : (seq) -> @_seq   = @store.db.setItem '_couch.remote.seq', seq
       
+    
+    
     # ## Private
     
-    ##
+    #
     # changes url
     #
     # long poll url with heartbeat = 10 seconds
@@ -127,6 +131,8 @@ define 'remote', ['errors'], (ERROR) ->
         # 
         # BUT: it might also happen that the profileDB is not ready yet. 
         #      Therefore, we try it again in 3 seconds
+        #
+        # TODO: review / rethink that.
         when 404
           # @trigger 'error:unknown'
           # @stop()
@@ -148,8 +154,6 @@ define 'remote', ['errors'], (ERROR) ->
             App.AutoUpdate.check() unless App.AutoUpdate.status() is 'checking'
             window.setTimeout (=> @_getChanges()), @_changes_timeout()
             @_double_changes_timeout()
-      
-    _changes_error
   
     # map of valid couchDB doc attributes starting with an underscore
     _valid_special_attributes:

@@ -113,8 +113,6 @@ define('remote', ['errors'], function(ERROR) {
       }
     };
 
-    _changes_error;
-
     Remote.prototype._valid_special_attributes = {
       '_id': 1,
       '_rev': 1,
