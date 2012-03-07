@@ -25,6 +25,9 @@ define 'specs/couchapp', ['couchapp'], (couchApp) ->
         it "should send a GET request to http://couch.example.com/", ->
           expect(@args.type).toBe 'GET'
           expect(@args.url).toBe 'http://couch.example.com/'
+        
+        it "should set `dataType: 'json'", ->
+          expect(@args.dataType).toBe 'json'
           
         it "should set `xhrFields` to `withCredentials: true`", ->
           expect(@args.xhrFields.withCredentials).toBe true
@@ -37,9 +40,9 @@ define 'specs/couchapp', ['couchapp'], (couchApp) ->
           $.ajax.andReturn promise
           expect(@app.request('GET', '/')).toBe promise
       
-      _when "request('POST', '/test', {funky: 'fresh'})", ->
+      _when "request 'POST', '/test', data: funky: 'fresh'", ->
         beforeEach ->
-          @app.request('POST', '/test')
+          @app.request 'POST', '/test', data: funky: 'fresh'
           @args = args = $.ajax.mostRecentCall.args[0]
           
         it "should send a POST request to http://couch.example.com/test", ->
@@ -48,5 +51,9 @@ define 'specs/couchapp', ['couchapp'], (couchApp) ->
         
         it "should set `contentType: 'application/json'`", ->
           expect(@args.contentType).toBe 'application/json'
+          
+        it "should stringify the passed data", ->
+          expect(@args.data).toBe '{"funky":"fresh"}'
+        
     # /request(type, path, options)
   # /couchApp

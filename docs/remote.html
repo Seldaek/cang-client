@@ -25,12 +25,7 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
 <p>a.k.a. make a longpoll AJAX request to CouchDB's <code>_changes</code> feed.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">pull_changes: </span><span class="o">-&gt;</span>
       <span class="vi">@_connected = </span><span class="kc">true</span>
       
-      <span class="vi">@_changes_request = </span><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span>
-        <span class="nv">type: </span>        <span class="s1">&#39;GET&#39;</span>
-        <span class="nv">dataType: </span>    <span class="s1">&#39;json&#39;</span>
-        <span class="nv">processData: </span> <span class="kc">false</span>
-        <span class="nv">url: </span>         <span class="nx">@_changes_url</span><span class="p">()</span>
-        <span class="nv">contentType: </span> <span class="s1">&#39;application/json&#39;</span>
+      <span class="vi">@_changes_request = </span><span class="nx">@app</span><span class="p">.</span><span class="nx">request</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="nx">@_changes_path</span><span class="p">(),</span>
         <span class="nv">success: </span>     <span class="nx">@_changes_success</span>
         <span class="nv">error: </span>       <span class="nx">@_changes_error</span>
       
@@ -47,24 +42,20 @@ using the <code>_bulk_docs</code> API</p>             </td>             <td clas
         
       <span class="nv">docs = </span><span class="nx">@_parse_for_remote</span> <span class="nx">doc</span> <span class="k">for</span> <span class="nx">doc</span> <span class="k">in</span> <span class="nx">docs</span>
       
-      <span class="nv">params =</span>
-        <span class="nv">type        : </span><span class="s1">&#39;POST&#39;</span>
-        <span class="nv">dataType    : </span><span class="s1">&#39;json&#39;</span>
-        <span class="nv">url         : </span><span class="s2">&quot;/db/account/_bulk_docs&quot;</span>
-        <span class="nv">contentType : </span><span class="s1">&#39;application/json&#39;</span>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">request</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;/db/account/_bulk_docs&#39;</span><span class="p">,</span> 
         <span class="nv">data        : </span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nv">docs: </span><span class="nx">docs</span><span class="p">)</span>
         <span class="nv">success     : </span><span class="nx">@_handle_changes</span>
       
       <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span>
+      
       </pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <h2>Get / Set seq</h2>
 
-<p>the <code>seq</code> number gets passed to couchDB's <code>_changes</code> feed.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">get_seq : </span>      <span class="o">-&gt;</span> <span class="nx">@_seq</span> <span class="o">||=</span> <span class="nx">@store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">getItem</span><span class="p">(</span><span class="s1">&#39;_couch.remote.seq&#39;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">0</span>
-    <span class="nv">set_seq : </span><span class="nf">(seq) -&gt;</span> <span class="vi">@_seq   = </span><span class="nx">@store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">setItem</span> <span class="s1">&#39;_couch.remote.seq&#39;</span><span class="p">,</span> <span class="nx">seq</span>
-      
+<p>the <code>seq</code> number gets passed to couchDB's <code>_changes</code> feed.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">get_seq : </span>      <span class="o">-&gt;</span> <span class="nx">@_seq</span> <span class="o">||=</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">getItem</span><span class="p">(</span><span class="s1">&#39;_couch.remote.seq&#39;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">0</span>
+    <span class="nv">set_seq : </span><span class="nf">(seq) -&gt;</span> <span class="vi">@_seq   = </span><span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">setItem</span> <span class="s1">&#39;_couch.remote.seq&#39;</span><span class="p">,</span> <span class="nx">seq</span>
     
     </pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <h2>Private</h2>             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <p>changes url</p>
 
-<p>long poll url with heartbeat = 10 seconds</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_changes_url : </span><span class="o">-&gt;</span>
+<p>long poll url with heartbeat = 10 seconds</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_changes_path : </span><span class="o">-&gt;</span>
       <span class="nv">since = </span><span class="nx">@get_seq</span><span class="p">()</span>
       <span class="nv">db    = </span><span class="s1">&#39;joe_example_com&#39;</span> <span class="c1"># TODO</span>
 

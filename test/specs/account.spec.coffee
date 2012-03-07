@@ -4,8 +4,13 @@ define 'specs/account', ['account'], (Account) ->
     couchDB_url : 'http://my.cou.ch'
     trigger     : ->
     request     : ->
-  
-  
+    on          : ->
+    store       :
+      db :
+        getItem    : ->
+        setItem    : ->
+        removeItem : ->
+          
   describe "couchApp", ->
     beforeEach ->
       @app = new app_mock
@@ -45,7 +50,7 @@ define 'specs/account', ['account'], (Account) ->
           @account.sign_up('joe@example.com', 'secret')
           expect(@app.trigger).wasCalledWith 'account:sign_up'
           
-        it "should trigger `account:sign_up` event", ->
+        it "should trigger `account:sign_in` event", ->
           @account.sign_up('joe@example.com', 'secret')
           expect(@app.trigger).wasCalledWith 'account:sign_in'
     # /.sign_up(email, password)
@@ -70,7 +75,7 @@ define 'specs/account', ['account'], (Account) ->
         beforeEach ->
           @app.request.andCallFake (type, path, options) -> options.success()
           
-        it "should trigger `account:sign_up` event", ->
+        it "should trigger `account:sign_in` event", ->
           @account.sign_in('joe@example.com', 'secret')
           expect(@app.trigger).wasCalledWith 'account:sign_in'
     # /.sign_in(email, password)
@@ -93,7 +98,7 @@ define 'specs/account', ['account'], (Account) ->
         beforeEach ->
           @app.request.andCallFake (type, path, options) -> options.success()
           
-        it "should trigger `account:sign_up` event", ->
+        it "should trigger `account:sign_out` event", ->
           @account.sign_out('joe@example.com', 'secret')
           expect(@app.trigger).wasCalledWith 'account:sign_out'
     # /.sign_in(email, password)

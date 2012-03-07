@@ -69,8 +69,8 @@ define 'remote', ['errors'], (ERROR) ->
     #
     # the `seq` number gets passed to couchDB's `_changes` feed.
     # 
-    get_seq :       -> @_seq ||= @store.db.getItem('_couch.remote.seq') or 0
-    set_seq : (seq) -> @_seq   = @store.db.setItem '_couch.remote.seq', seq
+    get_seq :       -> @_seq ||= @app.store.db.getItem('_couch.remote.seq') or 0
+    set_seq : (seq) -> @_seq   = @app.store.db.setItem '_couch.remote.seq', seq
     
     
     # ## Private

@@ -7,13 +7,25 @@ define 'account', ->
   'use strict'
   
   class Account
-  
+    
+    # ## Properties
+    email: undefined
   
     # ## Constructor
     #
     constructor : (@app) ->
       
-
+      # handle sessions
+      @email = @app.store.db.getItem '_couch.account.email'
+      
+      @app.on 'account:sign_in', (response) =>
+        @email = response.name
+        @app.store.db.setItem '_couch.account.email', @email
+      @app.on 'account:sign_out', (response) =>
+        delete @email
+        @app.store.db.removeItem '_couch.account.email'
+        
+        
     # ## sign up with email & password
     #
     # uses standard couchDB API to create a new document in _users db.
@@ -34,8 +46,8 @@ define 'account', ->
           password  : password
         
         success   : => 
-          @app.trigger 'account:sign_up'
-          @app.trigger 'account:sign_in'
+          @app.trigger 'account:sign_up', arguments...
+          @app.trigger 'account:sign_in', arguments...
 
 
     # ## sign in with email & password
@@ -45,9 +57,10 @@ define 'account', ->
     sign_in : (email, password) ->
 
       @app.request 'POST', '/_session', 
-        data:
+        data: 
           name      : email
           password  : password
+          
         success : => @app.trigger 'account:sign_in'
 
     # alias

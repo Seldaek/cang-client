@@ -34,9 +34,4 @@ define 'couchapp', ['events', 'store', 'account', 'remote'], (Events, Store, Acc
         xhrFields   : withCredentials: true
         crossDomain : true
 
-      options = $.extend defaults, options
-
-      if type is 'PUT' or type is 'POST'
-        options.contentType = "application/json"
-
-      $.ajax options
+      $.ajax $.extend defaults, options

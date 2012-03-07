@@ -3,9 +3,18 @@
   <span class="s1">&#39;use strict&#39;</span>
   
   <span class="k">class</span> <span class="nx">Account</span>
-  
-  </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Constructor</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">constructor : </span><span class="nf">(@app) -&gt;</span>
-      </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>sign up with email &amp; password</h2>
+    </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Properties</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">email: </span><span class="kc">undefined</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>Constructor</h2>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">constructor : </span><span class="nf">(@app) -&gt;</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>handle sessions</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="vi">@email = </span><span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">getItem</span> <span class="s1">&#39;_couch.account.email&#39;</span>
+      
+      <span class="nx">@app</span><span class="p">.</span><span class="kc">on</span> <span class="s1">&#39;account:sign_in&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">=&gt;</span>
+        <span class="vi">@email = </span><span class="nx">response</span><span class="p">.</span><span class="nx">name</span>
+        <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">setItem</span> <span class="s1">&#39;_couch.account.email&#39;</span><span class="p">,</span> <span class="nx">@email</span>
+      <span class="nx">@app</span><span class="p">.</span><span class="kc">on</span> <span class="s1">&#39;account:sign_out&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">=&gt;</span>
+        <span class="k">delete</span> <span class="nx">@email</span>
+        <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">removeItem</span> <span class="s1">&#39;_couch.account.email&#39;</span>
+        
+        </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>sign up with email &amp; password</h2>
 
 <p>uses standard couchDB API to create a new document in _users db.
 The backend will automatically create a userDB based on the email
@@ -13,56 +22,33 @@ address.</p>             </td>             <td class="code">               <div 
       <span class="nv">prefix  = </span><span class="s1">&#39;org.couchdb.user&#39;</span>
       <span class="nv">key     = </span><span class="s2">&quot;#{prefix}:#{email}&quot;</span>
 
-      <span class="nv">user = </span>
-        <span class="nv">_id       : </span><span class="nx">key</span>
-        <span class="nv">name      : </span><span class="nx">email</span>
-        <span class="nv">type      : </span><span class="s1">&#39;user&#39;</span>
-        <span class="nv">roles     : </span><span class="p">[]</span>
-        <span class="nv">password  : </span><span class="nx">password</span>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">request</span> <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s2">&quot;/_users/#{encodeURIComponent key}&quot;</span><span class="p">,</span>
         
-      <span class="nv">options =</span>
+        <span class="nv">data:</span>
+          <span class="nv">_id       : </span><span class="nx">key</span>
+          <span class="nv">name      : </span><span class="nx">email</span>
+          <span class="nv">type      : </span><span class="s1">&#39;user&#39;</span>
+          <span class="nv">roles     : </span><span class="p">[]</span>
+          <span class="nv">password  : </span><span class="nx">password</span>
+        
         <span class="nv">success   : </span><span class="o">=&gt;</span> 
-          <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_up&#39;</span>
-          <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_in&#39;</span>
-
-      <span class="nx">@_request</span> <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s2">&quot;/_users/#{encodeURIComponent key}&quot;</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">options</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>sign in with email &amp; password</h2>
+          <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_up&#39;</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">...</span>
+          <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_in&#39;</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">...</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <h2>sign in with email &amp; password</h2>
 
 <p>uses standard couchDB API to create a new user session (POST /_session)</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_in : </span><span class="nf">(email, password) -&gt;</span>
 
-      <span class="nv">creds = </span>
-        <span class="nv">name      : </span><span class="nx">email</span>
-        <span class="nv">password  : </span><span class="nx">password</span>
-        
-      <span class="nv">options = </span>
-        <span class="nv">success : </span><span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_in&#39;</span>
-        
-      <span class="nx">@_request</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;/_session&#39;</span><span class="p">,</span> <span class="nx">creds</span><span class="p">,</span> <span class="nx">options</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>alias</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">login: </span><span class="err">@</span><span class="o">::</span><span class="nx">sign_in</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <h2>change password</h2>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">request</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;/_session&#39;</span><span class="p">,</span> 
+        <span class="nv">data: </span>
+          <span class="nv">name      : </span><span class="nx">email</span>
+          <span class="nv">password  : </span><span class="nx">password</span>
+          
+        <span class="nv">success : </span><span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_in&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>alias</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">login: </span><span class="err">@</span><span class="o">::</span><span class="nx">sign_in</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <h2>change password</h2>
 
 <p>to be done.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">change_password : </span><span class="nf">(current_password, new_password) -&gt;</span>
-      <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;change password is not yet implementd&#39;</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <h2>sign out</h2>
+      <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;change password is not yet implementd&#39;</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <h2>sign out</h2>
 
 <p>uses standard couchDB API to destroy a user session (DELETE /_session)</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">sign_out: </span><span class="o">-&gt;</span>
-      <span class="nv">options =</span>
-        <span class="nv">success   : </span><span class="o">=&gt;</span> 
-          <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_out&#39;</span>
-      
-      <span class="nx">@_request</span> <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;/_session&#39;</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">options</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>alias</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">logout: </span><span class="err">@</span><span class="o">::</span><span class="nx">sign_out</span>
-    
-    </pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <hr />             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-10">&#182;</a>               </div>               <h2>Private</h2>             </td>             <td class="code">               <div class="highlight"><pre>    
-    <span class="nv">_request: </span><span class="nf">(type, path, data, _options = {}) -&gt;</span>
-      <span class="nv">options =</span>
-        <span class="nv">type        : </span><span class="nx">type</span>
-        <span class="nv">url         : </span><span class="s2">&quot;#{@app.couchDB_url}#{path}&quot;</span>
-        <span class="nv">xhrFields   : withCredentials: </span><span class="kc">true</span>
-        <span class="nv">crossDomain : </span><span class="kc">true</span>
-      <span class="nv">options = </span><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">_options</span>
-        
-      <span class="k">if</span> <span class="nx">data</span>
-        <span class="nv">options.data = </span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span> <span class="nx">data</span>
-      
-      <span class="k">if</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;PUT&#39;</span> <span class="o">or</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;POST&#39;</span>
-        <span class="nv">options.contentType = </span><span class="s2">&quot;application/json&quot;</span>
-      
-      <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span> <span class="nx">options</span>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">request</span> <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;/_session&#39;</span><span class="p">,</span> 
+        <span class="nv">success : </span><span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;account:sign_out&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-10">&#182;</a>               </div>               <p>alias</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">logout: </span><span class="err">@</span><span class="o">::</span><span class="nx">sign_out</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

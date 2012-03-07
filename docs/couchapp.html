@@ -5,6 +5,7 @@
   <span class="s1">&#39;use strict&#39;</span>
 
   <span class="k">class</span> <span class="nx">couchApp</span> <span class="k">extends</span> <span class="nx">Events</span>
+  
   </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>initialization</h2>
 
 <p>Inits the couchApp, a couchDB URL needs to be passed</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">constructor : </span><span class="nf">(@couchDB_url) -&gt;</span>
@@ -13,5 +14,20 @@
       <span class="vi">@store   = </span><span class="k">new</span> <span class="nx">Store</span>   <span class="k">this</span>
       <span class="vi">@account = </span><span class="k">new</span> <span class="nx">Account</span> <span class="k">this</span>
       <span class="vi">@remote  = </span><span class="k">new</span> <span class="nx">Remote</span>  <span class="k">this</span>
+      
+    </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>Request</h2>
+
+<p>use this method to send AJAX request to the Couch.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">request: </span><span class="nf">(type, path, options = {}) -&gt;</span>
+      <span class="nv">defaults =</span>
+        <span class="nv">type        : </span><span class="nx">type</span>
+        <span class="nv">url         : </span><span class="s2">&quot;#{@couchDB_url}#{path}&quot;</span>
+        <span class="nv">xhrFields   : withCredentials: </span><span class="kc">true</span>
+        <span class="nv">crossDomain : </span><span class="kc">true</span>
+        <span class="nv">dataType    : </span><span class="s1">&#39;json&#39;</span>
+      
+      <span class="nv">options = </span><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">options</span>
+      
+      <span class="k">if</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;PUT&#39;</span> <span class="o">or</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;POST&#39;</span>
+        <span class="nv">options.contentType = </span><span class="s2">&quot;application/json&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>options.data = JSON.stringify options.data</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span> <span class="nx">options</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
