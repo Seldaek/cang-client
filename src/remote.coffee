@@ -39,12 +39,7 @@ define 'remote', ['errors'], (ERROR) ->
     pull_changes: ->
       @_connected = true
       
-      @_changes_request = $.ajax
-        type:         'GET'
-        dataType:     'json'
-        processData:  false
-        url:          @_changes_url()
-        contentType:  'application/json'
+      @_changes_request = @app.request 'GET', @_changes_path(),
         success:      @_changes_success
         error:        @_changes_error
       
@@ -63,15 +58,12 @@ define 'remote', ['errors'], (ERROR) ->
         
       docs = @_parse_for_remote doc for doc in docs
       
-      params =
-        type        : 'POST'
-        dataType    : 'json'
-        url         : "/db/account/_bulk_docs"
-        contentType : 'application/json'
+      @app.request 'POST', '/db/account/_bulk_docs', 
         data        : JSON.stringify(docs: docs)
         success     : @_handle_changes
       
       $.ajax(params)
+      
       
     # ## Get / Set seq
     #
@@ -79,7 +71,6 @@ define 'remote', ['errors'], (ERROR) ->
     # 
     get_seq :       -> @_seq ||= @store.db.getItem('_couch.remote.seq') or 0
     set_seq : (seq) -> @_seq   = @store.db.setItem '_couch.remote.seq', seq
-      
     
     
     # ## Private
@@ -89,7 +80,7 @@ define 'remote', ['errors'], (ERROR) ->
     #
     # long poll url with heartbeat = 10 seconds
     #
-    _changes_url : ->
+    _changes_path : ->
       since = @get_seq()
       db    = 'joe_example_com' # TODO
 

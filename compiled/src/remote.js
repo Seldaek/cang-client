@@ -25,12 +25,7 @@ define('remote', ['errors'], function(ERROR) {
 
     Remote.prototype.pull_changes = function() {
       this._connected = true;
-      this._changes_request = $.ajax({
-        type: 'GET',
-        dataType: 'json',
-        processData: false,
-        url: this._changes_url(),
-        contentType: 'application/json',
+      this._changes_request = this.app.request('GET', this._changes_path(), {
         success: this._changes_success,
         error: this._changes_error
       });
@@ -39,23 +34,19 @@ define('remote', ['errors'], function(ERROR) {
     };
 
     Remote.prototype.push_changes = function(options) {
-      var doc, docs, params, _i, _len;
+      var doc, docs, _i, _len;
       docs = this.app.store.changed_docs();
       if (docs.lenght === 0) return this._deferred().resolve([]);
       for (_i = 0, _len = docs.length; _i < _len; _i++) {
         doc = docs[_i];
         docs = this._parse_for_remote(doc);
       }
-      params = {
-        type: 'POST',
-        dataType: 'json',
-        url: "/db/account/_bulk_docs",
-        contentType: 'application/json',
+      this.app.request('POST', '/db/account/_bulk_docs', {
         data: JSON.stringify({
           docs: docs
         }),
         success: this._handle_changes
-      };
+      });
       return $.ajax(params);
     };
 
@@ -67,7 +58,7 @@ define('remote', ['errors'], function(ERROR) {
       return this._seq = this.store.db.setItem('_couch.remote.seq', seq);
     };
 
-    Remote.prototype._changes_url = function() {
+    Remote.prototype._changes_path = function() {
       var db, since;
       since = this.get_seq();
       db = 'joe_example_com';
