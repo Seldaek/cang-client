@@ -9,39 +9,36 @@ define('account', function() {
     }
 
     Account.prototype.sign_up = function(email, password) {
-      var key, options, prefix, user,
+      var key, prefix,
         _this = this;
       prefix = 'org.couchdb.user';
       key = "" + prefix + ":" + email;
-      user = {
-        _id: key,
-        name: email,
-        type: 'user',
-        roles: [],
-        password: password
-      };
-      options = {
+      return this.app.request('PUT', "/_users/" + (encodeURIComponent(key)), {
+        data: {
+          _id: key,
+          name: email,
+          type: 'user',
+          roles: [],
+          password: password
+        },
         success: function() {
           _this.app.trigger('account:sign_up');
           return _this.app.trigger('account:sign_in');
         }
-      };
-      return this._request('PUT', "/_users/" + (encodeURIComponent(key)), user, options);
+      });
     };
 
     Account.prototype.sign_in = function(email, password) {
-      var creds, options,
-        _this = this;
-      creds = {
-        name: email,
-        password: password
-      };
-      options = {
+      var _this = this;
+      return this.app.request('POST', '/_session', {
+        data: {
+          name: email,
+          password: password
+        },
         success: function() {
           return _this.app.trigger('account:sign_in');
         }
-      };
-      return this._request('POST', '/_session', creds, options);
+      });
     };
 
     Account.prototype.login = Account.prototype.sign_in;
@@ -51,36 +48,15 @@ define('account', function() {
     };
 
     Account.prototype.sign_out = function() {
-      var options,
-        _this = this;
-      options = {
+      var _this = this;
+      return this.app.request('DELETE', '/_session', {
         success: function() {
           return _this.app.trigger('account:sign_out');
         }
-      };
-      return this._request('DELETE', '/_session', null, options);
+      });
     };
 
     Account.prototype.logout = Account.prototype.sign_out;
-
-    Account.prototype._request = function(type, path, data, _options) {
-      var options;
-      if (_options == null) _options = {};
-      options = {
-        type: type,
-        url: "" + this.app.couchDB_url + path,
-        xhrFields: {
-          withCredentials: true
-        },
-        crossDomain: true
-      };
-      options = $.extend(options, _options);
-      if (data) options.data = JSON.stringify(data);
-      if (type === 'PUT' || type === 'POST') {
-        options.contentType = "application/json";
-      }
-      return $.ajax(options);
-    };
 
     return Account;
 

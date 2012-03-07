@@ -9,6 +9,8 @@ define('specs/account', ['account'], function(Account) {
 
     app_mock.prototype.trigger = function() {};
 
+    app_mock.prototype.request = function() {};
+
     return app_mock;
 
   })();
@@ -16,38 +18,35 @@ define('specs/account', ['account'], function(Account) {
     beforeEach(function() {
       this.app = new app_mock;
       this.account = new Account(this.app);
-      spyOn($, "ajax").andReturn($.Deferred());
+      spyOn(this.app, "request");
       return spyOn(this.app, "trigger");
     });
     describe(".sign_up(email, password)", function() {
       beforeEach(function() {
+        var _ref;
         this.account.sign_up('joe@example.com', 'secret');
-        this.args = $.ajax.mostRecentCall.args[0];
-        return this.data = JSON.parse(this.args.data);
+        return _ref = this.app.request.mostRecentCall.args, this.type = _ref[0], this.path = _ref[1], this.options = _ref[2], _ref;
       });
       it("should send a PUT request to http://my.cou.ch/_users/org.couchdb.user%3Ajoe%40example.com", function() {
-        expect($.ajax).wasCalled();
-        expect(this.args.type).toBe('PUT');
-        return expect(this.args.url).toBe('http://my.cou.ch/_users/org.couchdb.user%3Ajoe%40example.com');
-      });
-      it("should set Content-Type to application/json", function() {
-        return expect(this.args.contentType).toBe('application/json');
+        expect(this.app.request).wasCalled();
+        expect(this.type).toBe('PUT');
+        return expect(this.path).toBe('/_users/org.couchdb.user%3Ajoe%40example.com');
       });
       it("should have set _id to 'org.couchdb.user:joe@example.com'", function() {
-        return expect(this.data._id).toBe('org.couchdb.user:joe@example.com');
+        return expect(this.options.data._id).toBe('org.couchdb.user:joe@example.com');
       });
       it("should have set name to 'joe@example.com", function() {
-        return expect(this.data.name).toBe('joe@example.com');
+        return expect(this.options.data.name).toBe('joe@example.com');
       });
       it("should have set type to 'user", function() {
-        return expect(this.data.type).toBe('user');
+        return expect(this.options.data.type).toBe('user');
       });
       it("should pass password", function() {
-        return expect(this.data.password).toBe('secret');
+        return expect(this.options.data.password).toBe('secret');
       });
       return _when("sign_up successful", function() {
         beforeEach(function() {
-          return $.ajax.andCallFake(function(options) {
+          return this.app.request.andCallFake(function(type, path, options) {
             return options.success();
           });
         });
@@ -63,24 +62,24 @@ define('specs/account', ['account'], function(Account) {
     });
     describe(".sign_in(email, password)", function() {
       beforeEach(function() {
+        var _ref;
         this.account.sign_in('joe@example.com', 'secret');
-        this.args = $.ajax.mostRecentCall.args[0];
-        return this.data = JSON.parse(this.args.data);
+        return _ref = this.app.request.mostRecentCall.args, this.type = _ref[0], this.path = _ref[1], this.options = _ref[2], _ref;
       });
       it("should send a POST request to http://my.cou.ch/_session", function() {
-        expect($.ajax).wasCalled();
-        expect(this.args.type).toBe('POST');
-        return expect(this.args.url).toBe('http://my.cou.ch/_session');
+        expect(this.app.request).wasCalled();
+        expect(this.type).toBe('POST');
+        return expect(this.path).toBe('/_session');
       });
       it("should send email as name parameter", function() {
-        return expect(this.data.name).toBe('joe@example.com');
+        return expect(this.options.data.name).toBe('joe@example.com');
       });
       it("should send password", function() {
-        return expect(this.data.password).toBe('secret');
+        return expect(this.options.data.password).toBe('secret');
       });
       return _when("sign_up successful", function() {
         beforeEach(function() {
-          return $.ajax.andCallFake(function(options) {
+          return this.app.request.andCallFake(function(type, path, options) {
             return options.success();
           });
         });
@@ -95,17 +94,18 @@ define('specs/account', ['account'], function(Account) {
     });
     return describe(".sign_out()", function() {
       beforeEach(function() {
+        var _ref;
         this.account.sign_out();
-        return this.args = $.ajax.mostRecentCall.args[0];
+        return _ref = this.app.request.mostRecentCall.args, this.type = _ref[0], this.path = _ref[1], this.options = _ref[2], _ref;
       });
       it("should send a DELETE request to http://my.cou.ch/_session", function() {
-        expect($.ajax).wasCalled();
-        expect(this.args.type).toBe('DELETE');
-        return expect(this.args.url).toBe('http://my.cou.ch/_session');
+        expect(this.app.request).wasCalled();
+        expect(this.type).toBe('DELETE');
+        return expect(this.path).toBe('/_session');
       });
       return _when("sign_up successful", function() {
         beforeEach(function() {
-          return $.ajax.andCallFake(function(options) {
+          return this.app.request.andCallFake(function(type, path, options) {
             return options.success();
           });
         });

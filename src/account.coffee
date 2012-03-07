@@ -24,19 +24,18 @@ define 'account', ->
       prefix  = 'org.couchdb.user'
       key     = "#{prefix}:#{email}"
 
-      user = 
-        _id       : key
-        name      : email
-        type      : 'user'
-        roles     : []
-        password  : password
+      @app.request 'PUT', "/_users/#{encodeURIComponent key}",
         
-      options =
+        data:
+          _id       : key
+          name      : email
+          type      : 'user'
+          roles     : []
+          password  : password
+        
         success   : => 
           @app.trigger 'account:sign_up'
           @app.trigger 'account:sign_in'
-
-      @_request 'PUT', "/_users/#{encodeURIComponent key}", user, options
 
 
     # ## sign in with email & password
@@ -45,14 +44,11 @@ define 'account', ->
     #
     sign_in : (email, password) ->
 
-      creds = 
-        name      : email
-        password  : password
-        
-      options = 
+      @app.request 'POST', '/_session', 
+        data:
+          name      : email
+          password  : password
         success : => @app.trigger 'account:sign_in'
-        
-      @_request 'POST', '/_session', creds, options
 
     # alias
     login: @::sign_in
@@ -71,32 +67,8 @@ define 'account', ->
     # uses standard couchDB API to destroy a user session (DELETE /_session)
     #
     sign_out: ->
-      options =
-        success   : => 
-          @app.trigger 'account:sign_out'
-      
-      @_request 'DELETE', '/_session', null, options
+      @app.request 'DELETE', '/_session', 
+        success : => @app.trigger 'account:sign_out'
 
     # alias
     logout: @::sign_out
-    
-    
-    # --------------------------------------------------------------------------  
-    
-    # ## Private
-    
-    _request: (type, path, data, _options = {}) ->
-      options =
-        type        : type
-        url         : "#{@app.couchDB_url}#{path}"
-        xhrFields   : withCredentials: true
-        crossDomain : true
-      options = $.extend options, _options
-        
-      if data
-        options.data = JSON.stringify data
-      
-      if type is 'PUT' or type is 'POST'
-        options.contentType = "application/json"
-      
-      $.ajax options

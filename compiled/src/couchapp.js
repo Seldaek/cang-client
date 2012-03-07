@@ -16,6 +16,24 @@ define('couchapp', ['events', 'store', 'account', 'remote'], function(Events, St
       this.remote = new Remote(this);
     }
 
+    couchApp.prototype.request = function(type, path, options) {
+      var defaults;
+      if (options == null) options = {};
+      defaults = {
+        type: type,
+        url: "" + this.couchDB_url + path,
+        xhrFields: {
+          withCredentials: true
+        },
+        crossDomain: true
+      };
+      options = $.extend(defaults, options);
+      if (type === 'PUT' || type === 'POST') {
+        options.contentType = "application/json";
+      }
+      return $.ajax(options);
+    };
+
     return couchApp;
 
   })(Events);
