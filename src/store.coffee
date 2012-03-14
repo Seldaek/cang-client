@@ -8,7 +8,6 @@ define 'store', ['errors'], (ERROR) ->
   
   class Store
   
-  
     # ## Constructor
     #
     constructor : (@app) ->
@@ -52,16 +51,18 @@ define 'store', ['errors'], (ERROR) ->
     #     # alias
     #     store.create(car)
     #     store.update(car)
-    save: (type, id, object) ->
+    save: (type, id, object, options) ->
       promise = @_promise()
     
-      switch arguments.length
-        when 2
-          object  = id
-          id      = object.id or object._id
-        when 1
+      switch 'object'
+        when typeof arguments[0]
+          options = id
           object  = type
           type    = object.type
+          id      = object.id or object._id
+        when typeof arguments[1]
+          options = object
+          object  = id
           id      = object.id or object._id
     
       unless typeof object is 'object'
@@ -88,7 +89,7 @@ define 'store', ['errors'], (ERROR) ->
       delete object.type
     
       try 
-        object = @cache type, id, object
+        object = @cache type, id, object, options
         promise.resolve object
       catch error
         promise.reject error

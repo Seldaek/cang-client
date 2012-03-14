@@ -185,10 +185,6 @@ define 'remote', ['errors'], (ERROR) ->
     #
     _handle_changes: (response) =>
       @set_seq response.last_seq
-      
-      # TODO: make app.store parse the passed objects correctly
-      #       e.g. rename `_id` to `id` etc
-      console.log 'saving', result.id, result.doc for result in response.results
       @app.store.save(result.doc, remote: true) for result in response.results
         
         

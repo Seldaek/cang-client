@@ -13,7 +13,11 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       # spyOn(@store, "_removeItem").andCallThrough()
       spyOn(@store.db, "clear").andCallThrough()
 
-    describe ".save(type, id, object)", ->
+    describe ".save(type, id, object, options)", ->
+      beforeEach ->
+        spyOn(@store, "_now").andReturn 'now'
+        spyOn(@store, "cache").andReturn 'cached_object'
+      
       it "should return a promise", ->
         promise = @store.save 'document', '123', name: 'test'
         do expect(promise.done).toBeDefined
@@ -36,18 +40,20 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
     
       _when "id is '123', type is 'document', object is {name: 'test'}", ->
         beforeEach ->
-          # fake date timestamps
-          spyOn(@store, "_now").andReturn 'now'
-          spyOn(@store, "cache").andReturn 'cached_object'
-      
           # keep promise, key, and stored object for assertions
-          @promise = @store.save 'document', '123', { name: 'test' }
+          @promise = @store.save 'document', '123', { name: 'test' }, { option: 'value' }
 
         it "should cache document", ->
           expect(@store.cache).wasCalled()
       
         it "should add timestamps", ->
-          expect(@store.cache).wasCalledWith 'document', '123', { name: 'test', created_at: 'now', updated_at: 'now' }
+          object = @store.cache.mostRecentCall.args[2]
+          expect(object.created_at).toBe 'now'
+          expect(object.updated_at).toBe 'now'
+        
+        it "should pass options", ->
+          options = @store.cache.mostRecentCall.args[3]
+          expect(options.option).toBe 'value'
       
         _when "successful", ->
           beforeEach ->
@@ -73,14 +79,11 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
   
       _when "id is '123', type is 'document', object is {id: '123', type: 'document', name: 'test'}", ->
         beforeEach ->
-          # fake date timestamps
-          spyOn(@store, "_now").andReturn 'now'
-      
           # keep promise, key, and stored object for assertions
           @store.save 'document', '123', {id: '123', type: 'document', name: 'test'}
-          [key, @object] = @store.db.setItem.mostRecentCall.args
+          [type, key, @object] = @store.cache.mostRecentCall.args
     
-        it "should store the object without the id attribute", ->
+        it "should cache the object without the id attribute", ->
           expect(@object.id).toBeUndefined()
     
         it "should store the object without the type attribute", ->
@@ -88,7 +91,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       
       it "should not overwrite created_at attribute", ->
         @store.save 'document', '123', { created_at: 'check12'  }
-        [type, id, object] = @store._setObject.mostRecentCall.args
+        [type, id, object] = @store.cache.mostRecentCall.args
         expect(object.created_at).toBe 'check12'
     
       it "should allow numbers and lowercase letters for for type & id only", ->
@@ -110,57 +113,61 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         _and "object has no id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
-            promise = @store.save 'document', { name: 'test' }
-            [@key, @object] = @store.db.setItem.mostRecentCall.args
+            promise = @store.save 'document', { name: 'test' }, { option: 'value' }
+            [@type, @key, @object] = @store.cache.mostRecentCall.args
       
           it "should generate an id", ->
-            expect(@key).toMatch /^document\/[a-z0-9]{7}$/
+            expect(@key).toMatch /^[a-z0-9]{7}$/
+            
+          it "should pass options", ->
+            options = @store.cache.mostRecentCall.args[3]
+            expect(options.option).toBe 'value'
     
         _and "object has an id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save 'document', { name: 'test', id: 'exists' }
-            [@key, @object] = @store.db.setItem.mostRecentCall.args
+            [type, @key, @object] = @store.cache.mostRecentCall.args
         
           it "should get the id", ->
-            expect(@key).toBe 'document/exists'
+            expect(@key).toBe 'exists'
         
         _and "object has an _id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save 'document', { name: 'test', _id: 'exists' }
-            [@key, @object] = @store.db.setItem.mostRecentCall.args
+            [type, @key, @object] = @store.cache.mostRecentCall.args
         
           it "should get the id", ->
-            expect(@key).toBe 'document/exists'
+            expect(@key).toBe 'exists'
   
       _when "called without type and id", ->
         _and "object has no id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document'
-            [@key, @object] = @store.db.setItem.mostRecentCall.args
+            [@type, @key, @object] = @store.cache.mostRecentCall.args
       
           it "should generate an id and get the type from object", ->
-            expect(@key).toMatch /^document\/[a-z0-9]{7}$/
+            expect(@key).toMatch /^[a-z0-9]{7}$/
     
         _and "object has an id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document', id: 'exists'
-            [@key, @object] = @store.db.setItem.mostRecentCall.args
+            [type, @key, @object] = @store.cache.mostRecentCall.args
         
           it "should get id and type form object", ->
-            expect(@key).toBe 'document/exists'
+            expect(@key).toBe 'exists'
          
         _and "object has an _id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document', _id: 'exists'
-            [@key, @object] = @store.db.setItem.mostRecentCall.args
+            [type, @key, @object] = @store.cache.mostRecentCall.args
         
           it "should get id and type form object", ->
-            expect(@key).toBe 'document/exists'
+            expect(@key).toBe 'exists'
             
       describe "aliases", ->
         it "should allow to use .create", ->
@@ -168,7 +175,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         it "should allow to use .update", ->
           expect(@store.save).toBe @store.create
       # /aliases
-    # /.save(id, type, object)
+    # /.save(id, type, object, options)
 
     describe ".load(type, id)", ->
       beforeEach ->
