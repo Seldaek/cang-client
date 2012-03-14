@@ -20,7 +20,7 @@ define 'remote', ['errors'], (ERROR) ->
       @connect()
       @app.on 'account:sign_in',  @connect
       @app.on 'account:sign_out', @disconnect
-      
+      console.log 'subscribed to account:sign_out'
       
       
     # ## Connect

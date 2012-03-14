@@ -107,6 +107,7 @@ define 'account', ->
     #
     # uses standard couchDB API to destroy a user session (DELETE /_session)
     #
+    # TODO: handle errors
     sign_out: ->
       @app.request 'DELETE', '/_session', 
         success : => @app.trigger 'account:sign_out', arguments...

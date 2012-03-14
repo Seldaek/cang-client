@@ -57,9 +57,7 @@ define 'events', ->
       list = @hasOwnProperty('_callbacks') and @_callbacks?[ev]
       return unless list
 
-      for callback in list
-        if callback.apply(@, args) is false
-          break
+      callback.apply(@, args) for callback in list
         
       return true
  
