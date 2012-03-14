@@ -62,20 +62,22 @@ define 'remote', ['errors'], (ERROR) ->
     push_changes : (options) =>
 
       console.log "@app.store.changed_docs()", @app.store.changed_docs()
-      $.ajax({type: 'POST', url: 'http://cors.io/funtime.g3th.net:5984/cang/_bulk_docs', data:'{"docs": []}', contentType: 'application/json'})
+      # $.ajax({type: 'POST', url: 'http://cors.io/funtime.g3th.net:5984/cang/_bulk_docs', data:'{"docs": []}', contentType: 'application/json'})
       
-      # docs    = @app.store.changed_docs()
-      # return @_promise().resolve([]) if docs.lenght is 0
-      #   
-      # docs = @_parse_for_remote doc for doc in docs
+      docs    = @app.store.changed_docs()
+      return @_promise().resolve([]) if docs.lenght is 0
+        
+      docs = for doc in docs
+        @_parse_for_remote doc 
       
-      # @app.request 'POST', "/#{encodeURIComponent @app.account.email}/_bulk_docs", 
-      #   dataType:     'json'
-      #   processData:  false
-      #   contentType:  'application/json'
-      # 
-      #   data        : JSON.stringify(docs: docs)
-      #   success     : @_handle_changes
+      console.log 'POST', "/#{encodeURIComponent @app.account.email}/_bulk_docs", docs
+      @app.request 'POST', "/#{encodeURIComponent @app.account.email}/_bulk_docs", 
+        dataType:     'json'
+        processData:  false
+        contentType:  'application/json'
+      
+        data        : JSON.stringify(docs: docs)
+        success     : @_handle_changes
       
       
     # ## Get / Set seq
@@ -110,7 +112,8 @@ define 'remote', ['errors'], (ERROR) ->
     _changes_success : (response) =>
       
       return unless @_connected
-      @_handle_changes(response)
+      @set_seq response.last_seq
+      @_handle_changes(response.results)
       do @pull_changes
       
     # 
@@ -177,6 +180,9 @@ define 'remote', ['errors'], (ERROR) ->
         continue if @_valid_special_attributes[attr]
         continue unless /^_/.test attr
         delete attributes[attr]
+     
+      attributes._id = "#{attributes.type}/#{attributes.id}"
+      delete attributes.id
       
       attributes
       
@@ -186,18 +192,21 @@ define 'remote', ['errors'], (ERROR) ->
     # renames `_id` attribute to `id` and removes the type from the id,
     # e.g. `document/123` -> `123`
     _parse_from_remote: (obj) ->
-      id = obj._id
+      id = obj._id or obj.id
       delete obj._id
-      obj.id = id.split(/\//).pop()
+      [obj.type, obj.id] = id.split(/\//)
+      
+      obj.created_at = new Date(Date.parse obj.created_at) if obj.created_at
+      obj.updated_at = new Date(Date.parse obj.updated_at) if obj.updated_at
+      
       obj
   
   
     #
     # handle changes from remote
     #
-    _handle_changes: (response) =>
-      @set_seq response.last_seq
-      @app.store.save( @_parse_from_remote(result.doc), remote: true) for result in response.results
+    _handle_changes: (changes) =>
+      @app.store.save( @_parse_from_remote(result.doc or result), remote: true) for result in changes
     
     
     #

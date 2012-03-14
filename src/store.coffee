@@ -85,7 +85,10 @@ define 'store', ['errors'], (ERROR) ->
         return promise
     
       # add timestamps. unless update comes from remote
-      object.created_at ||= object.updated_at = @_now() unless options?.remote
+      if options?.remote
+        object._synced_at = @_now()
+      else
+        object.created_at ||= object.updated_at = @_now()
     
       # remove `id` and `type` attributes before saving,
       # as the Store key contains this information
@@ -283,20 +286,18 @@ define 'store', ['errors'], (ERROR) ->
     # dirty objects in the store.
     #
     # Otherwise it returns `true` or `false` for the passed object. An object is dirty
-    # if it has no `synced_at` attribute or if `updated_at` is more recent than `synced_at`
+    # if it has no `_synced_at` attribute or if `updated_at` is more recent than `_synced_at`
     is_dirty: (type = null, id = null) ->
       unless type
         return $.isEmptyObject @_dirty
-    
-      key = "#{type}/#{id}"
       
-      return true  unless @cache(type, id).synced_at  # no synced_at? uuhh, that's dirty.
-      return false unless @cache(type, id).updated_at # no updated_at? no dirt then
+      synced_at  = @cache(type, id)._synced_at
+      updated_at = @cache(type, id).updated_at
+      
+      return true  unless synced_at  # no synced_at? uuhh, that's dirty.
+      return false unless updated_at # no updated_at? no dirt then
     
-      @cache(type, id).synced_at  = Date.parse @cache(type, id).synced_at  unless @cache(type, id).synced_at  instanceof Date
-      @cache(type, id).updated_at = Date.parse @cache(type, id).updated_at unless @cache(type, id).updated_at instanceof Date
-    
-      @cache(type, id).synced_at.getTime() < @cache(type, id).updated_at.getTime()
+      synced_at.getTime() < updated_at.getTime()
   
   
     # ## Clear
@@ -381,6 +382,11 @@ define 'store', ['errors'], (ERROR) ->
         obj = JSON.parse(json)
         obj.type  = type
         obj.id    = id
+        
+        obj.created_at = new Date(Date.parse obj.created_at) if obj.created_at
+        obj.updated_at = new Date(Date.parse obj.updated_at) if obj.updated_at
+        obj._synced_at = new Date(Date.parse obj._synced_at) if obj._synced_at
+        
         obj
       else
         false

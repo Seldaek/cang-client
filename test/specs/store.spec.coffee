@@ -59,11 +59,16 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           expect(object.updated_at).toBe 'now'
         
         _and "options.remote is true", ->
-          it "should not add or update the timestamps", ->
+          it "should not touch created_at / updated_at timestamps", ->
             @store.save 'document', '123', { name: 'test' }, { remote: true }
             object = @store.cache.mostRecentCall.args[2]
             expect(object.created_at).toBeUndefined()
             expect(object.updated_at).toBeUndefined()
+            
+          it "should add a _synced_at timestamp", ->
+            @store.save 'document', '123', { name: 'test' }, { remote: true }
+            object = @store.cache.mostRecentCall.args[2]
+            expect(object._synced_at).toBe 'now'
           
         
         it "should pass options", ->
@@ -346,11 +351,15 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           
           _and "object does exist in localStorage", ->
             beforeEach ->
-              @store._getObject.andReturn color: 'red'
+              @store._getObject.andReturn 
+                color: 'red'
             
             it "should cache it for future", ->
+              @store._getObject.andReturn 
+                color: 'red'
               @store.cache 'couch', '123'
               expect(@store._cached['couch/123'].color).toBe 'red'
+            
             
           _and "object does not exist in localStorage", ->
             beforeEach ->
@@ -443,7 +452,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       _when "type & id passed", ->
         _and "object was not yet synced", ->
           beforeEach ->
-            spyOn(@store, "cache").andReturn synced_at: undefined
+            spyOn(@store, "cache").andReturn _synced_at: undefined
           
           it "should return true", ->
             do expect(@store.is_dirty 'couch', '123').toBeTruthy
@@ -452,7 +461,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           _and "object was not updated yet", ->
             beforeEach ->
               spyOn(@store, "cache").andReturn 
-                synced_at : new Date(0)
+                _synced_at : new Date(0)
                 updated_at: undefined
             
             it "should return false", ->
@@ -461,7 +470,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           _and "object was updated at the same time", ->
             beforeEach ->
               spyOn(@store, "cache").andReturn 
-                synced_at : new Date(0)
+                _synced_at : new Date(0)
                 updated_at: new Date(0)
                 
             it "should return false", ->
@@ -470,7 +479,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           _and "object was updated later", ->
             beforeEach ->
               spyOn(@store, "cache").andReturn 
-                synced_at : new Date(0)
+                _synced_at : new Date(0)
                 updated_at: new Date(1)
                 
             it "should return true", ->
