@@ -11,7 +11,6 @@ define 'account', ->
     # ## Properties
     email: undefined
     
-    
     # ## Constructor
     #
     constructor : (@app) ->
@@ -23,7 +22,6 @@ define 'account', ->
       @app.on 'account:sign_in',  @_handle_sign_in
       @app.on 'account:sign_out', @_handle_sign_out
     
-    
     ##
     #
     authenticate : ->
@@ -31,25 +29,26 @@ define 'account', ->
       
       unless @email
         return promise.reject()
+        
+      if @_authenticated is true
+        return promise.resolve @email
+        
+      if @_authenticated is false
+        return promise.reject()
       
-      if @_authenticated is undefined
-        @app.request 'GET', "/_session"
-          success: (response) =>
-            if response.userCtx.name
-              @_authenticated = true
-              @email = response.userCtx.name
-              promise.resolve @email
-            else
-              @_authenticated = false
-              @app.trigger 'account:error:not_authenticated'
-              promise.reject()
-          error: promise.reject
-              
-      else
-        if @_authenticated
-          promise.resolve()
-        else
-          promise.reject()
+      # @_authenticated is undefined
+      @app.request 'GET', "/_session"
+        success: (response) =>
+          if response.userCtx.name
+            @_authenticated = true
+            @email = response.userCtx.name
+            promise.resolve @email
+          else
+            @_authenticated = false
+            @app.trigger 'account:error:not_authenticated'
+            promise.reject()
+            
+        error: promise.reject
           
       promise
       

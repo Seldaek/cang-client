@@ -1,0 +1,3 @@
+### account.authenticate
+
+* what if @email is different from what GET /_session returns? Can there be a case like that?

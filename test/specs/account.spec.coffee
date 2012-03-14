@@ -5,6 +5,10 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
       @app = new couchAppMock
       @account = new Account @app
     
+      # promises
+      spyOn(@app.promise_mock, "resolve").andCallThrough()
+      spyOn(@app.promise_mock, "reject").andCallThrough()
+    
       # requests
       spyOn(@app, "request")
       spyOn(@app, "trigger")
@@ -38,6 +42,7 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
     # /new
     
     describe "event handlers", ->
+      
       describe "_handle_sign_in", ->
         beforeEach ->
           spyOn(@app.store.db, "setItem")
@@ -75,6 +80,95 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
     
     describe ".authenticate()", ->
       
+      _when "@email is undefined", ->
+        beforeEach ->
+          delete @account.email
+          @promise = @account.authenticate()
+              
+        it "should return a promise", ->
+          expect(@promise).toBe @app.promise_mock
+          
+        it "should reject the promise", ->
+          expect(@app.promise_mock.reject).wasCalled()
+          
+      _when "@email is 'joe@example.com", ->
+        beforeEach ->
+          @account.email = 'joe@example.com'
+        
+        _and "account is already authenticated", ->
+          beforeEach ->
+            @account._authenticated = true
+            @promise = @account.authenticate()
+            
+          it "should return a promise", ->
+            expect(@promise).toBe @app.promise_mock
+
+          it "should resolve the promise", ->
+            expect(@app.promise_mock.resolve).wasCalledWith 'joe@example.com'
+        
+        _and "account is unauthenticated", ->
+          beforeEach ->
+            @account._authenticated = false
+            @promise = @account.authenticate()
+            
+          it "should return a promise", ->
+            expect(@promise).toBe @app.promise_mock
+
+          it "should reject the promise", ->
+            expect(@app.promise_mock.reject).wasCalled()
+            
+        _and "account has not been authenticated yet", ->
+          beforeEach ->
+            delete @account._authenticated
+          
+          it "should return a promise", ->
+            @promise = @account.authenticate()
+            expect(@promise).toBe @app.promise_mock
+            
+          it "should send a GET /_session", ->
+            @promise = @account.authenticate()
+            expect(@app.request).wasCalled()
+            args = @app.request.mostRecentCall.args
+            expect(args[0]).toBe 'GET'
+            expect(args[1]).toBe '/_session'
+          
+
+          # {"ok":true,"userCtx":{"name":"@example.com","roles":[]},"info":{"authentication_db":"_users","authentication_handlers":["oauth","cookie","default"],"authenticated":"cookie"}}
+          _when "authentication request is successful and returns joe@example.com", ->
+            beforeEach ->
+              @app.request.andCallFake (type, path, options = {}) -> options.success? userCtx: name: 'joe@example.com'
+              @promise = @account.authenticate()
+              
+            it "should set account as authenticated", ->
+              expect(@account._authenticated).toBe true
+              
+            it "should resolve the promise with 'joe@example.com'", ->
+              expect(@app.promise_mock.resolve).wasCalledWith 'joe@example.com'
+          
+          # {"ok":true,"userCtx":{"name":null,"roles":[]},"info":{"authentication_db":"_users","authentication_handlers":["oauth","cookie","default"]}}
+          _when "authentication request is successful and returns `name: joe@example.com`", ->
+            beforeEach ->
+              @app.request.andCallFake (type, path, options = {}) -> options.success? userCtx: name: null
+              @promise = @account.authenticate()
+              
+            it "should set account as unauthenticated", ->
+              expect(@account._authenticated).toBe false
+              
+            it "should reject the promise", ->
+              expect(@app.promise_mock.reject).wasCalled()
+              
+            it "should trigger an `account:error:not_authenticated` event", ->
+              expect(@app.trigger).wasCalledWith 'account:error:not_authenticated'
+              
+          _when "authentication request has an error", ->
+            beforeEach ->
+              @app.request.andCallFake (type, path, options = {}) -> options.error? 'error data'
+              @promise = @account.authenticate()
+            
+            it "should reject the promise", ->
+              expect(@app.promise_mock.reject).wasCalledWith 'error data'
+            
+              
     # /.authenticate()
   
     describe ".sign_up(email, password)", ->
