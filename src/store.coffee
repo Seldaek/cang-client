@@ -53,16 +53,16 @@ define 'store', ['errors'], (ERROR) ->
     #     store.create(car)
     #     store.update(car)
     save: (type, id, object) ->
-      promise = @_deferred()
+      promise = @_promise()
     
       switch arguments.length
         when 2
           object  = id
-          id      = object.id
+          id      = object.id or object._id
         when 1
           object  = type
           type    = object.type
-          id      = object.id
+          id      = object.id or object._id
     
       unless typeof object is 'object'
         promise.reject ERROR.INVALID_ARGUMENTS "object is #{typeof object}"
@@ -112,7 +112,7 @@ define 'store', ['errors'], (ERROR) ->
     #     # alias
     #     store.get(car)
     load : (type, id) ->
-      promise = @_deferred()
+      promise = @_promise()
       
       if arguments.length = 1 and typeof type is 'object'
         [type, id] = [type.type, type.id]
@@ -150,7 +150,7 @@ define 'store', ['errors'], (ERROR) ->
     #     # alias
     #     store.getAll()
     loadAll: (type) ->
-      promise = @_deferred()
+      promise = @_promise()
       keys = @_index()
     
       try
@@ -176,7 +176,7 @@ define 'store', ['errors'], (ERROR) ->
     # when object has been synced before, mark it as deleted. 
     # Otherwise remove it from Store.
     destroy: (type, id) ->
-      promise = @_deferred()
+      promise = @_promise()
       object = @cache type, id
       
       unless object
@@ -298,7 +298,7 @@ define 'store', ['errors'], (ERROR) ->
     #
     # clears localStorage and cache
     clear: ()->
-      promise = @_deferred()
+      promise = @_promise()
     
       try
         @db.clear()
@@ -390,7 +390,7 @@ define 'store', ['errors'], (ERROR) ->
       /^[a-z0-9]+\/[a-z0-9]+$/.test key
     
     #
-    _deferred: $.Deferred
+    _promise: $.Deferred
 
     # cache of localStorage for quicker access
     _cached: {}

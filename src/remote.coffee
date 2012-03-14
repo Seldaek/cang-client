@@ -17,26 +17,34 @@ define 'remote', ['errors'], (ERROR) ->
       
       @app.on 'store:dirty:idle', @push_changes
       
+      @connect()
+      @app.on 'account:sign_in',  @connect
+      @app.on 'account:sign_out', @disconnect
+      
+      
+      
     # ## Connect
     #
     # start pulling changes from the userDB
-    connect : ->
+    connect : =>
       
       return if @_connected
-      do @pull_changes
+      @app.account.authenticate().done @pull_changes
+      
       
     # ## Disconnect
     #
     # stop pulling changes from the userDB
-    disconnect : ->
+    disconnect : =>
       @_connected = false
       @_changes_request.abort() if @_changes_request
+    
     
     # ## pull changes
     #
     # a.k.a. make a longpoll AJAX request to CouchDB's `_changes` feed.
     #
-    pull_changes: ->
+    pull_changes: =>
       @_connected = true
       
       @_changes_request = @app.request 'GET', @_changes_path(),
@@ -52,17 +60,22 @@ define 'remote', ['errors'], (ERROR) ->
     # Push locally changed objects to userDB using the
     # using the `_bulk_docs` API
     push_changes : (options) =>
+
+      console.log "@app.store.changed_docs()", @app.store.changed_docs()
+      $.ajax({type: 'POST', url: 'http://cors.io/funtime.g3th.net:5984/cang/_bulk_docs', data:'{"docs": []}', contentType: 'application/json'})
       
-      docs    = @app.store.changed_docs()
-      return @_deferred().resolve([]) if docs.lenght is 0
-        
-      docs = @_parse_for_remote doc for doc in docs
+      # docs    = @app.store.changed_docs()
+      # return @_promise().resolve([]) if docs.lenght is 0
+      #   
+      # docs = @_parse_for_remote doc for doc in docs
       
-      @app.request 'POST', '/db/account/_bulk_docs', 
-        data        : JSON.stringify(docs: docs)
-        success     : @_handle_changes
-      
-      $.ajax(params)
+      # @app.request 'POST', "/#{encodeURIComponent @app.account.email}/_bulk_docs", 
+      #   dataType:     'json'
+      #   processData:  false
+      #   contentType:  'application/json'
+      # 
+      #   data        : JSON.stringify(docs: docs)
+      #   success     : @_handle_changes
       
       
     # ## Get / Set seq
@@ -84,7 +97,7 @@ define 'remote', ['errors'], (ERROR) ->
       since = @get_seq()
       db    = 'joe_example_com' # TODO
 
-      "/#{db}/_changes?heartbeat=10000&feed=longpoll&since=#{since}"
+      "/#{encodeURIComponent @app.account.email}/_changes?include_docs=true&heartbeat=10000&feed=longpoll&since=#{since}"
     
     # request gets restarted automaticcally in @_changes_error
     _restart_changes_request: => @_changes_request?.abort()
@@ -94,7 +107,7 @@ define 'remote', ['errors'], (ERROR) ->
     #
     # handle the incoming changes, then send the next request
     #
-    _changes_success : (response) ->
+    _changes_success : (response) =>
       
       return unless @_connected
       @_handle_changes(response)
@@ -106,9 +119,8 @@ define 'remote', ['errors'], (ERROR) ->
     # when there is a change, trigger event, 
     # then check for another change
     #
-    _changes_error : (xhr, error, resp) ->
-      return unless @is_active()
-      return if @is_offline()
+    _changes_error : (xhr, error, resp) =>
+      return unless @_connected
     
       switch xhr.status
     
@@ -127,7 +139,7 @@ define 'remote', ['errors'], (ERROR) ->
         when 404
           # @trigger 'error:unknown'
           # @stop()
-          window.setTimeout (=> @_getChanges()), @_changes_timeout(3000)
+          window.setTimeout @pull_changes, @_changes_timeout(3000)
         
         # Please server, don't give us these
         when 500
@@ -138,12 +150,11 @@ define 'remote', ['errors'], (ERROR) ->
         else
           if xhr.statusText is 'abort'
             # manual abort after 59sec. reload changes directly.
-            @_getChanges()
+            @pull_changes()
           else        
             # oops. This might be caused by an unreachable server.
             # let's trigger cache update to double check
-            App.AutoUpdate.check() unless App.AutoUpdate.status() is 'checking'
-            window.setTimeout (=> @_getChanges()), @_changes_timeout()
+            window.setTimeout @pull_changes, @_changes_timeout()
             @_double_changes_timeout()
   
     # map of valid couchDB doc attributes starting with an underscore
@@ -163,8 +174,8 @@ define 'remote', ['errors'], (ERROR) ->
       attributes = $.extend obj
     
       for attr of attributes
-        next if @_valid_special_attributes[attr]
-        next unless /^_/.test attr
+        continue if @_valid_special_attributes[attr]
+        continue unless /^_/.test attr
         delete attributes[attr]
       
       attributes
@@ -173,10 +184,31 @@ define 'remote', ['errors'], (ERROR) ->
     # handle changes from remote
     #
     _handle_changes: (response) =>
+      @set_seq response.last_seq
+      
       # TODO: make app.store parse the passed objects correctly
       #       e.g. rename `_id` to `id` etc
-      @app.store(object, remote: true) for object in response
+      console.log 'saving', result.id, result.doc for result in response.results
+      @app.store.save(result.doc, remote: true) for result in response.results
+        
+        
     
-  
     #
-    _deferred: $.Deferred
+    # changes timeout (setter & getter)
+    #
+    # if there is an error, we use a timeout to try it again.
+    # we double it each time an error occurs and reset it back
+    # to 100 on success
+    #
+    _changes_timeout_default : 100
+    _changes_timeout_current : 100
+    _changes_timeout : (set) ->
+      if set
+        @_changes_timeout_current = set
+      else
+        @_changes_timeout_current
+    _reset_changes_timeout  : -> @_changes_timeout_current = @_changes_timeout_default
+    _double_changes_timeout : -> @_changes_timeout_current = @_changes_timeout_current * 2
+    
+    #
+    _promise: $.Deferred

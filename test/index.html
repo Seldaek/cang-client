@@ -6,10 +6,13 @@
   
   <script src="lib/jasmine-1.1.0/jasmine.js"></script>
   <script src="lib/jasmine-1.1.0/jasmine-html.js"></script>
-  <script src="lib/jasmine-helpers.js"></script>
+  <script src="../compiled/test/lib/jasmine-helpers.js"></script>
 
   <script src="../vendor/require-1.0.7.js"></script>
-  <script src="../vendor/jquery-1.7.1.min.js"></script>
+  
+  <!--   <script src="../vendor/jquery-1.7.1.min.js"></script>
+     -->
+  <script src="http://code.jquery.com/jquery-1.7.1.js"></script>
 
   <script src="../compiled/src/errors.js"></script>
   <script src="../compiled/src/events.js"></script>
@@ -18,6 +21,7 @@
   <script src="../compiled/src/remote.js"></script>
   <script src="../compiled/src/couchapp.js"></script>
   
+  <script src="../compiled/test/mocks/couchapp.js"></script>
   <script src="../compiled/test/specs/couchapp.spec.js"></script>
   <script src="../compiled/test/specs/store.spec.js"></script>
   <script src="../compiled/test/specs/account.spec.js"></script>
@@ -30,6 +34,8 @@
     jas.addReporter(new jasmine.TrivialReporter());
     
     require([
+      'mocks/couchapp',
+      
       'specs/store',
       'specs/account',
       'specs/remote',

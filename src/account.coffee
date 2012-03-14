@@ -10,21 +10,50 @@ define 'account', ->
     
     # ## Properties
     email: undefined
-  
+    
+    
     # ## Constructor
     #
     constructor : (@app) ->
       
-      # handle sessions
+      # handle evtl session
       @email = @app.store.db.getItem '_couch.account.email'
+      @authenticate()
       
-      @app.on 'account:sign_in', (response) =>
-        @email = response.name
-        @app.store.db.setItem '_couch.account.email', @email
-      @app.on 'account:sign_out', (response) =>
-        delete @email
-        @app.store.db.removeItem '_couch.account.email'
-        
+      @app.on 'account:sign_in',  @_handle_sign_in
+      @app.on 'account:sign_out', @_handle_sign_out
+    
+    
+    ##
+    #
+    authenticate : ->
+      promise = @app.promise()
+      
+      unless @email
+        return promise.reject()
+      
+      if @_authenticated is undefined
+        @app.request 'GET', "/_session"
+          success: (response) =>
+            if response.userCtx.name
+              @_authenticated = true
+              @email = response.userCtx.name
+              promise.resolve @email
+            else
+              @_authenticated = false
+              @app.trigger 'account:error:not_authenticated'
+              promise.reject()
+          error: promise.reject
+              
+      else
+        if @_authenticated
+          promise.resolve()
+        else
+          promise.reject()
+          
+      promise
+      
+      
         
     # ## sign up with email & password
     #
@@ -61,7 +90,7 @@ define 'account', ->
           name      : email
           password  : password
           
-        success : => @app.trigger 'account:sign_in'
+        success : => @app.trigger 'account:sign_in', arguments...
 
     # alias
     login: @::sign_in
@@ -81,7 +110,24 @@ define 'account', ->
     #
     sign_out: ->
       @app.request 'DELETE', '/_session', 
-        success : => @app.trigger 'account:sign_out'
+        success : => @app.trigger 'account:sign_out', arguments...
 
     # alias
     logout: @::sign_out
+    
+    
+
+    # ## PRIVATE
+    #
+    
+    #
+    _handle_sign_in: (response) =>
+      @email = response.name
+      @app.store.db.setItem '_couch.account.email', @email
+      @_authenticated = true
+    
+    #
+    _handle_sign_out: (response) =>
+      delete @email
+      @app.store.db.removeItem '_couch.account.email'
+      @_authenticated = false

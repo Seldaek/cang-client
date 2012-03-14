@@ -1,11 +1,7 @@
-define 'specs/remote', ['store', 'couchapp'], (Store, couchApp) ->
-  
-  class app_mock
-    uuid    : -> 'abc',
-    trigger : ->
+define 'specs/remote', ['mocks/couchapp'], (couchAppMock) ->
   
   describe "Remote", ->  
     beforeEach ->
-      @app = new app_mock 
+      @app = new couchAppMock 
       @store = new Store @app
   # /Remote

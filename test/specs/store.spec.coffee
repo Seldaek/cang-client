@@ -1,12 +1,8 @@
-define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
-  
-  class app_mock
-    uuid    : -> 'abc',
-    trigger : ->
+define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
   
   describe "Store", ->  
     beforeEach ->
-      @app = new app_mock 
+      @app = new couchAppMock 
       @store = new Store @app
       
       spyOn(@store, "_setObject").andCallThrough()
@@ -89,7 +85,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     
         it "should store the object without the type attribute", ->
           expect(@object.type).toBeUndefined()
-  
+      
       it "should not overwrite created_at attribute", ->
         @store.save 'document', '123', { created_at: 'check12'  }
         [type, id, object] = @store._setObject.mostRecentCall.args
@@ -128,6 +124,15 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         
           it "should get the id", ->
             expect(@key).toBe 'document/exists'
+        
+        _and "object has an _id", ->
+          beforeEach ->
+            # keep promise, key, and stored object for assertions
+            promise = @store.save 'document', { name: 'test', _id: 'exists' }
+            [@key, @object] = @store.db.setItem.mostRecentCall.args
+        
+          it "should get the id", ->
+            expect(@key).toBe 'document/exists'
   
       _when "called without type and id", ->
         _and "object has no id", ->
@@ -143,6 +148,15 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document', id: 'exists'
+            [@key, @object] = @store.db.setItem.mostRecentCall.args
+        
+          it "should get id and type form object", ->
+            expect(@key).toBe 'document/exists'
+         
+        _and "object has an _id", ->
+          beforeEach ->
+            # keep promise, key, and stored object for assertions
+            promise = @store.save name: 'test', type: 'document', _id: 'exists'
             [@key, @object] = @store.db.setItem.mostRecentCall.args
         
           it "should get id and type form object", ->
@@ -381,13 +395,13 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
     describe ".clear()", ->
       beforeEach ->
 
-        spyOn(@store, "_deferred").andReturn
+        spyOn(@store, "_promise").andReturn
           resolve: jasmine.createSpy 'resolve'
           reject:  jasmine.createSpy 'reject'
       
       it "should return a promise", ->
         promise = @store.clear()
-        expect(promise).toBe @store._deferred()
+        expect(promise).toBe @store._promise()
         
       it "should clear localStorage", ->
         @store.clear()
@@ -405,7 +419,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         
       it "should resolve promise", ->
         @store.clear()      
-        do expect(@store._deferred().resolve).wasCalled
+        do expect(@store._promise().resolve).wasCalled
       
       _when "an error occurs", ->
         beforeEach ->
@@ -413,7 +427,7 @@ define 'specs/store', ['store', 'couchapp'], (Store, couchApp) ->
         
         it "should reject the promise", ->
           @store.clear()      
-          do expect(@store._deferred().reject).wasCalled
+          do expect(@store._promise().reject).wasCalled
     # /.clear()
 
     describe ".is_dirty(type, id)", ->

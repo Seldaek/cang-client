@@ -49,11 +49,5 @@ define 'specs/couchapp', ['couchapp'], (couchApp) ->
           expect(@args.type).toBe 'POST'
           expect(@args.url).toBe 'http://couch.example.com/test'
         
-        it "should set `contentType: 'application/json'`", ->
-          expect(@args.contentType).toBe 'application/json'
-          
-        it "should stringify the passed data", ->
-          expect(@args.data).toBe '{"funky":"fresh"}'
-        
     # /request(type, path, options)
   # /couchApp

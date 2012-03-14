@@ -1,24 +1,81 @@
-define 'specs/account', ['account'], (Account) ->
+define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) ->
   
-  class app_mock
-    couchDB_url : 'http://my.cou.ch'
-    trigger     : ->
-    request     : ->
-    on          : ->
-    store       :
-      db :
-        getItem    : ->
-        setItem    : ->
-        removeItem : ->
-          
-  describe "couchApp", ->
+  describe "Account", ->
     beforeEach ->
-      @app = new app_mock
+      @app = new couchAppMock
       @account = new Account @app
     
       # requests
       spyOn(@app, "request")
       spyOn(@app, "trigger")
+  
+    describe "new", ->
+      beforeEach ->
+        spyOn(Account.prototype, "authenticate")
+        spyOn(@app, "on")
+      
+      _when "_couch.account.email is set", ->
+        beforeEach ->
+          spyOn(@app.store.db, "getItem").andCallFake (key) ->
+            if key is '_couch.account.email'
+              return 'joe@example.com'
+              
+          it "should set @email", ->
+            account = new Account @app
+            expect(account.email).toBe 'joe@example.com'          
+            
+      it "should authenticate", ->
+        account = new Account @app
+        expect(account.authenticate).wasCalled()
+        
+      it "should bind to sign_in event", ->
+        account = new Account @app
+        expect(@app.on).wasCalledWith 'account:sign_in', account._handle_sign_in
+      
+      it "should bind to sign_out event", ->
+        account = new Account @app
+        expect(@app.on).wasCalledWith 'account:sign_out', account._handle_sign_out
+    # /new
+    
+    describe "event handlers", ->
+      describe "_handle_sign_in", ->
+        beforeEach ->
+          spyOn(@app.store.db, "setItem")
+          @account._handle_sign_in {"ok":true,"name":"joe@example.com","roles":[]}
+        
+        it "should set @email", ->
+          expect(@account.email).toBe 'joe@example.com'
+          
+        it "should store @email persistantly", ->
+          expect(@app.store.db.setItem).wasCalledWith '_couch.account.email', 'joe@example.com'
+          
+        it "should set _authenticated to true", ->
+          @account._authenticated = false
+          @account._handle_sign_in {"ok":true,"name":"joe@example.com","roles":[]}
+          expect(@account._authenticated).toBe true
+      # /_handle_sign_in
+      
+      describe "_handle_sign_out", ->
+        it "should set @email", ->
+          @account.email = 'joe@example.com'
+          @account._handle_sign_out {"ok":true}
+          do expect(@account.email).toBeUndefined
+          
+        it "should store @email persistantly", ->
+          spyOn(@app.store.db, "removeItem")
+          @account._handle_sign_out {"ok":true}
+          expect(@app.store.db.removeItem).wasCalledWith '_couch.account.email'
+          
+        it "should set _authenticated to false", ->
+          @account._authenticated = true
+          @account._handle_sign_out {"ok":true}
+          expect(@account._authenticated).toBe false
+      # /_handle_sign_out
+    # /event handlers
+    
+    describe ".authenticate()", ->
+      
+    # /.authenticate()
   
     describe ".sign_up(email, password)", ->
       beforeEach ->

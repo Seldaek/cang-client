@@ -33,5 +33,12 @@ define 'couchapp', ['events', 'store', 'account', 'remote'], (Events, Store, Acc
         url         : "#{@couchDB_url}#{path}"
         xhrFields   : withCredentials: true
         crossDomain : true
+        dataType    : 'json'
 
       $.ajax $.extend defaults, options
+      
+    
+    # ## Promise
+    #
+    # returns a promise skeletton for custom promise handlings
+    promise: $.Deferred
