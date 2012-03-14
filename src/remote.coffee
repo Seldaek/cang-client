@@ -38,6 +38,9 @@ define 'remote', ['errors'], (ERROR) ->
     disconnect : =>
       @_connected = false
       @_changes_request.abort() if @_changes_request
+      @app.store.db.removeItem '_couch.remote.seq'
+
+
     
     
     # ## pull changes
@@ -163,7 +166,7 @@ define 'remote', ['errors'], (ERROR) ->
       '_rev'     : 1
       '_deleted' : 1
   
-    #
+  
     # parse object for remote storage. All attributes starting with an 
     # `underscore` do not get synchronized despite the special attributes
     # `_id`, `_rev` and `_deleted`
@@ -171,7 +174,7 @@ define 'remote', ['errors'], (ERROR) ->
     # Also `id` attribute gets renamed to `_id`
     #
     _parse_for_remote: (obj) ->
-      attributes = $.extend obj
+      attributes = $.extend {}, obj
     
       for attr of attributes
         continue if @_valid_special_attributes[attr]
@@ -179,13 +182,23 @@ define 'remote', ['errors'], (ERROR) ->
         delete attributes[attr]
       
       attributes
+      
+    # parse object for local storage. 
+    # 
+    # renames `_id` attribute to `id` and removes the type from the id,
+    # e.g. `document/123` -> `123`
+    _parse_from_remote: (obj) ->
+      id = obj._id
+      delete obj._id
+      obj.id = id.split(/\//).pop()
+      obj
   
     #
     # handle changes from remote
     #
     _handle_changes: (response) =>
       @set_seq response.last_seq
-      @app.store.save(result.doc, remote: true) for result in response.results
+      @app.store.save( @_parse_from_remote(result.doc), remote: true) for result in response.results
         
         
     

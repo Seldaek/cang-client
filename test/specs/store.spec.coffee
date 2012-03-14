@@ -12,7 +12,14 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       spyOn(@store.db, "setItem").andCallThrough()
       # spyOn(@store, "_removeItem").andCallThrough()
       spyOn(@store.db, "clear").andCallThrough()
-
+    
+    describe "new", ->
+      it "should subscribe to account:sign_out event", ->
+        spyOn(@app, "on")
+        store = new Store @app
+        expect(@app.on).wasCalledWith 'account:sign_out', store.clear
+    # /new
+    
     describe ".save(type, id, object, options)", ->
       beforeEach ->
         spyOn(@store, "_now").andReturn 'now'
@@ -50,6 +57,14 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           object = @store.cache.mostRecentCall.args[2]
           expect(object.created_at).toBe 'now'
           expect(object.updated_at).toBe 'now'
+        
+        _and "options.remote is true", ->
+          it "should not add or update the timestamps", ->
+            @store.save 'document', '123', { name: 'test' }, { remote: true }
+            object = @store.cache.mostRecentCall.args[2]
+            expect(object.created_at).toBeUndefined()
+            expect(object.updated_at).toBeUndefined()
+          
         
         it "should pass options", ->
           options = @store.cache.mostRecentCall.args[3]
@@ -131,15 +146,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         
           it "should get the id", ->
             expect(@key).toBe 'exists'
-        
-        _and "object has an _id", ->
-          beforeEach ->
-            # keep promise, key, and stored object for assertions
-            promise = @store.save 'document', { name: 'test', _id: 'exists' }
-            [type, @key, @object] = @store.cache.mostRecentCall.args
-        
-          it "should get the id", ->
-            expect(@key).toBe 'exists'
   
       _when "called without type and id", ->
         _and "object has no id", ->
@@ -155,15 +161,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
             promise = @store.save name: 'test', type: 'document', id: 'exists'
-            [type, @key, @object] = @store.cache.mostRecentCall.args
-        
-          it "should get id and type form object", ->
-            expect(@key).toBe 'exists'
-         
-        _and "object has an _id", ->
-          beforeEach ->
-            # keep promise, key, and stored object for assertions
-            promise = @store.save name: 'test', type: 'document', _id: 'exists'
             [type, @key, @object] = @store.cache.mostRecentCall.args
         
           it "should get id and type form object", ->

@@ -22,6 +22,10 @@ define 'store', ['errors'], (ERROR) ->
           key        : -> null
           length     : -> 0
           clear      : -> null
+      
+      # handle sign outs
+      @app.on 'account:sign_out', @clear
+      
     
     # localStorage proxy
     db: 
@@ -59,11 +63,11 @@ define 'store', ['errors'], (ERROR) ->
           options = id
           object  = type
           type    = object.type
-          id      = object.id or object._id
+          id      = object.id
         when typeof arguments[1]
           options = object
           object  = id
-          id      = object.id or object._id
+          id      = object.id
     
       unless typeof object is 'object'
         promise.reject ERROR.INVALID_ARGUMENTS "object is #{typeof object}"
@@ -80,8 +84,8 @@ define 'store', ['errors'], (ERROR) ->
         promise.reject ERROR.INVALID_KEY type: type
         return promise
     
-      # add timestamps.
-      object.created_at ||= object.updated_at = @_now()
+      # add timestamps. unless update comes from remote
+      object.created_at ||= object.updated_at = @_now() unless options?.remote
     
       # remove `id` and `type` attributes before saving,
       # as the Store key contains this information
@@ -298,7 +302,8 @@ define 'store', ['errors'], (ERROR) ->
     # ## Clear
     #
     # clears localStorage and cache
-    clear: ()->
+    # TODO: do not clear entire localStorage, clear only item that have been stored before
+    clear: =>
       promise = @_promise()
     
       try
