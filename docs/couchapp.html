@@ -24,10 +24,7 @@
         <span class="nv">xhrFields   : withCredentials: </span><span class="kc">true</span>
         <span class="nv">crossDomain : </span><span class="kc">true</span>
         <span class="nv">dataType    : </span><span class="s1">&#39;json&#39;</span>
-      
-      <span class="nv">options = </span><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">options</span>
-      
-      <span class="k">if</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;PUT&#39;</span> <span class="o">or</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;POST&#39;</span>
-        <span class="nv">options.contentType = </span><span class="s2">&quot;application/json&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>options.data = JSON.stringify options.data</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span> <span class="nx">options</span>
+
+      <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">options</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
