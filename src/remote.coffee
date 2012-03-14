@@ -20,7 +20,6 @@ define 'remote', ['errors'], (ERROR) ->
       @connect()
       @app.on 'account:sign_in',  @connect
       @app.on 'account:sign_out', @disconnect
-      console.log 'subscribed to account:sign_out'
       
       
     # ## Connect
@@ -41,8 +40,6 @@ define 'remote', ['errors'], (ERROR) ->
       @app.store.db.removeItem '_couch.remote.seq'
 
 
-    
-    
     # ## pull changes
     #
     # a.k.a. make a longpoll AJAX request to CouchDB's `_changes` feed.
@@ -183,6 +180,7 @@ define 'remote', ['errors'], (ERROR) ->
       
       attributes
       
+      
     # parse object for local storage. 
     # 
     # renames `_id` attribute to `id` and removes the type from the id,
@@ -193,14 +191,14 @@ define 'remote', ['errors'], (ERROR) ->
       obj.id = id.split(/\//).pop()
       obj
   
+  
     #
     # handle changes from remote
     #
     _handle_changes: (response) =>
       @set_seq response.last_seq
       @app.store.save( @_parse_from_remote(result.doc), remote: true) for result in response.results
-        
-        
+    
     
     #
     # changes timeout (setter & getter)

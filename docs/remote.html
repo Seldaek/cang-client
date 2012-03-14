@@ -14,7 +14,6 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
       <span class="nx">@app</span><span class="p">.</span><span class="kc">on</span> <span class="s1">&#39;account:sign_in&#39;</span><span class="p">,</span>  <span class="nx">@connect</span>
       <span class="nx">@app</span><span class="p">.</span><span class="kc">on</span> <span class="s1">&#39;account:sign_out&#39;</span><span class="p">,</span> <span class="nx">@disconnect</span>
       
-      
       </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>Connect</h2>
 
 <p>start pulling changes from the userDB</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">connect : </span><span class="o">=&gt;</span>
@@ -27,8 +26,7 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
 <p>stop pulling changes from the userDB</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">disconnect : </span><span class="o">=&gt;</span>
       <span class="vi">@_connected = </span><span class="kc">false</span>
       <span class="nx">@_changes_request</span><span class="p">.</span><span class="nx">abort</span><span class="p">()</span> <span class="k">if</span> <span class="nx">@_changes_request</span>
-    
-    </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>pull changes</h2>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">removeItem</span> <span class="s1">&#39;_couch.remote.seq&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>pull changes</h2>
 
 <p>a.k.a. make a longpoll AJAX request to CouchDB's <code>_changes</code> feed.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">pull_changes: </span><span class="o">=&gt;</span>
       <span class="vi">@_connected = </span><span class="kc">true</span>
@@ -48,7 +46,7 @@ using the <code>_bulk_docs</code> API</p>             </td>             <td clas
       <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;@app.store.changed_docs()&quot;</span><span class="p">,</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">changed_docs</span><span class="p">()</span>
       <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span><span class="nv">type: </span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="nv">url: </span><span class="s1">&#39;http://cors.io/funtime.g3th.net:5984/cang/_bulk_docs&#39;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span><span class="s1">&#39;{&quot;docs&quot;: []}&#39;</span><span class="p">,</span> <span class="nv">contentType: </span><span class="s1">&#39;application/json&#39;</span><span class="p">})</span>
       </pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>docs    = @app.store.changed<em>docs()
-return @</em>deferred().resolve([]) if docs.lenght is 0</p>
+return @</em>promise().resolve([]) if docs.lenght is 0</p>
 
 <p>docs = @<em>parse</em>for_remote doc for doc in docs</p>             </td>             <td class="code">               <div class="highlight"><pre>      </pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>@app.request 'POST', "/#{encodeURIComponent @app.account.email}/<em>bulk</em>docs", 
   dataType:     'json'
@@ -68,7 +66,7 @@ return @</em>deferred().resolve([]) if docs.lenght is 0</p>
       <span class="nv">since = </span><span class="nx">@get_seq</span><span class="p">()</span>
       <span class="nv">db    = </span><span class="s1">&#39;joe_example_com&#39;</span> <span class="c1"># TODO</span>
 
-      <span class="s2">&quot;/#{encodeURIComponent @app.account.email}/_changes?heartbeat=10000&amp;feed=longpoll&amp;since=#{since}&quot;</span>
+      <span class="s2">&quot;/#{encodeURIComponent @app.account.email}/_changes?include_docs=true&amp;heartbeat=10000&amp;feed=longpoll&amp;since=#{since}&quot;</span>
     </pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-12">&#182;</a>               </div>               <p>request gets restarted automaticcally in @<em>changes</em>error</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_restart_changes_request: </span><span class="o">=&gt;</span> <span class="nx">@_changes_request</span><span class="o">?</span><span class="p">.</span><span class="nx">abort</span><span class="p">()</span>
       </pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-13">&#182;</a>               </div>               <p>changes success handler </p>
 
@@ -107,12 +105,13 @@ let's trigger cache update to double check</p>             </td>             <td
       <span class="s1">&#39;_id&#39;</span>      <span class="o">:</span> <span class="mi">1</span>
       <span class="s1">&#39;_rev&#39;</span>     <span class="o">:</span> <span class="mi">1</span>
       <span class="s1">&#39;_deleted&#39;</span> <span class="o">:</span> <span class="mi">1</span>
+  
   </pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-23">&#182;</a>               </div>               <p>parse object for remote storage. All attributes starting with an 
 <code>underscore</code> do not get synchronized despite the special attributes
 <code>_id</code>, <code>_rev</code> and <code>_deleted</code></p>
 
 <p>Also <code>id</code> attribute gets renamed to <code>_id</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_parse_for_remote: </span><span class="nf">(obj) -&gt;</span>
-      <span class="nv">attributes = </span><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="nx">obj</span>
+      <span class="nv">attributes = </span><span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">obj</span>
     
       <span class="k">for</span> <span class="nx">attr</span> <span class="k">of</span> <span class="nx">attributes</span>
         <span class="k">continue</span> <span class="k">if</span> <span class="nx">@_valid_special_attributes</span><span class="p">[</span><span class="nx">attr</span><span class="p">]</span>
@@ -120,11 +119,20 @@ let's trigger cache update to double check</p>             </td>             <td
         <span class="k">delete</span> <span class="nx">attributes</span><span class="p">[</span><span class="nx">attr</span><span class="p">]</span>
       
       <span class="nx">attributes</span>
-  </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <p>handle changes from remote</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_handle_changes: </span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">=&gt;</span>
       
-      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s1">&#39;_handle_changes&#39;</span><span class="p">,</span> <span class="nx">response</span>
-      </pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-25">&#182;</a>               </div>               <p>TODO: make app.store parse the passed objects correctly
-      e.g. rename <code>_id</code> to <code>id</code> etc</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">(</span><span class="nx">object</span><span class="p">,</span> <span class="nv">remote: </span><span class="kc">true</span><span class="p">)</span> <span class="k">for</span> <span class="nx">object</span> <span class="k">in</span> <span class="nx">response</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <p>parse object for local storage. </p>
+
+<p>renames <code>_id</code> attribute to <code>id</code> and removes the type from the id,
+e.g. <code>document/123</code> -> <code>123</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_parse_from_remote: </span><span class="nf">(obj) -&gt;</span>
+      <span class="nv">id = </span><span class="nx">obj</span><span class="p">.</span><span class="nx">_id</span>
+      <span class="k">delete</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">_id</span>
+      <span class="nv">obj.id = </span><span class="nx">id</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/\//</span><span class="p">).</span><span class="nx">pop</span><span class="p">()</span>
+      <span class="nx">obj</span>
+  
+  </pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-25">&#182;</a>               </div>               <p>handle changes from remote</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_handle_changes: </span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">=&gt;</span>
+      <span class="nx">@set_seq</span> <span class="nx">response</span><span class="p">.</span><span class="nx">last_seq</span>
+      <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span> <span class="nx">@_parse_from_remote</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">doc</span><span class="p">),</span> <span class="nv">remote: </span><span class="kc">true</span><span class="p">)</span> <span class="k">for</span> <span class="nx">result</span> <span class="k">in</span> <span class="nx">response</span><span class="p">.</span><span class="nx">results</span>
+    
     </pre></div>             </td>           </tr>                               <tr id="section-26">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-26">&#182;</a>               </div>               <p>changes timeout (setter &amp; getter)</p>
 
 <p>if there is an error, we use a timeout to try it again.
@@ -138,6 +146,6 @@ to 100 on success</p>             </td>             <td class="code">           
         <span class="nx">@_changes_timeout_current</span>
     <span class="nv">_reset_changes_timeout  : </span><span class="o">-&gt;</span> <span class="vi">@_changes_timeout_current = </span><span class="nx">@_changes_timeout_default</span>
     <span class="nv">_double_changes_timeout : </span><span class="o">-&gt;</span> <span class="vi">@_changes_timeout_current = </span><span class="nx">@_changes_timeout_current</span> <span class="o">*</span> <span class="mi">2</span>
-    </pre></div>             </td>           </tr>                               <tr id="section-27">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-27">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_deferred: </span><span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-27">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-27">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_promise: </span><span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
