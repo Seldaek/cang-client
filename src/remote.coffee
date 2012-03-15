@@ -38,6 +38,7 @@ define 'remote', ['errors'], (ERROR) ->
       @_connected = false
       @_changes_request.abort() if @_changes_request
       @app.store.db.removeItem '_couch.remote.seq'
+      delete @_seq
 
 
     # ## pull changes

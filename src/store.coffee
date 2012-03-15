@@ -88,7 +88,8 @@ define 'store', ['errors'], (ERROR) ->
       if options?.remote
         object._synced_at = @_now()
       else
-        object.created_at ||= object.updated_at = @_now()
+        object.updated_at = @_now()
+        object.created_at ||= object.updated_at
     
       # remove `id` and `type` attributes before saving,
       # as the Store key contains this information
@@ -219,8 +220,12 @@ define 'store', ['errors'], (ERROR) ->
       key = "#{type}/#{id}"
     
       if object
-        @_cached[key] = $.extend object, type: type, id: id
-        @_setObject type, id, object
+        if @is_marked_as_deleted object
+          @_cached[key] = false
+          @db.removeItem key
+        else
+          @_cached[key] = $.extend object, type: type, id: id
+          @_setObject type, id, object
         
         if options.remote
           @clear_changed type, id 
@@ -230,7 +235,7 @@ define 'store', ['errors'], (ERROR) ->
         return @_cached[key] if @_cached[key]?
         @_cached[key] = @_getObject type, id
     
-      if @is_dirty(type, id) or @is_marked_as_deleted(type, id)
+      if @is_dirty(object) or @is_marked_as_deleted(object)
         @mark_as_changed type, id, @_cached[key]
       else
         @clear_changed type, id
@@ -257,8 +262,14 @@ define 'store', ['errors'], (ERROR) ->
     #
     # when an object gets deleted that has been synched before (`_rev` attribute),
     # it cannot be removed from store but gets a `_deleted: true` attribute
+    #
+    # The object can be passed directly `is_marked_as_deleted(object)`
+    # or just its type and id `is_marked_as_deleted('couch','123')`
     is_marked_as_deleted : (type, id) ->
-      @cache(type, id)._deleted is true
+      if typeof type is 'object'
+        type._deleted is true
+      else
+        @cache(type, id)._deleted is true
     
     # ## Mark as changed
     #
@@ -287,17 +298,22 @@ define 'store', ['errors'], (ERROR) ->
     #
     # Otherwise it returns `true` or `false` for the passed object. An object is dirty
     # if it has no `_synced_at` attribute or if `updated_at` is more recent than `_synced_at`
-    is_dirty: (type = null, id = null) ->
+    #
+    # The object can be passed directly `is_dirty(object)` or just its type and id
+    # `is_dirty('couch','123')`
+    is_dirty: (type, id) ->
       unless type
         return $.isEmptyObject @_dirty
+        
+      if typeof type is 'object' 
+        obj = type
+      else
+        obj = @cache(type, id)
       
-      synced_at  = @cache(type, id)._synced_at
-      updated_at = @cache(type, id).updated_at
-      
-      return true  unless synced_at  # no synced_at? uuhh, that's dirty.
-      return false unless updated_at # no updated_at? no dirt then
+      return true  unless obj._synced_at  # no synced_at? uuhh, that's dirty.
+      return false unless obj.updated_at # no updated_at? no dirt then
     
-      synced_at.getTime() < updated_at.getTime()
+      obj._synced_at.getTime() < obj.updated_at.getTime()
   
   
     # ## Clear

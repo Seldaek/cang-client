@@ -10,7 +10,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       
       spyOn(@store.db, "getItem").andCallThrough()
       spyOn(@store.db, "setItem").andCallThrough()
-      # spyOn(@store, "_removeItem").andCallThrough()
+      spyOn(@store.db, "removeItem").andCallThrough()
       spyOn(@store.db, "clear").andCallThrough()
     
     describe "new", ->
@@ -327,14 +327,35 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         @store._cached = {}
         
       _when "object passed", ->
-        it "should write the object to localStorage, but without type & id attributes", ->
-          @store.cache('couch', '123', color: 'red')
-          expect(@store.db.setItem).wasCalledWith 'couch/123', '{"color":"red"}'
+        _when "object is marked as deleted", ->
+          beforeEach ->
+            @store.is_marked_as_deleted.andReturn true
           
-        _when "`options.remote = true` passed", ->
-          it "should clear changed object", ->
-            @store.cache('couch', '123', {color: 'red'}, remote: true)
-            expect(@store.clear_changed).wasCalledWith 'couch', '123'
+          it "should not write the object to localStorage", ->
+            @store.cache 'couch', '123', color: 'red', _deleted: true
+            expect(@store.db.setItem).wasNotCalled()
+            
+          it "should remove the object from localStorage", ->
+            @store.cache 'couch', '123', color: 'red', _deleted: true
+            expect(@store.db.removeItem).wasCalled()
+            
+          it "should cache the object as false", ->
+            expect(@store._cached['couch/123']).toBeUndefined()
+            @store.cache 'couch', '123', color: 'red', _deleted: true
+            expect(@store._cached['couch/123']).toBe false
+          
+        _when "object isn't marked as deleted", ->
+          beforeEach ->
+            @store.is_marked_as_deleted.andReturn false
+          
+          it "should write the object to localStorage, but without type & id attributes", ->
+            @store.cache('couch', '123', color: 'red')
+            expect(@store.db.setItem).wasCalledWith 'couch/123', '{"color":"red"}'
+          
+          _when "`options.remote = true` passed", ->
+            it "should clear changed object", ->
+              @store.cache('couch', '123', {color: 'red'}, remote: true)
+              expect(@store.clear_changed).wasCalledWith 'couch', '123'
       
       _when "no object passed", ->
         _and "object is already cached", ->
@@ -484,8 +505,19 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
                 
             it "should return true", ->
               do expect(@store.is_dirty 'couch', '123').toBeTruthy
-            
-            
+        
+      _when "object passed", ->
+        _and "it is dirty", ->
+          it "should return true", ->
+            it_is_dirty = @store.is_dirty _synced_at: undefined
+            do expect(it_is_dirty).toBeTruthy
+
+        _and "object isn't dirty", ->
+          it "should return false", ->
+            it_is_dirty = @store.is_dirty 
+              updated_at: new Date(0)
+              _synced_at: new Date(0)
+            do expect(it_is_dirty).toBeFalsy
     # /.is_dirty(type, id)
     
     describe ".mark_as_changed(type, id, object)", ->
@@ -540,14 +572,18 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           spyOn(@store, "cache").andReturn _deleted: true
         
         it "should return true", ->
-          @store.is_marked_as_deleted('couch', '123')
+          expect(@store.is_marked_as_deleted('couch', '123')).toBeTruthy()
           
       _when "object 'couch/123' isn't marked as deleted", ->
         beforeEach ->
           spyOn(@store, "cache").andReturn {}
           
         it "should return false", ->
-          @store.is_marked_as_deleted('couch', '123')
+          expect(@store.is_marked_as_deleted('couch', '123')).toBeFalsy()
+          
+      _when "passed object is marked as deleted", ->
+        it "should return true", ->
+          expect(@store.is_marked_as_deleted( {_deleted: true} )).toBeTruthy()
     # /.is_marked_as_deleted(type, id)
 
     describe ".clear_changed(type, id)", ->
