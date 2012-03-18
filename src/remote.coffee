@@ -37,7 +37,9 @@ define 'remote', ['errors'], (ERROR) ->
     # stop pulling changes from the userDB
     disconnect : =>
       @_connected = false
+      console.log 'aborting _changes_request', @_changes_request
       @_changes_request.abort() if @_changes_request
+      
       @app.store.db.removeItem '_couch.remote.seq'
       
       @app.unbind 'store:dirty:idle', @push_changes
@@ -56,7 +58,7 @@ define 'remote', ['errors'], (ERROR) ->
         error:        @_changes_error
       
       window.clearTimeout @_changes_request_timeout
-      @_changes_request_timeout = window.setTimeout @_restart_changes_request, 59000 # 59 sec
+      @_changes_request_timeout = window.setTimeout @_restart_changes_request, 25000 # 25 sec
       
       
     # ## Push changes
@@ -77,7 +79,7 @@ define 'remote', ['errors'], (ERROR) ->
         contentType:  'application/json'
       
         data        : JSON.stringify(docs: docs)
-        success     : @_handle_changes
+        success     : @_handle_push_changes
       
       
     # ## Get / Set seq
@@ -113,7 +115,7 @@ define 'remote', ['errors'], (ERROR) ->
       
       return unless @_connected
       @set_seq response.last_seq
-      @_handle_changes(response.results)
+      @_handle_pull_changes(response.results)
       do @pull_changes
       
     # 
@@ -130,7 +132,7 @@ define 'remote', ['errors'], (ERROR) ->
         # This happens when users session got invalidated on server
         when 403
           @trigger 'error:unauthorized'
-          @stop()
+          do @disconnect
         
         # the 404 comes, when the requested DB of the User has been removed. 
         # Should really not happen. 
@@ -140,25 +142,25 @@ define 'remote', ['errors'], (ERROR) ->
         #
         # TODO: review / rethink that.
         when 404
-          # @trigger 'error:unknown'
-          # @stop()
-          window.setTimeout @pull_changes, @_changes_timeout(3000)
+          window.setTimeout @pull_changes, 3000
         
         # Please server, don't give us these
         when 500
           @trigger 'error:server'
-          @stop()
+          do @disconnect
         
         # usually a 0, which stands for timeout or server not reachable.
         else
           if xhr.statusText is 'abort'
-            # manual abort after 59sec. reload changes directly.
-            @pull_changes()
-          else        
+            # manual abort after 25sec. reload changes directly.
+            do @pull_changes
+          else    
+              
             # oops. This might be caused by an unreachable server.
-            # let's trigger cache update to double check
-            window.setTimeout @pull_changes, @_changes_timeout()
-            @_double_changes_timeout()
+            # Or the server canceld it for what ever reason, e.g.
+            # heroku kills the request after ~30s.
+            # we'll try again after a 3s timeout
+            window.setTimeout @pull_changes, 3000
   
     # map of valid couchDB doc attributes starting with an underscore
     _valid_special_attributes:
@@ -205,26 +207,18 @@ define 'remote', ['errors'], (ERROR) ->
     #
     # handle changes from remote
     #
-    _handle_changes: (changes) =>
-      @app.store.save( @_parse_from_remote(result.doc or result), remote: true) for result in changes
-    
-    
-    #
-    # changes timeout (setter & getter)
-    #
-    # if there is an error, we use a timeout to try it again.
-    # we double it each time an error occurs and reset it back
-    # to 100 on success
-    #
-    _changes_timeout_default : 100
-    _changes_timeout_current : 100
-    _changes_timeout : (set) ->
-      if set
-        @_changes_timeout_current = set
-      else
-        @_changes_timeout_current
-    _reset_changes_timeout  : -> @_changes_timeout_current = @_changes_timeout_default
-    _double_changes_timeout : -> @_changes_timeout_current = @_changes_timeout_current * 2
+    _handle_pull_changes: (changes) =>
+      for {doc} in changes
+        _doc = @_parse_from_remote(doc)
+        if _doc._deleted
+          @app.store.destroy(_doc.type, _doc.id, remote: true)
+          .done (object) => @app.trigger 'remote:destroy', _doc.type, _doc.id, object
+        else
+          @app.store.save(_doc.type, _doc.id, _doc, remote: true)
+          .done (object) => @app.trigger 'remote:change', _doc.type, _doc.id, object
+        
+    _handle_push_changes: (changes) =>
+      # TODO: handle conflicts
     
     #
     _promise: $.Deferred
