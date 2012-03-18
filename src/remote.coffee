@@ -15,11 +15,9 @@ define 'remote', ['errors'], (ERROR) ->
     #
     constructor : (@app) ->
       
-      @app.on 'store:dirty:idle', @push_changes
-      
-      @connect()
       @app.on 'account:sign_in',  @connect
       @app.on 'account:sign_out', @disconnect
+      @connect()
       
       
     # ## Connect
@@ -28,7 +26,10 @@ define 'remote', ['errors'], (ERROR) ->
     connect : =>
       
       return if @_connected
-      @app.account.authenticate().done @pull_changes
+      @app.account.authenticate().done =>
+        @app.on 'store:dirty:idle', @push_changes
+        @pull_changes()
+        @push_changes()
       
       
     # ## Disconnect
@@ -38,6 +39,8 @@ define 'remote', ['errors'], (ERROR) ->
       @_connected = false
       @_changes_request.abort() if @_changes_request
       @app.store.db.removeItem '_couch.remote.seq'
+      
+      @app.unbind 'store:dirty:idle', @push_changes
       delete @_seq
 
 
@@ -62,9 +65,6 @@ define 'remote', ['errors'], (ERROR) ->
     # using the `_bulk_docs` API
     push_changes : (options) =>
 
-      console.log "@app.store.changed_docs()", @app.store.changed_docs()
-      # $.ajax({type: 'POST', url: 'http://cors.io/funtime.g3th.net:5984/cang/_bulk_docs', data:'{"docs": []}', contentType: 'application/json'})
-      
       docs    = @app.store.changed_docs()
       return @_promise().resolve([]) if docs.lenght is 0
         
