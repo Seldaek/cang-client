@@ -15,21 +15,26 @@ define('remote', ['errors'], function(ERROR) {
       this.pull_changes = __bind(this.pull_changes, this);
       this.disconnect = __bind(this.disconnect, this);
       this.connect = __bind(this.connect, this);
-      this.app.on('store:dirty:idle', this.push_changes);
-      this.connect();
       this.app.on('account:sign_in', this.connect);
       this.app.on('account:sign_out', this.disconnect);
+      this.connect();
     }
 
     Remote.prototype.connect = function() {
+      var _this = this;
       if (this._connected) return;
-      return this.app.account.authenticate().done(this.pull_changes);
+      return this.app.account.authenticate().done(function() {
+        _this.app.on('store:dirty:idle', _this.push_changes);
+        _this.pull_changes();
+        return _this.push_changes();
+      });
     };
 
     Remote.prototype.disconnect = function() {
       this._connected = false;
       if (this._changes_request) this._changes_request.abort();
       this.app.store.db.removeItem('_couch.remote.seq');
+      this.app.unbind('store:dirty:idle', this.push_changes);
       return delete this._seq;
     };
 
@@ -45,7 +50,6 @@ define('remote', ['errors'], function(ERROR) {
 
     Remote.prototype.push_changes = function(options) {
       var doc, docs;
-      console.log("@app.store.changed_docs()", this.app.store.changed_docs());
       docs = this.app.store.changed_docs();
       if (docs.lenght === 0) return this._promise().resolve([]);
       docs = (function() {
