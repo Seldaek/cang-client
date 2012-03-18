@@ -48,7 +48,8 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
 using the <code>_bulk_docs</code> API</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">push_changes : </span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="o">=&gt;</span>
 
       <span class="nv">docs    = </span><span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">changed_docs</span><span class="p">()</span>
-      <span class="k">return</span> <span class="nx">@_promise</span><span class="p">().</span><span class="nx">resolve</span><span class="p">([])</span> <span class="k">if</span> <span class="nx">docs</span><span class="p">.</span><span class="nx">lenght</span> <span class="o">is</span> <span class="mi">0</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s2">&quot;docs?&quot;</span><span class="p">,</span> <span class="nx">docs</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span> <span class="nx">docs</span>
+      <span class="k">return</span> <span class="nx">@_promise</span><span class="p">().</span><span class="nx">resolve</span><span class="p">([])</span> <span class="k">if</span> <span class="nx">docs</span><span class="p">.</span><span class="nx">length</span> <span class="o">is</span> <span class="mi">0</span>
         
       <span class="nv">docs = </span><span class="k">for</span> <span class="nx">doc</span> <span class="k">in</span> <span class="nx">docs</span>
         <span class="nx">@_parse_for_remote</span> <span class="nx">doc</span> 
