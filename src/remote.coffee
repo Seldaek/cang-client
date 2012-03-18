@@ -66,7 +66,8 @@ define 'remote', ['errors'], (ERROR) ->
     push_changes : (options) =>
 
       docs    = @app.store.changed_docs()
-      return @_promise().resolve([]) if docs.lenght is 0
+      console.log "docs?", docs.length, docs
+      return @_promise().resolve([]) if docs.length is 0
         
       docs = for doc in docs
         @_parse_for_remote doc 

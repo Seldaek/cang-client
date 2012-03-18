@@ -51,7 +51,8 @@ define('remote', ['errors'], function(ERROR) {
     Remote.prototype.push_changes = function(options) {
       var doc, docs;
       docs = this.app.store.changed_docs();
-      if (docs.lenght === 0) return this._promise().resolve([]);
+      console.log("docs?", docs.length, docs);
+      if (docs.length === 0) return this._promise().resolve([]);
       docs = (function() {
         var _i, _len, _results;
         _results = [];
