@@ -66,12 +66,14 @@ define 'account', ->
 
       @app.request 'PUT', "/_users/#{encodeURIComponent key}",
         
-        data:
+        data: JSON.stringify
           _id       : key
           name      : email
           type      : 'user'
           roles     : []
           password  : password
+          
+        contentType:  'application/json'
         
         success   : => 
           @app.trigger 'account:sign_up', arguments...

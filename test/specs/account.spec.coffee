@@ -175,23 +175,30 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
       beforeEach ->
         @account.sign_up('joe@example.com', 'secret')
         [@type, @path, @options] = @app.request.mostRecentCall.args
+        @data = JSON.parse @options.data
     
       it "should send a PUT request to http://my.cou.ch/_users/org.couchdb.user%3Ajoe%40example.com", ->
         expect(@app.request).wasCalled()
         expect(@type).toBe 'PUT'
         expect(@path).toBe  '/_users/org.couchdb.user%3Ajoe%40example.com'
+        
+      it "should set contentType to 'application/json'", ->
+        expect(@options.contentType).toBe 'application/json'
+      
+      it "should stringify the data", ->
+        expect(typeof @options.data).toBe 'string'
     
       it "should have set _id to 'org.couchdb.user:joe@example.com'", ->
-        expect(@options.data._id).toBe 'org.couchdb.user:joe@example.com'
+        expect(@data._id).toBe 'org.couchdb.user:joe@example.com'
       
       it "should have set name to 'joe@example.com", ->
-        expect(@options.data.name).toBe 'joe@example.com'
+        expect(@data.name).toBe 'joe@example.com'
         
       it "should have set type to 'user", ->
-        expect(@options.data.type).toBe 'user'
+        expect(@data.type).toBe 'user'
 
       it "should pass password", ->
-        expect(@options.data.password).toBe 'secret'
+        expect(@data.password).toBe 'secret'
         
       _when "sign_up successful", ->
         beforeEach ->
