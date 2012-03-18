@@ -51,7 +51,6 @@ define('remote', ['errors'], function(ERROR) {
     Remote.prototype.push_changes = function(options) {
       var doc, docs;
       docs = this.app.store.changed_docs();
-      console.log("docs?", docs.length, docs);
       if (docs.length === 0) return this._promise().resolve([]);
       docs = (function() {
         var _i, _len, _results;
@@ -62,7 +61,6 @@ define('remote', ['errors'], function(ERROR) {
         }
         return _results;
       }).call(this);
-      console.log('POST', "/" + (encodeURIComponent(this.app.account.email)) + "/_bulk_docs", docs);
       return this.app.request('POST', "/" + (encodeURIComponent(this.app.account.email)) + "/_bulk_docs", {
         dataType: 'json',
         processData: false,

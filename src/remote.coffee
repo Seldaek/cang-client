@@ -66,13 +66,11 @@ define 'remote', ['errors'], (ERROR) ->
     push_changes : (options) =>
 
       docs    = @app.store.changed_docs()
-      console.log "docs?", docs.length, docs
       return @_promise().resolve([]) if docs.length is 0
         
       docs = for doc in docs
         @_parse_for_remote doc 
       
-      console.log 'POST', "/#{encodeURIComponent @app.account.email}/_bulk_docs", docs
       @app.request 'POST', "/#{encodeURIComponent @app.account.email}/_bulk_docs", 
         dataType:     'json'
         processData:  false
