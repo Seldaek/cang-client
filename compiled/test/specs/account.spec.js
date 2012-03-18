@@ -209,24 +209,31 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
       beforeEach(function() {
         var _ref;
         this.account.sign_up('joe@example.com', 'secret');
-        return _ref = this.app.request.mostRecentCall.args, this.type = _ref[0], this.path = _ref[1], this.options = _ref[2], _ref;
+        _ref = this.app.request.mostRecentCall.args, this.type = _ref[0], this.path = _ref[1], this.options = _ref[2];
+        return this.data = JSON.parse(this.options.data);
       });
       it("should send a PUT request to http://my.cou.ch/_users/org.couchdb.user%3Ajoe%40example.com", function() {
         expect(this.app.request).wasCalled();
         expect(this.type).toBe('PUT');
         return expect(this.path).toBe('/_users/org.couchdb.user%3Ajoe%40example.com');
       });
+      it("should set contentType to 'application/json'", function() {
+        return expect(this.options.contentType).toBe('application/json');
+      });
+      it("should stringify the data", function() {
+        return expect(typeof this.options.data).toBe('string');
+      });
       it("should have set _id to 'org.couchdb.user:joe@example.com'", function() {
-        return expect(this.options.data._id).toBe('org.couchdb.user:joe@example.com');
+        return expect(this.data._id).toBe('org.couchdb.user:joe@example.com');
       });
       it("should have set name to 'joe@example.com", function() {
-        return expect(this.options.data.name).toBe('joe@example.com');
+        return expect(this.data.name).toBe('joe@example.com');
       });
       it("should have set type to 'user", function() {
-        return expect(this.options.data.type).toBe('user');
+        return expect(this.data.type).toBe('user');
       });
       it("should pass password", function() {
-        return expect(this.options.data.password).toBe('secret');
+        return expect(this.data.password).toBe('secret');
       });
       return _when("sign_up successful", function() {
         beforeEach(function() {

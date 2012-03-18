@@ -48,13 +48,14 @@ define('account', function() {
       prefix = 'org.couchdb.user';
       key = "" + prefix + ":" + email;
       return this.app.request('PUT', "/_users/" + (encodeURIComponent(key)), {
-        data: {
+        data: JSON.stringify({
           _id: key,
           name: email,
           type: 'user',
           roles: [],
           password: password
-        },
+        }),
+        contentType: 'application/json',
         success: function() {
           var _ref, _ref2;
           (_ref = _this.app).trigger.apply(_ref, ['account:sign_up'].concat(__slice.call(arguments)));
