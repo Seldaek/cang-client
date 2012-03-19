@@ -115,22 +115,22 @@
     // 
     
     // new doc created
-    app.remote.on( 'create', function( created_object) { } )
+    app.remote.on( 'created', function( type, id, created_object) { } )
 
     // existing doc updated
-    app.remote.on( 'update', function( updated_object) { } )
+    app.remote.on( 'updated', function( type, id, updated_object) { } )
 
     // doc deleted
-    app.remote.on( 'delete', function( deleted_object) { } )
+    app.remote.on( 'deleted', function( type, id, deleted_object) { } )
 
     // any of above events
-    app.remote.on( 'change', function( changed_object) { } )
+    app.remote.on( 'changed', function( type, id, changed_object) { } )
 
     // all listeners can be filtered by type
-    app.remote.on( "create:type", function( created_object) { } )
-    app.remote.on( "update:type", function( updated_object)  { } )
-    app.remote.on( "delete:type", function( deleted_object) { } )
-    app.remote.on( "change:type", function( changed_object) { } )
+    app.remote.on( "created:couch", function( id, created_object) { } )
+    app.remote.on( "updated:couch", function( id, updated_object)  { } )
+    app.remote.on( "deleted:couch", function( id, deleted_object) { } )
+    app.remote.on( "changed:couch", function( id, changed_object) { } )
     
     //
     // Send emails (coming soon)

@@ -86,8 +86,23 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           it "should pass the object to done callback", ->
             expect(@args[0]).toBe 'cached_object'
             
-          it "should pass false (= not created) as the second param to the done callback", ->
-            expect(@args[1]).toBe false
+          _and "object did exist before", ->
+            beforeEach ->
+              @store._cached['document/123'] = {}
+              promise = @store.save 'document', '123', { name: 'test' }, { option: 'value' }
+              @args = promise.resolve.mostRecentCall?.args
+              
+            it "should pass false (= not created) as the second param to the done callback", ->
+              expect(@args[1]).toBe false
+            
+          _and "object did not exist before", ->            
+            beforeEach ->
+              delete @store._cached['document/123']
+              promise = @store.save 'document', '123', { name: 'test' }, { option: 'value' }
+              @args = promise.resolve.mostRecentCall?.args
+            
+            it "should pass true (= new created) as the second param to the done callback", ->
+              expect(@args[1]).toBe true
       
         _when "failed", ->
           beforeEach ->

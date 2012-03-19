@@ -16,8 +16,8 @@ define('remote', ['errors'], function(ERROR) {
       this.pull_changes = __bind(this.pull_changes, this);
       this.disconnect = __bind(this.disconnect, this);
       this.connect = __bind(this.connect, this);
-      this.app.on('account:sign_in', this.connect);
-      this.app.on('account:sign_out', this.disconnect);
+      this.app.on('account:signed_in', this.connect);
+      this.app.on('account:signed_out', this.disconnect);
       this.connect();
     }
 
@@ -80,6 +80,10 @@ define('remote', ['errors'], function(ERROR) {
 
     Remote.prototype.set_seq = function(seq) {
       return this._seq = this.app.store.db.setItem('_couch.remote.seq', seq);
+    };
+
+    Remote.prototype.on = function(event, cb) {
+      return this.app.on("remote:" + event, cb);
     };
 
     Remote.prototype._changes_path = function() {
@@ -161,13 +165,24 @@ define('remote', ['errors'], function(ERROR) {
           _results.push(this.app.store.destroy(_doc.type, _doc.id, {
             remote: true
           }).done(function(object) {
-            return _this.app.trigger('remote:destroy', _doc.type, _doc.id, object);
+            _this.app.trigger('remote:destroyed', _doc.type, _doc.id, object);
+            _this.app.trigger("remote:destroyed:" + _doc.type, _doc.id, object);
+            _this.app.trigger('remote:changed', _doc.type, _doc.id, object);
+            return _this.app.trigger("remote:changed:" + _doc.type, _doc.id, object);
           }));
         } else {
           _results.push(this.app.store.save(_doc.type, _doc.id, _doc, {
             remote: true
-          }).done(function(object) {
-            return _this.app.trigger('remote:change', _doc.type, _doc.id, object);
+          }).done(function(object, object_was_created) {
+            _this.app.trigger('remote:changed', _doc.type, _doc.id, object);
+            _this.app.trigger("remote:changed:" + _doc.type, _doc.id, object);
+            if (object_was_created) {
+              _this.app.trigger('remote:created', _doc.type, _doc.id, object);
+              return _this.app.trigger("remote:created:" + _doc.type, _doc.id, object);
+            } else {
+              _this.app.trigger('remote:updated', _doc.type, _doc.id, object);
+              return _this.app.trigger("remote:updated:" + _doc.type, _doc.id, object);
+            }
           }));
         }
       }

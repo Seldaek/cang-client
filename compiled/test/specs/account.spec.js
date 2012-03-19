@@ -34,12 +34,12 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
       it("should bind to sign_in event", function() {
         var account;
         account = new Account(this.app);
-        return expect(this.app.on).wasCalledWith('account:sign_in', account._handle_sign_in);
+        return expect(this.app.on).wasCalledWith('account:signed_in', account._handle_sign_in);
       });
       return it("should bind to sign_out event", function() {
         var account;
         account = new Account(this.app);
-        return expect(this.app.on).wasCalledWith('account:sign_out', account._handle_sign_out);
+        return expect(this.app.on).wasCalledWith('account:signed_out', account._handle_sign_out);
       });
     });
     describe("event handlers", function() {
@@ -241,13 +241,13 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
             return options.success();
           });
         });
-        it("should trigger `account:sign_up` event", function() {
+        it("should trigger `account:signed_up` event", function() {
           this.account.sign_up('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:sign_up');
+          return expect(this.app.trigger).wasCalledWith('account:signed_up');
         });
-        return it("should trigger `account:sign_in` event", function() {
+        return it("should trigger `account:signed_in` event", function() {
           this.account.sign_up('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:sign_in');
+          return expect(this.app.trigger).wasCalledWith('account:signed_in');
         });
       });
     });
@@ -274,9 +274,9 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
             return options.success();
           });
         });
-        return it("should trigger `account:sign_in` event", function() {
+        return it("should trigger `account:signed_in` event", function() {
           this.account.sign_in('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:sign_in');
+          return expect(this.app.trigger).wasCalledWith('account:signed_in');
         });
       });
     });
@@ -300,9 +300,9 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
             return options.success();
           });
         });
-        return it("should trigger `account:sign_out` event", function() {
+        return it("should trigger `account:signed_out` event", function() {
           this.account.sign_out('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:sign_out');
+          return expect(this.app.trigger).wasCalledWith('account:signed_out');
         });
       });
     });

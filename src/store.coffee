@@ -66,7 +66,7 @@ define 'store', ['errors'], (ERROR) ->
       
       # generate an id if necessary
       if id
-        is_new = false
+        is_new = typeof @_cached["#{type}/#{id}"] isnt 'object'
       else
         is_new = true
         id = @uuid()

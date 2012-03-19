@@ -30,7 +30,7 @@ define('store', ['errors'], function(ERROR) {
           }
         };
       }
-      this.app.on('account:sign_out', this.clear);
+      this.app.on('account:signed_out', this.clear);
     }
 
     Store.prototype.db = {
@@ -55,7 +55,7 @@ define('store', ['errors'], function(ERROR) {
     };
 
     Store.prototype.save = function(type, id, object, options) {
-      var promise;
+      var is_new, promise;
       if (options == null) options = {};
       promise = this.app.promise();
       if (typeof object !== 'object') {
@@ -63,7 +63,12 @@ define('store', ['errors'], function(ERROR) {
         return promise;
       }
       object = $.extend({}, object);
-      id || (id = this.uuid());
+      if (id) {
+        is_new = typeof this._cached["" + type + "/" + id] !== 'object';
+      } else {
+        is_new = true;
+        id = this.uuid();
+      }
       if (!this._is_valid_key(id)) {
         return promise.reject(ERROR.INVALID_KEY({
           id: id
@@ -84,7 +89,7 @@ define('store', ['errors'], function(ERROR) {
       delete object.type;
       try {
         object = this.cache(type, id, object, options);
-        promise.resolve(object);
+        promise.resolve(object, is_new);
       } catch (error) {
         promise.reject(error);
       }

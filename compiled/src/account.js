@@ -14,8 +14,8 @@ define('account', function() {
       this._handle_sign_in = __bind(this._handle_sign_in, this);
       this.email = this.app.store.db.getItem('_couch.account.email');
       this.authenticate();
-      this.app.on('account:sign_in', this._handle_sign_in);
-      this.app.on('account:sign_out', this._handle_sign_out);
+      this.app.on('account:signed_in', this._handle_sign_in);
+      this.app.on('account:signed_out', this._handle_sign_out);
     }
 
     Account.prototype.authenticate = function() {
@@ -58,8 +58,8 @@ define('account', function() {
         contentType: 'application/json',
         success: function() {
           var _ref, _ref2;
-          (_ref = _this.app).trigger.apply(_ref, ['account:sign_up'].concat(__slice.call(arguments)));
-          return (_ref2 = _this.app).trigger.apply(_ref2, ['account:sign_in'].concat(__slice.call(arguments)));
+          (_ref = _this.app).trigger.apply(_ref, ['account:signed_up'].concat(__slice.call(arguments)));
+          return (_ref2 = _this.app).trigger.apply(_ref2, ['account:signed_in'].concat(__slice.call(arguments)));
         }
       });
     };
@@ -73,7 +73,7 @@ define('account', function() {
         },
         success: function() {
           var _ref;
-          return (_ref = _this.app).trigger.apply(_ref, ['account:sign_in'].concat(__slice.call(arguments)));
+          return (_ref = _this.app).trigger.apply(_ref, ['account:signed_in'].concat(__slice.call(arguments)));
         }
       });
     };
@@ -89,7 +89,7 @@ define('account', function() {
       return this.app.request('DELETE', '/_session', {
         success: function() {
           var _ref;
-          return (_ref = _this.app).trigger.apply(_ref, ['account:sign_out'].concat(__slice.call(arguments)));
+          return (_ref = _this.app).trigger.apply(_ref, ['account:signed_out'].concat(__slice.call(arguments)));
         }
       });
     };

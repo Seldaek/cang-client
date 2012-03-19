@@ -16,11 +16,11 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       return spyOn(this.store.db, "clear").andCallThrough();
     });
     describe("new", function() {
-      return it("should subscribe to account:sign_out event", function() {
+      return it("should subscribe to account:signed_out event", function() {
         var store;
         spyOn(this.app, "on");
         store = new Store(this.app);
-        return expect(this.app.on).wasCalledWith('account:sign_out', store.clear);
+        return expect(this.app.on).wasCalledWith('account:signed_out', store.clear);
       });
     });
     describe(".save(type, id, object, options)", function() {
@@ -100,13 +100,43 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         _when("successful", function() {
           beforeEach(function() {
             var _ref;
-            return this.args = (_ref = this.promise.resolve.mostRecentCall) != null ? _ref.args[0] : void 0;
+            return this.args = (_ref = this.promise.resolve.mostRecentCall) != null ? _ref.args : void 0;
           });
           it("should resolve the promise", function() {
             return expect(this.promise.resolve).wasCalled();
           });
-          return it("should pass the object to done callback", function() {
-            return expect(this.args).toBe('cached_object');
+          it("should pass the object to done callback", function() {
+            return expect(this.args[0]).toBe('cached_object');
+          });
+          _and("object did exist before", function() {
+            beforeEach(function() {
+              var promise, _ref;
+              this.store._cached['document/123'] = {};
+              promise = this.store.save('document', '123', {
+                name: 'test'
+              }, {
+                option: 'value'
+              });
+              return this.args = (_ref = promise.resolve.mostRecentCall) != null ? _ref.args : void 0;
+            });
+            return it("should pass false (= not created) as the second param to the done callback", function() {
+              return expect(this.args[1]).toBe(false);
+            });
+          });
+          return _and("object did not exist before", function() {
+            beforeEach(function() {
+              var promise, _ref;
+              delete this.store._cached['document/123'];
+              promise = this.store.save('document', '123', {
+                name: 'test'
+              }, {
+                option: 'value'
+              });
+              return this.args = (_ref = promise.resolve.mostRecentCall) != null ? _ref.args : void 0;
+            });
+            return it("should pass true (= new created) as the second param to the done callback", function() {
+              return expect(this.args[1]).toBe(true);
+            });
           });
         });
         return _when("failed", function() {
@@ -165,24 +195,37 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         }
         return _results;
       });
-      return _when("called without id", function() {
-        return _and("object has no id", function() {
+      return _when("called without id = undefined", function() {
+        beforeEach(function() {
+          var _ref;
+          this.promise = this.store.save('document', void 0, {
+            name: 'test'
+          }, {
+            option: 'value'
+          });
+          return _ref = this.store.cache.mostRecentCall.args, this.type = _ref[0], this.key = _ref[1], this.object = _ref[2], _ref;
+        });
+        it("should generate an id", function() {
+          return expect(this.key).toMatch(/^[a-z0-9]{7}$/);
+        });
+        it("should pass options", function() {
+          var options;
+          options = this.store.cache.mostRecentCall.args[3];
+          return expect(options.option).toBe('value');
+        });
+        return _when("successful", function() {
           beforeEach(function() {
             var _ref;
-            this.store.save('document', void 0, {
-              name: 'test'
-            }, {
-              option: 'value'
-            });
-            return _ref = this.store.cache.mostRecentCall.args, this.type = _ref[0], this.key = _ref[1], this.object = _ref[2], _ref;
+            return this.args = (_ref = this.promise.resolve.mostRecentCall) != null ? _ref.args : void 0;
           });
-          it("should generate an id", function() {
-            return expect(this.key).toMatch(/^[a-z0-9]{7}$/);
+          it("should resolve the promise", function() {
+            return expect(this.promise.resolve).wasCalled();
           });
-          return it("should pass options", function() {
-            var options;
-            options = this.store.cache.mostRecentCall.args[3];
-            return expect(options.option).toBe('value');
+          it("should pass the object to done callback", function() {
+            return expect(this.args[0]).toBe('cached_object');
+          });
+          return it("should pass true (= created) as the second param to the done callback", function() {
+            return expect(this.args[1]).toBe(true);
           });
         });
       });

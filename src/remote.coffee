@@ -90,6 +90,12 @@ define 'remote', ['errors'], (ERROR) ->
     set_seq : (seq) -> @_seq   = @app.store.db.setItem '_couch.remote.seq', seq
     
     
+    # ## On
+    #
+    # alias for `app.on`
+    on : (event, cb) -> @app.on "remote:#{event}", cb
+    
+    
     # ## Private
     
     #
@@ -203,7 +209,6 @@ define 'remote', ['errors'], (ERROR) ->
       
       obj
   
-  
     #
     # handle changes from remote
     #
@@ -212,10 +217,22 @@ define 'remote', ['errors'], (ERROR) ->
         _doc = @_parse_from_remote(doc)
         if _doc._deleted
           @app.store.destroy(_doc.type, _doc.id, remote: true)
-          .done (object) => @app.trigger 'remote:destroyed', _doc.type, _doc.id, object
+          .done (object) => 
+            @app.trigger 'remote:destroyed', _doc.type, _doc.id, object
+            @app.trigger "remote:destroyed:#{_doc.type}", _doc.id, object
+            @app.trigger 'remote:changed', _doc.type, _doc.id, object
+            @app.trigger "remote:changed:#{_doc.type}", _doc.id, object
         else
           @app.store.save(_doc.type, _doc.id, _doc, remote: true)
-          .done (object) => @app.trigger 'remote:changed', _doc.type, _doc.id, object
+          .done (object, object_was_created) => 
+            @app.trigger 'remote:changed', _doc.type, _doc.id, object
+            @app.trigger "remote:changed:#{_doc.type}", _doc.id, object
+            if object_was_created
+              @app.trigger 'remote:created', _doc.type, _doc.id, object
+              @app.trigger "remote:created:#{_doc.type}", _doc.id, object
+            else
+              @app.trigger 'remote:updated', _doc.type, _doc.id, object
+              @app.trigger "remote:updated:#{_doc.type}", _doc.id, object
         
     _handle_push_changes: (changes) =>
       # TODO: handle conflicts
