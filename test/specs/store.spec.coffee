@@ -126,7 +126,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         _and "object has no id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
-            @store.save 'document', { name: 'test' }, { option: 'value' }
+            @store.save 'document', undefined, { name: 'test' }, { option: 'value' }
             [@type, @key, @object] = @store.cache.mostRecentCall.args
       
           it "should generate an id", ->
@@ -135,42 +135,45 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           it "should pass options", ->
             options = @store.cache.mostRecentCall.args[3]
             expect(options.option).toBe 'value'
+    # /.save(type, id, object, options)
     
-        _and "object has an id", ->
-          beforeEach ->
-            # keep promise, key, and stored object for assertions
-            promise = @store.save 'document', { name: 'test', id: 'exists' }
-            [type, @key, @object] = @store.cache.mostRecentCall.args
-        
-          it "should get the id", ->
-            expect(@key).toBe 'exists'
-  
-      _when "called without type and id", ->
-        _and "object has no id", ->
-          beforeEach ->
-            # keep promise, key, and stored object for assertions
-            promise = @store.save name: 'test', type: 'document'
-            [@type, @key, @object] = @store.cache.mostRecentCall.args
+    describe ".create(type, object, options)", ->
+      beforeEach ->
+        spyOn(@store, "save").andReturn 'promise'
       
-          it "should generate an id and get the type from object", ->
-            expect(@key).toMatch /^[a-z0-9]{7}$/
+      it "should call .save(type, undefined, options) and return its promise", ->
+        promise = @store.create('couch', {funky: 'fresh'})
+        expect(@store.save).wasCalledWith 'couch', undefined, {funky: 'fresh'}
+        expect(promise).toBe 'promise'
+    # /.create(type, object, options)
     
-        _and "object has an id", ->
-          beforeEach ->
-            # keep promise, key, and stored object for assertions
-            promise = @store.save name: 'test', type: 'document', id: 'exists'
-            [type, @key, @object] = @store.cache.mostRecentCall.args
+    describe ".update(type, id, object, options)", ->
+      beforeEach ->
+        @load_promise = $.Deferred()
+        @save_promise = $.Deferred()
+        spyOn(@store, "load").andReturn @load_promise
+        spyOn(@store, "save").andReturn @save_promise
+      
+      _when "object cannot be found", ->
+        beforeEach ->
+          @promise = @store.update 'couch', '123', funky: 'fresh'
+          @load_promise.reject('oops')
         
-          it "should get id and type form object", ->
-            expect(@key).toBe 'exists'
-            
-      describe "aliases", ->
-        it "should allow to use .create", ->
-          expect(@store.save).toBe @store.create
-        it "should allow to use .update", ->
-          expect(@store.save).toBe @store.create
-      # /aliases
-    # /.save(id, type, object, options)
+        it "should return a rejected promise reject the promise", ->
+          expect(@promise.reject).wasCalledWith 'oops'
+      
+      _when "object be found", ->
+        beforeEach ->
+          @promise = @store.update 'couch', '123', { funky: 'fresh' }
+          @load_promise.resolve { style: 'baws' }
+        
+        it "should save the updated object", ->
+          expect(@store.save).wasCalledWith 'couch', '123', { style: 'baws', funky: 'fresh' }
+        
+        it "should return a resolved promise", ->
+          @save_promise.resolve { style: 'baws' }
+          expect(@promise.resolve).wasCalled()
+    # /.update(type, id, object, options)
 
     describe ".load(type, id)", ->
       beforeEach ->
@@ -212,13 +215,8 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       it "should cache the object after the first get", ->
         @store.load 'document', 'abc4567'
         @store.load 'document', 'abc4567'
-    
+
         expect(@store.db.getItem.callCount).toBe 1
-        
-      describe "aliases", ->
-        it "should allow to use .get", ->
-          expect(@store.get).toBe @store.load
-      # /aliases
     # /.get(type, id)
 
     describe ".loadAll(type)", ->
@@ -267,11 +265,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
             promise = @store.loadAll('cat')
             results = promise.resolve.mostRecentCall.args[0]
             expect(results.length).toBe 2
-            
-      describe "aliases", ->
-        it "should allow to use .getAll", ->
-          expect(@store.getAll).toBe @store.loadAll
-      # /aliases
     # /.loadAll(type)
 
     describe ".delete(type, id)", ->

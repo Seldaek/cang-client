@@ -38,56 +38,44 @@ define 'store', ['errors'], (ERROR) ->
 
     # ## Save
     #
-    # updates or creates object in Store and adds `created_at` and `updated_at` 
-    # timestamps along the way.
+    # saves the passed object into the store and replaces an eventually existing 
+    # document with same type & id.
+    #
+    # When id is undefined, it gets generated an new object gets saved 
+    #
+    # It also adds timestamps along the way:
+    # 
+    # * `created_at` unless it already exists
+    # * `updated_at` every time
+    # * `synced_at`  if changes comes from remote
+    #
     #
     # example usage:
     #
-    #     # create
-    #     store.save('car', {color: 'red'})                
-    #     store.save({type: 'car', color: 'red'})
-    #
-    #     # update
+    #     store.save('car', undefined, {color: 'red'})
     #     store.save('car', 'abc4567', {color: 'red'})
-    #     store.save('car', {id: 'abc4567', color: 'red'}) 
-    #     store.save({type: 'car', id: 'abc4567', color: 'red'}) 
-    #
-    #     # alias
-    #     store.create(car)
-    #     store.update(car)
-    save: (type, id, object, options) ->
+    save: (type, id, object, options = {}) ->
       promise = @app.promise()
-    
-      switch 'object'
-        when typeof arguments[0]
-          options = id
-          object  = type
-          type    = object.type
-          id      = object.id
-        when typeof arguments[1]
-          options = object
-          object  = id
-          id      = object.id
     
       unless typeof object is 'object'
         promise.reject ERROR.INVALID_ARGUMENTS "object is #{typeof object}"
         return promise
       
+      # make sure we don't mess with the passed object directly
       object = $.extend {}, object
       
-      # generate an id when object is new
+      # generate an id if necessary
       id ||= @uuid()
     
       # validations
       unless @_is_valid_key id
-        promise.reject ERROR.INVALID_KEY id: id
-        return promise
+        return promise.reject ERROR.INVALID_KEY id: id
+        
       unless @_is_valid_key type
-        promise.reject ERROR.INVALID_KEY type: type
-        return promise
+        return promise.reject ERROR.INVALID_KEY type: type
     
       # add timestamps
-      if options?.remote
+      if options.remote
         object._synced_at = @_now()
       else
         object.updated_at = @_now()
@@ -106,9 +94,28 @@ define 'store', ['errors'], (ERROR) ->
     
       return promise
     
-    # aliases
-    create : @::save
-    update : @::save
+    # ## Create
+    #
+    # `.create` is an alias for `.save`, with the difference that there is no id argument.
+    # Internally it simply calls `.save(type, undefined, object).
+    create: (type, object, options = {}) ->
+      @save type, undefined, object
+      
+    # ## Update
+    #
+    # In contrast to `.save`, the `.update` method does not replace the stored object
+    # but only changes the passed attributes of an exsting object, if it exists
+    update: (type, id, object_update, options = {}) ->
+      promise = @app.promise()
+      
+      @load(type, id)
+        .fail(promise.reject)
+        .done (_current_obj) =>
+          @save(type, id, $.extend _current_obj, object_update)
+            .fail(promise.reject)
+            .done(promise.resolve)
+              
+      return promise
     
     
     # ## load
@@ -118,10 +125,6 @@ define 'store', ['errors'], (ERROR) ->
     # example usage:
     #
     #     store.load('car', 'abc4567')
-    #     store.load({type: 'car', id: 'abc4567') 
-    #
-    #     # alias
-    #     store.get(car)
     load : (type, id) ->
       promise = @app.promise()
     
@@ -140,9 +143,6 @@ define 'store', ['errors'], (ERROR) ->
         promise.reject error
       
       return promise
-      
-    # aliases
-    get : @::load
   
   
     # ## loadAll
@@ -154,9 +154,6 @@ define 'store', ['errors'], (ERROR) ->
     #
     #     store.loadAll()
     #     store.loadAll('car')
-    #
-    #     # alias
-    #     store.getAll()
     loadAll: (type) ->
       promise = @app.promise()
       keys = @_index()
@@ -172,9 +169,6 @@ define 'store', ['errors'], (ERROR) ->
         promise.reject error
     
       return promise
-    
-    # alias
-    getAll : @::loadAll
     
     
     # ## Delete

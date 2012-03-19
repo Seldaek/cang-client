@@ -56,19 +56,8 @@ define('store', ['errors'], function(ERROR) {
 
     Store.prototype.save = function(type, id, object, options) {
       var promise;
+      if (options == null) options = {};
       promise = this.app.promise();
-      switch ('object') {
-        case typeof arguments[0]:
-          options = id;
-          object = type;
-          type = object.type;
-          id = object.id;
-          break;
-        case typeof arguments[1]:
-          options = object;
-          object = id;
-          id = object.id;
-      }
       if (typeof object !== 'object') {
         promise.reject(ERROR.INVALID_ARGUMENTS("object is " + (typeof object)));
         return promise;
@@ -76,18 +65,16 @@ define('store', ['errors'], function(ERROR) {
       object = $.extend({}, object);
       id || (id = this.uuid());
       if (!this._is_valid_key(id)) {
-        promise.reject(ERROR.INVALID_KEY({
+        return promise.reject(ERROR.INVALID_KEY({
           id: id
         }));
-        return promise;
       }
       if (!this._is_valid_key(type)) {
-        promise.reject(ERROR.INVALID_KEY({
+        return promise.reject(ERROR.INVALID_KEY({
           type: type
         }));
-        return promise;
       }
-      if (options != null ? options.remote : void 0) {
+      if (options.remote) {
         object._synced_at = this._now();
       } else {
         object.updated_at = this._now();
@@ -104,16 +91,25 @@ define('store', ['errors'], function(ERROR) {
       return promise;
     };
 
-    Store.prototype.create = Store.prototype.save;
+    Store.prototype.create = function(type, object, options) {
+      if (options == null) options = {};
+      return this.save(type, void 0, object);
+    };
 
-    Store.prototype.update = Store.prototype.save;
+    Store.prototype.update = function(type, id, object_update, options) {
+      var promise,
+        _this = this;
+      if (options == null) options = {};
+      promise = this.app.promise();
+      this.load(type, id).fail(promise.reject).done(function(_current_obj) {
+        return _this.save(type, id, $.extend(_current_obj, object_update)).fail(promise.reject).done(promise.resolve);
+      });
+      return promise;
+    };
 
     Store.prototype.load = function(type, id) {
-      var object, promise, _ref;
+      var object, promise;
       promise = this.app.promise();
-      if (arguments.length = 1 && typeof type === 'object') {
-        _ref = [type.type, type.id], type = _ref[0], id = _ref[1];
-      }
       if (!(typeof type === 'string' && typeof id === 'string')) {
         return promise.reject(ERROR.INVALID_ARGUMENTS("type & id are required"));
       }
@@ -129,8 +125,6 @@ define('store', ['errors'], function(ERROR) {
       }
       return promise;
     };
-
-    Store.prototype.get = Store.prototype.load;
 
     Store.prototype.loadAll = function(type) {
       var id, key, keys, promise, results, _type;
@@ -156,8 +150,6 @@ define('store', ['errors'], function(ERROR) {
       }
       return promise;
     };
-
-    Store.prototype.getAll = Store.prototype.loadAll;
 
     Store.prototype["delete"] = function(type, id, options) {
       var key, object, promise;

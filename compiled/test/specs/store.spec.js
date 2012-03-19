@@ -165,11 +165,11 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         }
         return _results;
       });
-      _when("called without id", function() {
-        _and("object has no id", function() {
+      return _when("called without id", function() {
+        return _and("object has no id", function() {
           beforeEach(function() {
             var _ref;
-            this.store.save('document', {
+            this.store.save('document', void 0, {
               name: 'test'
             }, {
               option: 'value'
@@ -185,55 +185,61 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             return expect(options.option).toBe('value');
           });
         });
-        return _and("object has an id", function() {
-          beforeEach(function() {
-            var promise, type, _ref;
-            promise = this.store.save('document', {
-              name: 'test',
-              id: 'exists'
-            });
-            return _ref = this.store.cache.mostRecentCall.args, type = _ref[0], this.key = _ref[1], this.object = _ref[2], _ref;
+      });
+    });
+    describe(".create(type, object, options)", function() {
+      beforeEach(function() {
+        return spyOn(this.store, "save").andReturn('promise');
+      });
+      return it("should call .save(type, undefined, options) and return its promise", function() {
+        var promise;
+        promise = this.store.create('couch', {
+          funky: 'fresh'
+        });
+        expect(this.store.save).wasCalledWith('couch', void 0, {
+          funky: 'fresh'
+        });
+        return expect(promise).toBe('promise');
+      });
+    });
+    describe(".update(type, id, object, options)", function() {
+      beforeEach(function() {
+        this.load_promise = $.Deferred();
+        this.save_promise = $.Deferred();
+        spyOn(this.store, "load").andReturn(this.load_promise);
+        return spyOn(this.store, "save").andReturn(this.save_promise);
+      });
+      _when("object cannot be found", function() {
+        beforeEach(function() {
+          this.promise = this.store.update('couch', '123', {
+            funky: 'fresh'
           });
-          return it("should get the id", function() {
-            return expect(this.key).toBe('exists');
-          });
+          return this.load_promise.reject('oops');
+        });
+        return it("should return a rejected promise reject the promise", function() {
+          return expect(this.promise.reject).wasCalledWith('oops');
         });
       });
-      _when("called without type and id", function() {
-        _and("object has no id", function() {
-          beforeEach(function() {
-            var promise, _ref;
-            promise = this.store.save({
-              name: 'test',
-              type: 'document'
-            });
-            return _ref = this.store.cache.mostRecentCall.args, this.type = _ref[0], this.key = _ref[1], this.object = _ref[2], _ref;
+      return _when("object be found", function() {
+        beforeEach(function() {
+          this.promise = this.store.update('couch', '123', {
+            funky: 'fresh'
           });
-          return it("should generate an id and get the type from object", function() {
-            return expect(this.key).toMatch(/^[a-z0-9]{7}$/);
+          return this.load_promise.resolve({
+            style: 'baws'
           });
         });
-        return _and("object has an id", function() {
-          beforeEach(function() {
-            var promise, type, _ref;
-            promise = this.store.save({
-              name: 'test',
-              type: 'document',
-              id: 'exists'
-            });
-            return _ref = this.store.cache.mostRecentCall.args, type = _ref[0], this.key = _ref[1], this.object = _ref[2], _ref;
-          });
-          return it("should get id and type form object", function() {
-            return expect(this.key).toBe('exists');
+        it("should save the updated object", function() {
+          return expect(this.store.save).wasCalledWith('couch', '123', {
+            style: 'baws',
+            funky: 'fresh'
           });
         });
-      });
-      return describe("aliases", function() {
-        it("should allow to use .create", function() {
-          return expect(this.store.save).toBe(this.store.create);
-        });
-        return it("should allow to use .update", function() {
-          return expect(this.store.save).toBe(this.store.create);
+        return it("should return a resolved promise", function() {
+          this.save_promise.resolve({
+            style: 'baws'
+          });
+          return expect(this.promise.resolve).wasCalled();
         });
       });
     });
@@ -263,13 +269,6 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
           });
         });
       });
-      it("should allow to pass an object as paramter {type: 'car', id: 'abc4567'}", function() {
-        this.store.load({
-          type: 'car',
-          id: 'abc4567'
-        });
-        return expect(this.store.cache).wasCalled();
-      });
       _when("object can be found", function() {
         beforeEach(function() {
           this.store.cache.andReturn({
@@ -290,15 +289,10 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
           return expect(this.promise.reject).wasCalled();
         });
       });
-      it("should cache the object after the first get", function() {
+      return it("should cache the object after the first get", function() {
         this.store.load('document', 'abc4567');
         this.store.load('document', 'abc4567');
         return expect(this.store.db.getItem.callCount).toBe(1);
-      });
-      return describe("aliases", function() {
-        return it("should allow to use .get", function() {
-          return expect(this.store.get).toBe(this.store.load);
-        });
       });
     });
     describe(".loadAll(type)", function() {
@@ -353,7 +347,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
           });
         });
       });
-      _when("called with type = 'cat'", function() {
+      return _when("called with type = 'cat'", function() {
         return with_2_cats_and_3_dogs(function() {
           return it("should return only the cat objects", function() {
             var promise, results;
@@ -361,11 +355,6 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             results = promise.resolve.mostRecentCall.args[0];
             return expect(results.length).toBe(2);
           });
-        });
-      });
-      return describe("aliases", function() {
-        return it("should allow to use .getAll", function() {
-          return expect(this.store.getAll).toBe(this.store.loadAll);
         });
       });
     });
