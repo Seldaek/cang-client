@@ -42,7 +42,7 @@ task 'autotest', 'autotest', ->
   build( test, true)
   
 task 'build', 'build cang-client.min.js', ->
-  build = spawn 'r.js', ['-o', 'name=cang', 'baseUrl=./compiled/src', 'out=cang-client.min.js']
+  build = spawn 'r.js', ['-o', 'name=cang', 'baseUrl=./compiled/src', 'out=cang.min.js']
   build.stdout.on 'data', (data) -> print data.toString()
   build.stderr.on 'data', (data) -> print data.toString()
   build.on 'exit', (status) -> callback?() if status is 0
