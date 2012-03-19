@@ -62,20 +62,25 @@
     // create a new object
     type = 'couch'
     attributes = {color: "red"}
-    app.store.save(type , attributes )
+    app.store.create(type, attributes )
       .done ( function(new_object) { } )
       .fail ( function(err)        { } )
       
-    // update an existing object
+    // save an object
+    type = 'couch'
     id   = 'abc4567'
-    type = 'rule'
     attributes  = {color: "red", name: "relax"}
     app.store.save( type, id, attributes )
       .done ( function(new_object) { } )
       .fail ( function(err)        { } )
       
-    // alternative syntax
-    app.store.save( {name: "relax", type: "couch", id: "abc4567"} )
+    // update an existing object
+    type = 'couch'
+    id   = 'abc4567'
+    update = {size: 2}
+    app.store.update( type, id, update )
+      .done ( function(updated_object) { } )
+      .fail ( function(err)            { } )
     
     // load one object
     type = 'couch'
@@ -103,29 +108,29 @@
       .fail ( function(err)            { } )
       
     //
-    // Synchronization (coming soon)
+    // Synchronization
     //
     // When signed in, local changes do get synched automatically.
     // You can subscribe to remote updates
     // 
     
     // new doc created
-    app.remote.on_create( function( created_object) { } )
+    app.remote.on( 'create', function( created_object) { } )
 
     // existing doc updated
-    app.remote.on_update( function( update_object)  { } )
+    app.remote.on( 'update', function( updated_object) { } )
 
     // doc deleted
-    app.remote.on_delete( function( deleted_object) { } )
+    app.remote.on( 'delete', function( deleted_object) { } )
 
     // any of above events
-    app.remote.on_change( function( changed_object) { } )
+    app.remote.on( 'change', function( changed_object) { } )
 
     // all listeners can be filtered by type
-    app.remote.on_create( type, function( created_object) { } )
-    app.remote.on_update( type, function( update_object)  { } )
-    app.remote.on_delete( type, function( deleted_object) { } )
-    app.remote.on_change( type, function( changed_object) { } )
+    app.remote.on( "create:type", function( created_object) { } )
+    app.remote.on( "update:type", function( updated_object)  { } )
+    app.remote.on( "delete:type", function( deleted_object) { } )
+    app.remote.on( "change:type", function( changed_object) { } )
     
     //
     // Send emails (coming soon)
