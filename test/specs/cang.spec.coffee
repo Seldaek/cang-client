@@ -1,18 +1,18 @@
-define 'specs/couchapp', ['couchapp'], (couchApp) ->
+define 'specs/cang', ['cang'], (Cang) ->
   
-  describe "couchApp", ->
+  describe "Cang", ->
     beforeEach ->
-      @app = new couchApp 'http://couch.example.com'
+      @app = new Cang 'http://couch.example.com'
       spyOn($, "ajax").andReturn $.Deferred()
     
     
     describe "new", ->
       it "should store the couchDB URL", ->
-        app = new couchApp 'http://couch.example.com'
+        app = new Cang 'http://couch.example.com'
         expect(app.couchDB_url).toBe 'http://couch.example.com'
         
       it "should remove trailing slash from passed URL", ->
-        app = new couchApp 'http://couch.example.com/'
+        app = new Cang 'http://couch.example.com/'
         expect(app.couchDB_url).toBe 'http://couch.example.com'
     # /new
     
@@ -50,4 +50,4 @@ define 'specs/couchapp', ['couchapp'], (couchApp) ->
           expect(@args.url).toBe 'http://couch.example.com/test'
         
     # /request(type, path, options)
-  # /couchApp
+  # /Cang

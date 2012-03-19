@@ -1,7 +1,7 @@
-define 'specs/remote', ['mocks/couchapp'], (couchAppMock) ->
+define 'specs/remote', ['mocks/cang'], (CangMock) ->
   
   describe "Remote", ->  
     beforeEach ->
-      @app = new couchAppMock 
+      @app = new CangMock 
       @store = new Store @app
   # /Remote

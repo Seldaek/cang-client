@@ -6,9 +6,9 @@ Setup
 -----
 
 ```javascript
-couchApp = require('couchapp')
+Cang = require('cang')
 couchDB_endpoint = 'http://worlddominatorapp.iriscouch.com';
-app = new couchApp(couchDB_endpoint);
+app = new Cang(couchDB_endpoint);
 ```
 
 
@@ -225,7 +225,7 @@ Future Ideas
 Dependencies
 ------------
 
-couchApp depends on jQuery/[zepto](http://zeptojs.com/) and [require.js](http://requirejs.org) 
+Cang depends on jQuery/[zepto](http://zeptojs.com/) and [require.js](http://requirejs.org) 
 
 
 Contribute
@@ -233,4 +233,4 @@ Contribute
 
 When you feel like contributing, I highly recommend to install [PhantomJS](http://www.phantomjs.org/) for automated, headless testing. Run `$ cake autotest` to have test running in the background while hacking.
 
-When you're done with changes, make sure to run `$ r.js -o name=couchapp baseUrl=./compiled out=couchapp.min.js` to update the concatenated & minified js file for production use.
+When you're done with changes, make sure to run `$ r.js -o name=cang baseUrl=./compiled out=cang.min.js` to update the concatenated & minified js file for production use.

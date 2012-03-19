@@ -1,19 +1,19 @@
 #
-# couchApp
+# Cang
 # --------
 #
 # the door to world domination (apps)
 #
-define 'couchapp', ['events', 'store', 'account', 'remote'], (Events, Store, Account, Remote) ->
+define 'cang', ['events', 'store', 'account', 'remote'], (Events, Store, Account, Remote) ->
   
   'use strict'
 
-  class couchApp extends Events
+  class Cang extends Events
   
   
     # ## initialization
     #
-    # Inits the couchApp, a couchDB URL needs to be passed
+    # Inits the Cang, a couchDB URL needs to be passed
     constructor : (@couchDB_url) ->
     
       # remove trailing slash(es)

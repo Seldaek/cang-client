@@ -1,8 +1,8 @@
 
-define('specs/remote', ['mocks/couchapp'], function(couchAppMock) {
+define('specs/remote', ['mocks/cang'], function(CangMock) {
   return describe("Remote", function() {
     return beforeEach(function() {
-      this.app = new couchAppMock;
+      this.app = new CangMock;
       return this.store = new Store(this.app);
     });
   });

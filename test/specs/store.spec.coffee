@@ -1,8 +1,8 @@
-define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
+define 'specs/store', ['store', 'mocks/cang'], (Store, CangMock) ->
   
   describe "Store", ->  
     beforeEach ->
-      @app = new couchAppMock 
+      @app = new CangMock 
       @store = new Store @app
       
       spyOn(@app.promise_mock, "resolve").andCallThrough()

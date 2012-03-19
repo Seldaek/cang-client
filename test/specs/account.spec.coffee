@@ -1,8 +1,8 @@
-define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) ->
+define 'specs/account', ['mocks/cang', 'account'], (CangMock, Account) ->
   
   describe "Account", ->
     beforeEach ->
-      @app = new couchAppMock
+      @app = new CangMock
       @account = new Account @app
     
       # promises
@@ -260,4 +260,4 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
           @account.sign_out('joe@example.com', 'secret')
           expect(@app.trigger).wasCalledWith 'account:signed_out'
     # /.sign_in(email, password)
-  # /couchApp
+  # /Cang

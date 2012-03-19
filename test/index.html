@@ -19,11 +19,11 @@
   <script src="../compiled/src/store.js"></script>
   <script src="../compiled/src/account.js"></script>
   <script src="../compiled/src/remote.js"></script>
-  <script src="../compiled/src/couchapp.js"></script>
+  <script src="../compiled/src/cang.js"></script>
   
-  <script src="../compiled/test/mocks/couchapp.mock.js"></script>
+  <script src="../compiled/test/mocks/cang.mock.js"></script>
   
-  <script src="../compiled/test/specs/couchapp.spec.js"></script>
+  <script src="../compiled/test/specs/cang.spec.js"></script>
   <script src="../compiled/test/specs/store.spec.js"></script>
   <script src="../compiled/test/specs/account.spec.js"></script>
   <script src="../compiled/test/specs/remote.spec.js"></script>
@@ -35,12 +35,12 @@
     jas.addReporter(new jasmine.TrivialReporter());
     
     require([
-      'mocks/couchapp',
+      'mocks/cang',
       
       'specs/store',
       'specs/account',
       'specs/remote',
-      'specs/couchapp'
+      'specs/cang'
     ], function () {
       jas.execute();
     });

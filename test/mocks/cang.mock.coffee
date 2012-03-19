@@ -1,4 +1,4 @@
-define 'mocks/couchapp', ->
+define 'mocks/cang', ->
   
   promise_mock =
     reject  : -> promise_mock
@@ -6,7 +6,7 @@ define 'mocks/couchapp', ->
     fail    : -> promise_mock
     done    : -> promise_mock
     
-  class couchAppMock
+  class CangMock
     couchDB_url : 'http://my.cou.ch'
     
     trigger       : ->

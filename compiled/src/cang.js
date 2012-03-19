@@ -1,14 +1,14 @@
 var __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-define('couchapp', ['events', 'store', 'account', 'remote'], function(Events, Store, Account, Remote) {
+define('cang', ['events', 'store', 'account', 'remote'], function(Events, Store, Account, Remote) {
   'use strict';
-  var couchApp;
-  return couchApp = (function(_super) {
+  var Cang;
+  return Cang = (function(_super) {
 
-    __extends(couchApp, _super);
+    __extends(Cang, _super);
 
-    function couchApp(couchDB_url) {
+    function Cang(couchDB_url) {
       this.couchDB_url = couchDB_url;
       this.couchDB_url = this.couchDB_url.replace(/\/+$/, '');
       this.store = new Store(this);
@@ -16,7 +16,7 @@ define('couchapp', ['events', 'store', 'account', 'remote'], function(Events, St
       this.remote = new Remote(this);
     }
 
-    couchApp.prototype.request = function(type, path, options) {
+    Cang.prototype.request = function(type, path, options) {
       var defaults;
       if (options == null) options = {};
       defaults = {
@@ -31,9 +31,9 @@ define('couchapp', ['events', 'store', 'account', 'remote'], function(Events, St
       return $.ajax($.extend(defaults, options));
     };
 
-    couchApp.prototype.promise = $.Deferred;
+    Cang.prototype.promise = $.Deferred;
 
-    return couchApp;
+    return Cang;
 
   })(Events);
 });

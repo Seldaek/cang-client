@@ -1,8 +1,8 @@
 
-define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Account) {
+define('specs/account', ['mocks/cang', 'account'], function(CangMock, Account) {
   return describe("Account", function() {
     beforeEach(function() {
-      this.app = new couchAppMock;
+      this.app = new CangMock;
       this.account = new Account(this.app);
       spyOn(this.app.promise_mock, "resolve").andCallThrough();
       spyOn(this.app.promise_mock, "reject").andCallThrough();
