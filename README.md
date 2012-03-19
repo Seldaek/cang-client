@@ -120,7 +120,7 @@ app.store.save( type, id, {name: "rule the world"} )
 // update an existing object
 id   = 'abc4567'
 type = 'rule'
-app.store.save( type, id, {nr: 1} )
+app.store.update( type, id, {nr: 1} )
   
   .done ( function(updated_object) { } )
   .fail ( function(err)        { } )
