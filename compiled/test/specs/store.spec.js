@@ -4,6 +4,10 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
     beforeEach(function() {
       this.app = new couchAppMock;
       this.store = new Store(this.app);
+      spyOn(this.app.promise_mock, "resolve").andCallThrough();
+      spyOn(this.app.promise_mock, "reject").andCallThrough();
+      spyOn(this.app.promise_mock, "fail").andCallThrough();
+      spyOn(this.app.promise_mock, "done").andCallThrough();
       spyOn(this.store, "_setObject").andCallThrough();
       spyOn(this.store, "_getObject").andCallThrough();
       spyOn(this.store.db, "getItem").andCallThrough();
@@ -35,20 +39,16 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       describe("invalid arguments", function() {
         _when("no arguments passed", function() {
           return it("should call the fail callback", function() {
-            var error, promise;
+            var promise;
             promise = this.store.save();
-            error = jasmine.createSpy('error');
-            promise.fail(error);
-            return expect(error).wasCalled();
+            return expect(promise.reject).wasCalled();
           });
         });
         return _when("no object passed", function() {
           return it("should call the fail callback", function() {
-            var error, promise;
+            var promise;
             promise = this.store.save('document', 'abc4567');
-            error = jasmine.createSpy('error');
-            promise.fail(error);
-            return expect(error).wasCalled();
+            return expect(promise.reject).wasCalled();
           });
         });
       });
@@ -100,12 +100,10 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         _when("successful", function() {
           beforeEach(function() {
             var _ref;
-            this.success = jasmine.createSpy('success');
-            this.promise.done(this.success);
-            return this.args = (_ref = this.success.mostRecentCall) != null ? _ref.args[0] : void 0;
+            return this.args = (_ref = this.promise.resolve.mostRecentCall) != null ? _ref.args[0] : void 0;
           });
-          it("should call done callback", function() {
-            return expect(this.success).wasCalled();
+          it("should resolve the promise", function() {
+            return expect(this.promise.resolve).wasCalled();
           });
           return it("should pass the object to done callback", function() {
             return expect(this.args).toBe('cached_object');
@@ -118,13 +116,11 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             });
           });
           return it("should call fail callback", function() {
-            var error, promise;
+            var promise;
             promise = this.store.save('document', '123', {
               name: 'test'
             });
-            error = jasmine.createSpy('error');
-            promise.fail(error);
-            return expect(error).wasCalled();
+            return expect(promise.reject).wasCalled();
           });
         });
       });
@@ -154,30 +150,26 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         return expect(object.created_at).toBe('check12');
       });
       it("should allow numbers and lowercase letters for for type & id only", function() {
-        var invalid, key, promise, spy, _i, _j, _len, _len2, _results;
+        var invalid, key, promise, _i, _j, _len, _len2, _results;
         invalid = ['UPPERCASE', 'under_lines', '-?&$'];
         for (_i = 0, _len = invalid.length; _i < _len; _i++) {
           key = invalid[_i];
-          spy = jasmine.createSpy("fail with key = " + key);
           promise = this.store.save(key, 'valid', {});
-          promise.fail(spy);
-          expect(spy).wasCalled();
+          expect(promise.reject).wasCalled();
         }
         _results = [];
         for (_j = 0, _len2 = invalid.length; _j < _len2; _j++) {
           key = invalid[_j];
-          spy = jasmine.createSpy("fail with key = " + key);
           promise = this.store.save('valid', key, {});
-          promise.fail(spy);
-          _results.push(expect(spy).wasCalled());
+          _results.push(expect(promise.reject).wasCalled());
         }
         return _results;
       });
       _when("called without id", function() {
         _and("object has no id", function() {
           beforeEach(function() {
-            var promise, _ref;
-            promise = this.store.save('document', {
+            var _ref;
+            this.store.save('document', {
               name: 'test'
             }, {
               option: 'value'
@@ -258,20 +250,16 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       describe("invalid arguments", function() {
         _when("no arguments passed", function() {
           return it("should call the fail callback", function() {
-            var error, promise;
+            var promise;
             promise = this.store.load();
-            error = jasmine.createSpy('error');
-            promise.fail(error);
-            return expect(error).wasCalled();
+            return expect(promise.reject).wasCalled();
           });
         });
         return _when("no id passed", function() {
           return it("should call the fail callback", function() {
-            var error, promise;
+            var promise;
             promise = this.store.load('document');
-            error = jasmine.createSpy('error');
-            promise.fail(error);
-            return expect(error).wasCalled();
+            return expect(promise.reject).wasCalled();
           });
         });
       });
@@ -287,24 +275,19 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
           this.store.cache.andReturn({
             name: 'test'
           });
-          this.promise = this.store.load('document', 'abc4567');
-          this.success = jasmine.createSpy('success');
-          this.promise.done(this.success);
-          return this.object = this.success.mostRecentCall.args[0];
+          return this.promise = this.store.load('document', 'abc4567');
         });
         return it("should call the done callback", function() {
-          return expect(this.success).wasCalled();
+          return expect(this.promise.resolve).wasCalled();
         });
       });
       _when("object cannot be found", function() {
         beforeEach(function() {
           this.store.cache.andReturn(false);
-          this.promise = this.store.load('document', 'abc4567');
-          this.error = jasmine.createSpy('error');
-          return this.promise.fail(this.error);
+          return this.promise = this.store.load('document', 'abc4567');
         });
         return it("should call the fail callback", function() {
-          return expect(this.error).wasCalled();
+          return expect(this.promise.reject).wasCalled();
         });
       });
       it("should cache the object after the first get", function() {
@@ -343,8 +326,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             var promise, results, success;
             success = jasmine.createSpy('success');
             promise = this.store.loadAll();
-            promise.done(success);
-            results = success.mostRecentCall.args[0];
+            results = promise.resolve.mostRecentCall.args[0];
             return expect(results.length).toBe(5);
           });
         });
@@ -353,11 +335,9 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             return spyOn(this.store, "_index").andReturn([]);
           });
           return it("should return an empty array", function() {
-            var promise, success;
-            success = jasmine.createSpy('success');
+            var promise;
             promise = this.store.loadAll();
-            promise.done(success);
-            return expect(success).wasCalledWith([]);
+            return expect(promise.resolve).wasCalledWith([]);
           });
         });
         return _and("there are other documents in localStorage not stored with store", function() {
@@ -366,11 +346,9 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             return spyOn(this.store, "cache").andReturn({});
           });
           return it("should not return them", function() {
-            var promise, results, success;
-            success = jasmine.createSpy('success');
+            var promise, results;
             promise = this.store.loadAll();
-            promise.done(success);
-            results = success.mostRecentCall.args[0];
+            results = promise.resolve.mostRecentCall.args[0];
             return expect(results.length).toBe(1);
           });
         });
@@ -378,11 +356,9 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       _when("called with type = 'cat'", function() {
         return with_2_cats_and_3_dogs(function() {
           return it("should return only the cat objects", function() {
-            var promise, results, success;
-            success = jasmine.createSpy('success');
+            var promise, results;
             promise = this.store.loadAll('cat');
-            promise.done(success);
-            results = success.mostRecentCall.args[0];
+            results = promise.resolve.mostRecentCall.args[0];
             return expect(results.length).toBe(2);
           });
         });
@@ -394,16 +370,83 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       });
     });
     describe(".delete(type, id)", function() {
-      it("should return a promise", function() {
-        var promise;
-        promise = this.store.destroy('document', '123');
-        expect(promise.done).toBeDefined();
-        return expect(promise.fail).toBeDefined();
+      _when("objecet cannot be found", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "cache").andReturn(false);
+        });
+        return it("should return a rejected the promise", function() {
+          var promise;
+          promise = this.store["delete"]('document', '123');
+          return expect(promise.reject).wasCalled();
+        });
       });
-      it("should have more specs");
+      _when("object can be found and has not been synched before", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "cache").andReturn({});
+        });
+        it("should remove the object", function() {
+          this.store["delete"]('document', '123');
+          return expect(this.store.db.removeItem).wasCalledWith('document/123');
+        });
+        it("should set the _cached object to false", function() {
+          delete this.store._cached['document/123'];
+          this.store["delete"]('document', '123');
+          return expect(this.store._cached['document/123']).toBe(false);
+        });
+        it("should clear document from changed", function() {
+          spyOn(this.store, "clear_changed");
+          this.store["delete"]('document', '123');
+          return expect(this.store.clear_changed).wasCalledWith('document', '123');
+        });
+        it("should return a resolved promise", function() {
+          var promise;
+          promise = this.store["delete"]('document', '123');
+          return expect(promise.resolve).wasCalledWith({});
+        });
+        return it("should return a clone of the cached object (before it was deleted)", function() {
+          var promise;
+          spyOn($, "extend");
+          promise = this.store["delete"]('document', '123', {
+            remote: true
+          });
+          return expect($.extend).wasCalled();
+        });
+      });
+      _when("object can be found and delete comes from remote", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "cache").andReturn({
+            _synced_at: 'now'
+          });
+        });
+        return it("should remove the object", function() {
+          this.store["delete"]('document', '123', {
+            remote: true
+          });
+          return expect(this.store.db.removeItem).wasCalledWith('document/123');
+        });
+      });
+      _when("object can be found and was synched before", function() {
+        beforeEach(function() {
+          return spyOn(this.store, "cache").andReturn({
+            _synced_at: 'now'
+          });
+        });
+        it("should mark the object as deleted and cache it", function() {
+          var promise;
+          promise = this.store["delete"]('document', '123');
+          return expect(this.store.cache).wasCalledWith('document', '123', {
+            _synced_at: 'now',
+            _deleted: true
+          });
+        });
+        return it("should not remove the object from store", function() {
+          this.store["delete"]('document', '123');
+          return expect(this.store.db.removeItem).wasNotCalled();
+        });
+      });
       return describe("aliases", function() {
         return it("should allow to use .destroy", function() {
-          return expect(this.store["delete"]).toBe(this.store.destroy);
+          return expect(this.store.destroy).toBe(this.store["delete"]);
         });
       });
     });
@@ -416,52 +459,20 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         return this.store._cached = {};
       });
       _when("object passed", function() {
-        _when("object is marked as deleted", function() {
-          beforeEach(function() {
-            return this.store.is_marked_as_deleted.andReturn(true);
+        it("should write the object to localStorage, but without type & id attributes", function() {
+          this.store.cache('couch', '123', {
+            color: 'red'
           });
-          it("should not write the object to localStorage", function() {
-            this.store.cache('couch', '123', {
-              color: 'red',
-              _deleted: true
-            });
-            return expect(this.store.db.setItem).wasNotCalled();
-          });
-          it("should remove the object from localStorage", function() {
-            this.store.cache('couch', '123', {
-              color: 'red',
-              _deleted: true
-            });
-            return expect(this.store.db.removeItem).wasCalled();
-          });
-          return it("should cache the object as false", function() {
-            expect(this.store._cached['couch/123']).toBeUndefined();
-            this.store.cache('couch', '123', {
-              color: 'red',
-              _deleted: true
-            });
-            return expect(this.store._cached['couch/123']).toBe(false);
-          });
+          return expect(this.store.db.setItem).wasCalledWith('couch/123', '{"color":"red"}');
         });
-        return _when("object isn't marked as deleted", function() {
-          beforeEach(function() {
-            return this.store.is_marked_as_deleted.andReturn(false);
-          });
-          it("should write the object to localStorage, but without type & id attributes", function() {
+        return _when("`options.remote = true` passed", function() {
+          return it("should clear changed object", function() {
             this.store.cache('couch', '123', {
               color: 'red'
+            }, {
+              remote: true
             });
-            return expect(this.store.db.setItem).wasCalledWith('couch/123', '{"color":"red"}');
-          });
-          return _when("`options.remote = true` passed", function() {
-            return it("should clear changed object", function() {
-              this.store.cache('couch', '123', {
-                color: 'red'
-              }, {
-                remote: true
-              });
-              return expect(this.store.clear_changed).wasCalledWith('couch', '123');
-            });
+            return expect(this.store.clear_changed).wasCalledWith('couch', '123');
           });
         });
       });
@@ -560,16 +571,10 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       });
     });
     describe(".clear()", function() {
-      beforeEach(function() {
-        return spyOn(this.store, "_promise").andReturn({
-          resolve: jasmine.createSpy('resolve'),
-          reject: jasmine.createSpy('reject')
-        });
-      });
       it("should return a promise", function() {
         var promise;
         promise = this.store.clear();
-        return expect(promise).toBe(this.store._promise());
+        return expect(promise).toBe(this.app.promise_mock);
       });
       it("should clear localStorage", function() {
         this.store.clear();
@@ -587,7 +592,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       });
       it("should resolve promise", function() {
         this.store.clear();
-        return expect(this.store._promise().resolve).wasCalled();
+        return expect(this.app.promise().resolve).wasCalled();
       });
       return _when("an error occurs", function() {
         beforeEach(function() {
@@ -597,7 +602,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         });
         return it("should reject the promise", function() {
           this.store.clear();
-          return expect(this.store._promise().reject).wasCalled();
+          return expect(this.app.promise().reject).wasCalled();
         });
       });
     });

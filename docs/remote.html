@@ -26,7 +26,9 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
 
 <p>stop pulling changes from the userDB</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">disconnect : </span><span class="o">=&gt;</span>
       <span class="vi">@_connected = </span><span class="kc">false</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s1">&#39;aborting _changes_request&#39;</span><span class="p">,</span> <span class="nx">@_changes_request</span>
       <span class="nx">@_changes_request</span><span class="p">.</span><span class="nx">abort</span><span class="p">()</span> <span class="k">if</span> <span class="nx">@_changes_request</span>
+      
       <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">removeItem</span> <span class="s1">&#39;_couch.remote.seq&#39;</span>
       
       <span class="nx">@app</span><span class="p">.</span><span class="nx">unbind</span> <span class="s1">&#39;store:dirty:idle&#39;</span><span class="p">,</span> <span class="nx">@push_changes</span>
@@ -40,7 +42,7 @@ and <code>_bulk_docs</code> to push local changes</p>             </td>         
         <span class="nv">error: </span>       <span class="nx">@_changes_error</span>
       
       <span class="nb">window</span><span class="p">.</span><span class="nx">clearTimeout</span> <span class="nx">@_changes_request_timeout</span>
-      <span class="vi">@_changes_request_timeout = </span><span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="nx">@_restart_changes_request</span><span class="p">,</span> <span class="mi">59000</span> <span class="c1"># 59 sec</span>
+      <span class="vi">@_changes_request_timeout = </span><span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="nx">@_restart_changes_request</span><span class="p">,</span> <span class="mi">25000</span> <span class="c1"># 25 sec</span>
       
       </pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <h2>Push changes</h2>
 
@@ -59,7 +61,7 @@ using the <code>_bulk_docs</code> API</p>             </td>             <td clas
         <span class="nv">contentType: </span> <span class="s1">&#39;application/json&#39;</span>
       
         <span class="nv">data        : </span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nv">docs: </span><span class="nx">docs</span><span class="p">)</span>
-        <span class="nv">success     : </span><span class="nx">@_handle_changes</span>
+        <span class="nv">success     : </span><span class="nx">@_handle_push_changes</span>
       
       </pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <h2>Get / Set seq</h2>
 
@@ -80,7 +82,7 @@ using the <code>_bulk_docs</code> API</p>             </td>             <td clas
       
       <span class="k">return</span> <span class="nx">unless</span> <span class="nx">@_connected</span>
       <span class="nx">@set_seq</span> <span class="nx">response</span><span class="p">.</span><span class="nx">last_seq</span>
-      <span class="nx">@_handle_changes</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">results</span><span class="p">)</span>
+      <span class="nx">@_handle_pull_changes</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">results</span><span class="p">)</span>
       <span class="nx">do</span> <span class="nx">@pull_changes</span>
       </pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-12">&#182;</a>               </div>               <p>changes error handler </p>
 
@@ -91,29 +93,31 @@ then check for another change</p>             </td>             <td class="code"
       <span class="k">switch</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">status</span>
     </pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-13">&#182;</a>               </div>               <p>This happens when users session got invalidated on server</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">when</span> <span class="mi">403</span>
           <span class="nx">@trigger</span> <span class="s1">&#39;error:unauthorized&#39;</span>
-          <span class="nx">@stop</span><span class="p">()</span>
+          <span class="nx">do</span> <span class="nx">@disconnect</span>
         </pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-14">&#182;</a>               </div>               <p>the 404 comes, when the requested DB of the User has been removed. 
 Should really not happen. </p>
 
 <p>BUT: it might also happen that the profileDB is not ready yet. 
      Therefore, we try it again in 3 seconds</p>
 
-<p>TODO: review / rethink that.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">when</span> <span class="mi">404</span></pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-15">&#182;</a>               </div>               <p>@trigger 'error:unknown'
-@stop()</p>             </td>             <td class="code">               <div class="highlight"><pre>          <span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="nx">@pull_changes</span><span class="p">,</span> <span class="nx">@_changes_timeout</span><span class="p">(</span><span class="mi">3000</span><span class="p">)</span>
-        </pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-16">&#182;</a>               </div>               <p>Please server, don't give us these</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">when</span> <span class="mi">500</span>
+<p>TODO: review / rethink that.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">when</span> <span class="mi">404</span>
+          <span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="nx">@pull_changes</span><span class="p">,</span> <span class="mi">3000</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-15">&#182;</a>               </div>               <p>Please server, don't give us these</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">when</span> <span class="mi">500</span>
           <span class="nx">@trigger</span> <span class="s1">&#39;error:server&#39;</span>
-          <span class="nx">@stop</span><span class="p">()</span>
-        </pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-17">&#182;</a>               </div>               <p>usually a 0, which stands for timeout or server not reachable.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">else</span>
-          <span class="k">if</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">statusText</span> <span class="o">is</span> <span class="s1">&#39;abort&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-18">&#182;</a>               </div>               <p>manual abort after 59sec. reload changes directly.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">@pull_changes</span><span class="p">()</span>
-          <span class="k">else</span>        </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <p>oops. This might be caused by an unreachable server.
-let's trigger cache update to double check</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="nx">@pull_changes</span><span class="p">,</span> <span class="nx">@_changes_timeout</span><span class="p">()</span>
-            <span class="nx">@_double_changes_timeout</span><span class="p">()</span>
-  </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <p>map of valid couchDB doc attributes starting with an underscore</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_valid_special_attributes:</span>
+          <span class="nx">do</span> <span class="nx">@disconnect</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-16">&#182;</a>               </div>               <p>usually a 0, which stands for timeout or server not reachable.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">else</span>
+          <span class="k">if</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">statusText</span> <span class="o">is</span> <span class="s1">&#39;abort&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-17">&#182;</a>               </div>               <p>manual abort after 25sec. reload changes directly.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">do</span> <span class="nx">@pull_changes</span>
+          <span class="k">else</span>    
+              </pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-18">&#182;</a>               </div>               <p>oops. This might be caused by an unreachable server.
+Or the server canceld it for what ever reason, e.g.
+heroku kills the request after ~30s.
+we'll try again after a 3s timeout</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nb">window</span><span class="p">.</span><span class="nx">setTimeout</span> <span class="nx">@pull_changes</span><span class="p">,</span> <span class="mi">3000</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <p>map of valid couchDB doc attributes starting with an underscore</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_valid_special_attributes:</span>
       <span class="s1">&#39;_id&#39;</span>      <span class="o">:</span> <span class="mi">1</span>
       <span class="s1">&#39;_rev&#39;</span>     <span class="o">:</span> <span class="mi">1</span>
       <span class="s1">&#39;_deleted&#39;</span> <span class="o">:</span> <span class="mi">1</span>
   
-  </pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <p>parse object for remote storage. All attributes starting with an 
+  </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <p>parse object for remote storage. All attributes starting with an 
 <code>underscore</code> do not get synchronized despite the special attributes
 <code>_id</code>, <code>_rev</code> and <code>_deleted</code></p>
 
@@ -130,7 +134,7 @@ let's trigger cache update to double check</p>             </td>             <td
       
       <span class="nx">attributes</span>
       
-      </pre></div>             </td>           </tr>                               <tr id="section-22">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-22">&#182;</a>               </div>               <p>parse object for local storage. </p>
+      </pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <p>parse object for local storage. </p>
 
 <p>renames <code>_id</code> attribute to <code>id</code> and removes the type from the id,
 e.g. <code>document/123</code> -> <code>123</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_parse_from_remote: </span><span class="nf">(obj) -&gt;</span>
@@ -143,22 +147,16 @@ e.g. <code>document/123</code> -> <code>123</code></p>             </td>        
       
       <span class="nx">obj</span>
   
-  </pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-23">&#182;</a>               </div>               <p>handle changes from remote</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_handle_changes: </span><span class="p">(</span><span class="nx">changes</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span> <span class="nx">@_parse_from_remote</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">doc</span> <span class="o">or</span> <span class="nx">result</span><span class="p">),</span> <span class="nv">remote: </span><span class="kc">true</span><span class="p">)</span> <span class="k">for</span> <span class="nx">result</span> <span class="k">in</span> <span class="nx">changes</span>
-    
-    </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <p>changes timeout (setter &amp; getter)</p>
-
-<p>if there is an error, we use a timeout to try it again.
-we double it each time an error occurs and reset it back
-to 100 on success</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_changes_timeout_default : </span><span class="mi">100</span>
-    <span class="nv">_changes_timeout_current : </span><span class="mi">100</span>
-    <span class="nv">_changes_timeout : </span><span class="nf">(set) -&gt;</span>
-      <span class="k">if</span> <span class="nx">set</span>
-        <span class="vi">@_changes_timeout_current = </span><span class="nx">set</span>
-      <span class="k">else</span>
-        <span class="nx">@_changes_timeout_current</span>
-    <span class="nv">_reset_changes_timeout  : </span><span class="o">-&gt;</span> <span class="vi">@_changes_timeout_current = </span><span class="nx">@_changes_timeout_default</span>
-    <span class="nv">_double_changes_timeout : </span><span class="o">-&gt;</span> <span class="vi">@_changes_timeout_current = </span><span class="nx">@_changes_timeout_current</span> <span class="o">*</span> <span class="mi">2</span>
-    </pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-25">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_promise: </span><span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-22">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-22">&#182;</a>               </div>               <p>handle changes from remote</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_handle_pull_changes: </span><span class="p">(</span><span class="nx">changes</span><span class="p">)</span> <span class="o">=&gt;</span>
+      <span class="k">for</span> <span class="p">{</span><span class="nx">doc</span><span class="p">}</span> <span class="k">in</span> <span class="nx">changes</span>
+        <span class="nv">_doc = </span><span class="nx">@_parse_from_remote</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">_deleted</span>
+          <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">destroy</span><span class="p">(</span><span class="nx">_doc</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nv">remote: </span><span class="kc">true</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">done</span> <span class="p">(</span><span class="nx">object</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;remote:destroy&#39;</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">object</span>
+        <span class="k">else</span>
+          <span class="nx">@app</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="nx">_doc</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">,</span> <span class="nv">remote: </span><span class="kc">true</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">done</span> <span class="p">(</span><span class="nx">object</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">trigger</span> <span class="s1">&#39;remote:change&#39;</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span> <span class="nx">_doc</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">object</span>
+        
+    <span class="nv">_handle_push_changes: </span><span class="p">(</span><span class="nx">changes</span><span class="p">)</span> <span class="o">=&gt;</span></pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-23">&#182;</a>               </div>               <p>TODO: handle conflicts</p>             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_promise: </span><span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span>
 
 </pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

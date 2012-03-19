@@ -56,7 +56,7 @@ define('store', ['errors'], function(ERROR) {
 
     Store.prototype.save = function(type, id, object, options) {
       var promise;
-      promise = this._promise();
+      promise = this.app.promise();
       switch ('object') {
         case typeof arguments[0]:
           options = id;
@@ -73,6 +73,7 @@ define('store', ['errors'], function(ERROR) {
         promise.reject(ERROR.INVALID_ARGUMENTS("object is " + (typeof object)));
         return promise;
       }
+      object = $.extend({}, object);
       id || (id = this.uuid());
       if (!this._is_valid_key(id)) {
         promise.reject(ERROR.INVALID_KEY({
@@ -109,7 +110,7 @@ define('store', ['errors'], function(ERROR) {
 
     Store.prototype.load = function(type, id) {
       var object, promise, _ref;
-      promise = this._promise();
+      promise = this.app.promise();
       if (arguments.length = 1 && typeof type === 'object') {
         _ref = [type.type, type.id], type = _ref[0], id = _ref[1];
       }
@@ -133,7 +134,7 @@ define('store', ['errors'], function(ERROR) {
 
     Store.prototype.loadAll = function(type) {
       var id, key, keys, promise, results, _type;
-      promise = this._promise();
+      promise = this.app.promise();
       keys = this._index();
       try {
         results = (function() {
@@ -158,24 +159,25 @@ define('store', ['errors'], function(ERROR) {
 
     Store.prototype.getAll = Store.prototype.loadAll;
 
-    Store.prototype.destroy = function(type, id) {
+    Store.prototype["delete"] = function(type, id, options) {
       var key, object, promise;
-      promise = this._promise();
+      if (options == null) options = {};
+      promise = this.app.promise();
       object = this.cache(type, id);
       if (!object) return promise.reject(ERROR.NOT_FOUND(type, id));
-      if (object._rev) {
+      if (object._synced_at && !options.remote) {
         object._deleted = true;
         this.cache(type, id, object);
       } else {
         key = "" + type + "/" + id;
         this.db.removeItem(key);
-        delete this._cached[key];
+        this._cached[key] = false;
         this.clear_changed(type, id);
       }
-      return promise.resolve(object);
+      return promise.resolve($.extend({}, object));
     };
 
-    Store.prototype["delete"] = Store.prototype.destroy;
+    Store.prototype.destroy = Store.prototype["delete"];
 
     Store.prototype.cache = function(type, id, object, options) {
       var key;
@@ -183,30 +185,29 @@ define('store', ['errors'], function(ERROR) {
       if (options == null) options = {};
       key = "" + type + "/" + id;
       if (object) {
-        if (this.is_marked_as_deleted(object)) {
-          this._cached[key] = false;
-          this.db.removeItem(key);
-        } else {
-          this._cached[key] = $.extend(object, {
-            type: type,
-            id: id
-          });
-          this._setObject(type, id, object);
-        }
+        this._cached[key] = $.extend(object, {
+          type: type,
+          id: id
+        });
+        this._setObject(type, id, object);
         if (options.remote) {
           this.clear_changed(type, id);
-          return true;
+          return $.extend({}, this._cached[key]);
         }
       } else {
-        if (this._cached[key] != null) return this._cached[key];
+        if (this._cached[key] != null) return $.extend({}, this._cached[key]);
         this._cached[key] = this._getObject(type, id);
       }
-      if (this.is_dirty(object) || this.is_marked_as_deleted(object)) {
+      if (this._cached[key] && (this.is_dirty(this._cached[key]) || this.is_marked_as_deleted(this._cached[key]))) {
         this.mark_as_changed(type, id, this._cached[key]);
       } else {
         this.clear_changed(type, id);
       }
-      return this._cached[key];
+      if (this._cached[key]) {
+        return $.extend({}, this._cached[key]);
+      } else {
+        return this._cached[key];
+      }
     };
 
     Store.prototype.clear_changed = function(type, id) {
@@ -267,7 +268,7 @@ define('store', ['errors'], function(ERROR) {
 
     Store.prototype.clear = function() {
       var promise;
-      promise = this._promise();
+      promise = this.app.promise();
       try {
         this.db.clear();
         this._cached = {};
@@ -343,8 +344,6 @@ define('store', ['errors'], function(ERROR) {
     Store.prototype._is_semantic_id = function(key) {
       return /^[a-z0-9]+\/[a-z0-9]+$/.test(key);
     };
-
-    Store.prototype._promise = $.Deferred;
 
     Store.prototype._cached = {};
 

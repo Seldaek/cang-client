@@ -7,7 +7,8 @@ define('remote', ['errors'], function(ERROR) {
 
     function Remote(app) {
       this.app = app;
-      this._handle_changes = __bind(this._handle_changes, this);
+      this._handle_push_changes = __bind(this._handle_push_changes, this);
+      this._handle_pull_changes = __bind(this._handle_pull_changes, this);
       this._changes_error = __bind(this._changes_error, this);
       this._changes_success = __bind(this._changes_success, this);
       this._restart_changes_request = __bind(this._restart_changes_request, this);
@@ -32,6 +33,7 @@ define('remote', ['errors'], function(ERROR) {
 
     Remote.prototype.disconnect = function() {
       this._connected = false;
+      console.log('aborting _changes_request', this._changes_request);
       if (this._changes_request) this._changes_request.abort();
       this.app.store.db.removeItem('_couch.remote.seq');
       this.app.unbind('store:dirty:idle', this.push_changes);
@@ -45,7 +47,7 @@ define('remote', ['errors'], function(ERROR) {
         error: this._changes_error
       });
       window.clearTimeout(this._changes_request_timeout);
-      return this._changes_request_timeout = window.setTimeout(this._restart_changes_request, 59000);
+      return this._changes_request_timeout = window.setTimeout(this._restart_changes_request, 25000);
     };
 
     Remote.prototype.push_changes = function(options) {
@@ -68,7 +70,7 @@ define('remote', ['errors'], function(ERROR) {
         data: JSON.stringify({
           docs: docs
         }),
-        success: this._handle_changes
+        success: this._handle_push_changes
       });
     };
 
@@ -95,7 +97,7 @@ define('remote', ['errors'], function(ERROR) {
     Remote.prototype._changes_success = function(response) {
       if (!this._connected) return;
       this.set_seq(response.last_seq);
-      this._handle_changes(response.results);
+      this._handle_pull_changes(response.results);
       return this.pull_changes();
     };
 
@@ -104,18 +106,17 @@ define('remote', ['errors'], function(ERROR) {
       switch (xhr.status) {
         case 403:
           this.trigger('error:unauthorized');
-          return this.stop();
+          return this.disconnect();
         case 404:
-          return window.setTimeout(this.pull_changes, this._changes_timeout(3000));
+          return window.setTimeout(this.pull_changes, 3000);
         case 500:
           this.trigger('error:server');
-          return this.stop();
+          return this.disconnect();
         default:
           if (xhr.statusText === 'abort') {
             return this.pull_changes();
           } else {
-            window.setTimeout(this.pull_changes, this._changes_timeout());
-            return this._double_changes_timeout();
+            return window.setTimeout(this.pull_changes, 3000);
           }
       }
     };
@@ -149,37 +150,31 @@ define('remote', ['errors'], function(ERROR) {
       return obj;
     };
 
-    Remote.prototype._handle_changes = function(changes) {
-      var result, _i, _len, _results;
+    Remote.prototype._handle_pull_changes = function(changes) {
+      var doc, _doc, _i, _len, _results,
+        _this = this;
       _results = [];
       for (_i = 0, _len = changes.length; _i < _len; _i++) {
-        result = changes[_i];
-        _results.push(this.app.store.save(this._parse_from_remote(result.doc || result), {
-          remote: true
-        }));
+        doc = changes[_i].doc;
+        _doc = this._parse_from_remote(doc);
+        if (_doc._deleted) {
+          _results.push(this.app.store.destroy(_doc.type, _doc.id, {
+            remote: true
+          }).done(function(object) {
+            return _this.app.trigger('remote:destroy', _doc.type, _doc.id, object);
+          }));
+        } else {
+          _results.push(this.app.store.save(_doc.type, _doc.id, _doc, {
+            remote: true
+          }).done(function(object) {
+            return _this.app.trigger('remote:change', _doc.type, _doc.id, object);
+          }));
+        }
       }
       return _results;
     };
 
-    Remote.prototype._changes_timeout_default = 100;
-
-    Remote.prototype._changes_timeout_current = 100;
-
-    Remote.prototype._changes_timeout = function(set) {
-      if (set) {
-        return this._changes_timeout_current = set;
-      } else {
-        return this._changes_timeout_current;
-      }
-    };
-
-    Remote.prototype._reset_changes_timeout = function() {
-      return this._changes_timeout_current = this._changes_timeout_default;
-    };
-
-    Remote.prototype._double_changes_timeout = function() {
-      return this._changes_timeout_current = this._changes_timeout_current * 2;
-    };
+    Remote.prototype._handle_push_changes = function(changes) {};
 
     Remote.prototype._promise = $.Deferred;
 
