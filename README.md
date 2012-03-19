@@ -104,23 +104,25 @@ create or update an object.
 ```javascript
 // create a new object
 type = 'rule'
-app.store.save( type, {name: "rule the world"} )
+app.store.create( type, {name: "rule the world"} )
   
   .done ( function(new_object) { } )
+  .fail ( function(err)        { } )
+  
+// save an object
+id   = 'abc4567'
+type = 'rule'
+app.store.save( type, id, {name: "rule the world"} )
+  
+  .done ( function(object) { } )
   .fail ( function(err)        { } )
   
 // update an existing object
 id   = 'abc4567'
 type = 'rule'
-app.store.save( type, id, {name: "rule the world"} )
+app.store.save( type, id, {nr: 1} )
   
-  .done ( function(new_object) { } )
-  .fail ( function(err)        { } )
-  
-// alternative syntax
-app.store.save( {name: "rule the world", type: "rule", id: "abc4567"} )
-  
-  .done ( function(new_object) { } )
+  .done ( function(updated_object) { } )
   .fail ( function(err)        { } )
 ```
 
@@ -167,22 +169,22 @@ subscribe to changes from remote
 
 ```javascript
 // new doc created
-app.remote.on_create( function( created_object) { } )
+app.remote.on( 'created', function( type, id, created_object) { } )
 
 // existing doc updated
-app.remote.on_update( function( update_object)  { } )
+app.remote.on( 'updated', function( type, id, updated_object) { } )
 
 // doc deleted
-app.remote.on_delete( function( deleted_object) { } )
+app.remote.on( 'deleted', function( type, id, deleted_object) { } )
 
 // any of above events
-app.remote.on_change( function( changed_object) { } )
+app.remote.on( 'changed', function( type, id, changed_object) { } )
 
 // all listeners can be filtered by type
-app.remote.on_create( type, function( created_object) { } )
-app.remote.on_update( type, function( update_object)  { } )
-app.remote.on_delete( type, function( deleted_object) { } )
-app.remote.on_change( type, function( changed_object) { } )
+app.remote.on( "created:couch", function( id, created_object) { } )
+app.remote.on( "updated:couch", function( id, updated_object)  { } )
+app.remote.on( "deleted:couch", function( id, deleted_object) { } )
+app.remote.on( "changed:couch", function( id, changed_object) { } )
 ```
 
 
@@ -193,21 +195,20 @@ hell, yeah!
 
 ```javascript
 email = {
-  from    : 'joe@example.com',
   to      : ['you@roundthewor.ld'],
-  cc      : ['Rest of the World <rest@roundthewor.ld>'],
+  cc      : ['rest@roundthewor.ld'],
   subject : 'rule the wolrd',
   body    : "we can do it!\nSigned, Joe"
 }
 
 app.email.send( email )
-  
-  // successfully synched to server
+
+  // synched to server
   .progress ( function(email) { } )
-  
+
   // email sent successfully
   .done     ( function(email) { } )
-  
+
   // something went wrong
   .fail     ( function(err)   { } )
 ```
@@ -219,6 +220,7 @@ Future Ideas
 * sharing
 * searching
 * payments
+* file conversion
 * ... ?
 
 
