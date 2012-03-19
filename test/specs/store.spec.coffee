@@ -19,10 +19,10 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       spyOn(@store.db, "clear").andCallThrough()
     
     describe "new", ->
-      it "should subscribe to account:sign_out event", ->
+      it "should subscribe to account:signed_out event", ->
         spyOn(@app, "on")
         store = new Store @app
-        expect(@app.on).wasCalledWith 'account:sign_out', store.clear
+        expect(@app.on).wasCalledWith 'account:signed_out', store.clear
     # /new
     
     describe ".save(type, id, object, options)", ->
@@ -78,13 +78,16 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       
         _when "successful", ->
           beforeEach ->
-            @args = @promise.resolve.mostRecentCall?.args[0]
+            @args = @promise.resolve.mostRecentCall?.args
       
           it "should resolve the promise", ->
             expect(@promise.resolve).wasCalled()
       
           it "should pass the object to done callback", ->
-            expect(@args).toBe 'cached_object'
+            expect(@args[0]).toBe 'cached_object'
+            
+          it "should pass false (= not created) as the second param to the done callback", ->
+            expect(@args[1]).toBe false
       
         _when "failed", ->
           beforeEach ->
@@ -122,19 +125,31 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           promise = @store.save 'valid', key, {}
           expect(promise.reject).wasCalled()
           
-      _when "called without id", ->
-        _and "object has no id", ->
+      _when "called without id = undefined", ->
+        beforeEach ->
+          # keep promise, key, and stored object for assertions
+          @promise = @store.save 'document', undefined, { name: 'test' }, { option: 'value' }
+          [@type, @key, @object] = @store.cache.mostRecentCall.args
+    
+        it "should generate an id", ->
+          expect(@key).toMatch /^[a-z0-9]{7}$/
+          
+        it "should pass options", ->
+          options = @store.cache.mostRecentCall.args[3]
+          expect(options.option).toBe 'value'
+          
+        _when "successful", ->
           beforeEach ->
-            # keep promise, key, and stored object for assertions
-            @store.save 'document', undefined, { name: 'test' }, { option: 'value' }
-            [@type, @key, @object] = @store.cache.mostRecentCall.args
+            @args = @promise.resolve.mostRecentCall?.args
       
-          it "should generate an id", ->
-            expect(@key).toMatch /^[a-z0-9]{7}$/
+          it "should resolve the promise", ->
+            expect(@promise.resolve).wasCalled()
+      
+          it "should pass the object to done callback", ->
+            expect(@args[0]).toBe 'cached_object'
             
-          it "should pass options", ->
-            options = @store.cache.mostRecentCall.args[3]
-            expect(options.option).toBe 'value'
+          it "should pass true (= created) as the second param to the done callback", ->
+            expect(@args[1]).toBe true
     # /.save(type, id, object, options)
     
     describe ".create(type, object, options)", ->

@@ -19,8 +19,8 @@ define 'account', ->
       @email = @app.store.db.getItem '_couch.account.email'
       @authenticate()
       
-      @app.on 'account:sign_in',  @_handle_sign_in
-      @app.on 'account:sign_out', @_handle_sign_out
+      @app.on 'account:signed_in',  @_handle_sign_in
+      @app.on 'account:signed_out', @_handle_sign_out
     
     ##
     #
@@ -76,8 +76,8 @@ define 'account', ->
         contentType:  'application/json'
         
         success   : => 
-          @app.trigger 'account:sign_up', arguments...
-          @app.trigger 'account:sign_in', arguments...
+          @app.trigger 'account:signed_up', arguments...
+          @app.trigger 'account:signed_in', arguments...
 
 
     # ## sign in with email & password
@@ -91,7 +91,7 @@ define 'account', ->
           name      : email
           password  : password
           
-        success : => @app.trigger 'account:sign_in', arguments...
+        success : => @app.trigger 'account:signed_in', arguments...
 
     # alias
     login: @::sign_in
@@ -112,7 +112,7 @@ define 'account', ->
     # TODO: handle errors
     sign_out: ->
       @app.request 'DELETE', '/_session', 
-        success : => @app.trigger 'account:sign_out', arguments...
+        success : => @app.trigger 'account:signed_out', arguments...
 
     # alias
     logout: @::sign_out

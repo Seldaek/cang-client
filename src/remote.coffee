@@ -15,8 +15,8 @@ define 'remote', ['errors'], (ERROR) ->
     #
     constructor : (@app) ->
       
-      @app.on 'account:sign_in',  @connect
-      @app.on 'account:sign_out', @disconnect
+      @app.on 'account:signed_in',  @connect
+      @app.on 'account:signed_out', @disconnect
       @connect()
       
       
@@ -212,10 +212,10 @@ define 'remote', ['errors'], (ERROR) ->
         _doc = @_parse_from_remote(doc)
         if _doc._deleted
           @app.store.destroy(_doc.type, _doc.id, remote: true)
-          .done (object) => @app.trigger 'remote:destroy', _doc.type, _doc.id, object
+          .done (object) => @app.trigger 'remote:destroyed', _doc.type, _doc.id, object
         else
           @app.store.save(_doc.type, _doc.id, _doc, remote: true)
-          .done (object) => @app.trigger 'remote:change', _doc.type, _doc.id, object
+          .done (object) => @app.trigger 'remote:changed', _doc.type, _doc.id, object
         
     _handle_push_changes: (changes) =>
       # TODO: handle conflicts

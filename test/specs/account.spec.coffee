@@ -34,11 +34,11 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
         
       it "should bind to sign_in event", ->
         account = new Account @app
-        expect(@app.on).wasCalledWith 'account:sign_in', account._handle_sign_in
+        expect(@app.on).wasCalledWith 'account:signed_in', account._handle_sign_in
       
       it "should bind to sign_out event", ->
         account = new Account @app
-        expect(@app.on).wasCalledWith 'account:sign_out', account._handle_sign_out
+        expect(@app.on).wasCalledWith 'account:signed_out', account._handle_sign_out
     # /new
     
     describe "event handlers", ->
@@ -204,13 +204,13 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
         beforeEach ->
           @app.request.andCallFake (type, path, options) -> options.success()
         
-        it "should trigger `account:sign_up` event", ->
+        it "should trigger `account:signed_up` event", ->
           @account.sign_up('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:sign_up'
+          expect(@app.trigger).wasCalledWith 'account:signed_up'
           
-        it "should trigger `account:sign_in` event", ->
+        it "should trigger `account:signed_in` event", ->
           @account.sign_up('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:sign_in'
+          expect(@app.trigger).wasCalledWith 'account:signed_in'
     # /.sign_up(email, password)
   
     describe ".sign_in(email, password)", ->
@@ -233,9 +233,9 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
         beforeEach ->
           @app.request.andCallFake (type, path, options) -> options.success()
           
-        it "should trigger `account:sign_in` event", ->
+        it "should trigger `account:signed_in` event", ->
           @account.sign_in('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:sign_in'
+          expect(@app.trigger).wasCalledWith 'account:signed_in'
     # /.sign_in(email, password)
   
     describe ".change_password(email, password)", ->
@@ -256,8 +256,8 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
         beforeEach ->
           @app.request.andCallFake (type, path, options) -> options.success()
           
-        it "should trigger `account:sign_out` event", ->
+        it "should trigger `account:signed_out` event", ->
           @account.sign_out('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:sign_out'
+          expect(@app.trigger).wasCalledWith 'account:signed_out'
     # /.sign_in(email, password)
   # /couchApp

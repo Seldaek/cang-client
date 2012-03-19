@@ -24,7 +24,7 @@ define 'store', ['errors'], (ERROR) ->
           clear      : -> null
       
       # handle sign outs
-      @app.on 'account:sign_out', @clear
+      @app.on 'account:signed_out', @clear
       
     
     # localStorage proxy
@@ -65,7 +65,11 @@ define 'store', ['errors'], (ERROR) ->
       object = $.extend {}, object
       
       # generate an id if necessary
-      id ||= @uuid()
+      if id
+        is_new = false
+      else
+        is_new = true
+        id = @uuid()
     
       # validations
       unless @_is_valid_key id
@@ -88,7 +92,7 @@ define 'store', ['errors'], (ERROR) ->
     
       try 
         object = @cache type, id, object, options
-        promise.resolve object
+        promise.resolve object, is_new
       catch error
         promise.reject error
     
