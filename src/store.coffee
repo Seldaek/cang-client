@@ -56,7 +56,7 @@ define 'store', ['errors'], (ERROR) ->
     #     store.create(car)
     #     store.update(car)
     save: (type, id, object, options) ->
-      promise = @_promise()
+      promise = @app.promise()
     
       switch 'object'
         when typeof arguments[0]
@@ -73,6 +73,8 @@ define 'store', ['errors'], (ERROR) ->
         promise.reject ERROR.INVALID_ARGUMENTS "object is #{typeof object}"
         return promise
       
+      object = $.extend {}, object
+      
       # generate an id when object is new
       id ||= @uuid()
     
@@ -84,7 +86,7 @@ define 'store', ['errors'], (ERROR) ->
         promise.reject ERROR.INVALID_KEY type: type
         return promise
     
-      # add timestamps. unless update comes from remote
+      # add timestamps
       if options?.remote
         object._synced_at = @_now()
       else
@@ -121,7 +123,7 @@ define 'store', ['errors'], (ERROR) ->
     #     # alias
     #     store.get(car)
     load : (type, id) ->
-      promise = @_promise()
+      promise = @app.promise()
       
       if arguments.length = 1 and typeof type is 'object'
         [type, id] = [type.type, type.id]
@@ -159,7 +161,7 @@ define 'store', ['errors'], (ERROR) ->
     #     # alias
     #     store.getAll()
     loadAll: (type) ->
-      promise = @_promise()
+      promise = @app.promise()
       keys = @_index()
     
       try
@@ -178,20 +180,20 @@ define 'store', ['errors'], (ERROR) ->
     getAll : @::loadAll
     
     
-    # ## Destroy
+    # ## Delete
     #
-    # destroys one object specified by `type` and `id`. 
+    # Deletes one object specified by `type` and `id`. 
     # 
     # when object has been synced before, mark it as deleted. 
     # Otherwise remove it from Store.
-    destroy: (type, id) ->
-      promise = @_promise()
-      object = @cache type, id
+    delete: (type, id, options = {}) ->
+      promise = @app.promise()
+      object  = @cache type, id
       
       unless object
         return promise.reject ERROR.NOT_FOUND type, id
       
-      if object._rev
+      if object._synced_at and !options.remote
         object._deleted = true
         @cache type, id, object
       
@@ -199,13 +201,13 @@ define 'store', ['errors'], (ERROR) ->
         key = "#{type}/#{id}"
         @db.removeItem key
     
-        delete @_cached[key]
+        @_cached[key] = false
         @clear_changed type, id
     
-      promise.resolve object
+      promise.resolve $.extend {}, object
     
     # alias
-    delete: @::destroy
+    destroy: @::delete
     
     
     # ## Cache
@@ -220,27 +222,26 @@ define 'store', ['errors'], (ERROR) ->
       key = "#{type}/#{id}"
     
       if object
-        if @is_marked_as_deleted object
-          @_cached[key] = false
-          @db.removeItem key
-        else
-          @_cached[key] = $.extend object, type: type, id: id
-          @_setObject type, id, object
+        @_cached[key] = $.extend object, type: type, id: id
+        @_setObject type, id, object
         
         if options.remote
           @clear_changed type, id 
-          return true
+          return $.extend {}, @_cached[key]
       
       else
-        return @_cached[key] if @_cached[key]?
+        return $.extend {}, @_cached[key] if @_cached[key]?
         @_cached[key] = @_getObject type, id
-    
-      if @is_dirty(object) or @is_marked_as_deleted(object)
+      
+      if @_cached[key] and (@is_dirty(@_cached[key]) or @is_marked_as_deleted(@_cached[key]))
         @mark_as_changed type, id, @_cached[key]
       else
         @clear_changed type, id
       
-      @_cached[key]
+      if @_cached[key]
+        $.extend {}, @_cached[key]
+      else
+        @_cached[key]
   
   
     # ## Clear changed 
@@ -321,7 +322,7 @@ define 'store', ['errors'], (ERROR) ->
     # clears localStorage and cache
     # TODO: do not clear entire localStorage, clear only item that have been stored before
     clear: =>
-      promise = @_promise()
+      promise = @app.promise()
     
       try
         @db.clear()
@@ -416,9 +417,6 @@ define 'store', ['errors'], (ERROR) ->
       
     _is_semantic_id: (key) ->
       /^[a-z0-9]+\/[a-z0-9]+$/.test key
-    
-    #
-    _promise: $.Deferred
 
     # cache of localStorage for quicker access
     _cached: {}

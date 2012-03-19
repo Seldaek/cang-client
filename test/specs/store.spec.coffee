@@ -5,6 +5,11 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       @app = new couchAppMock 
       @store = new Store @app
       
+      spyOn(@app.promise_mock, "resolve").andCallThrough()
+      spyOn(@app.promise_mock, "reject").andCallThrough()
+      spyOn(@app.promise_mock, "fail").andCallThrough()
+      spyOn(@app.promise_mock, "done").andCallThrough()
+      
       spyOn(@store, "_setObject").andCallThrough()
       spyOn(@store, "_getObject").andCallThrough()
       
@@ -34,16 +39,12 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         _when "no arguments passed", ->          
           it "should call the fail callback", ->
             promise = @store.save()
-            error = jasmine.createSpy 'error'
-            promise.fail error
-            expect(error).wasCalled()
+            expect(promise.reject).wasCalled()
     
         _when "no object passed", ->
           it "should call the fail callback", ->
             promise = @store.save 'document', 'abc4567'
-            error = jasmine.createSpy 'error'
-            promise.fail error
-            expect(error).wasCalled()
+            expect(promise.reject).wasCalled()
     
       _when "id is '123', type is 'document', object is {name: 'test'}", ->
         beforeEach ->
@@ -77,12 +78,10 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       
         _when "successful", ->
           beforeEach ->
-            @success = jasmine.createSpy 'success'
-            @promise.done @success
-            @args = @success.mostRecentCall?.args[0]
+            @args = @promise.resolve.mostRecentCall?.args[0]
       
-          it "should call done callback", ->
-            expect(@success).wasCalled()
+          it "should resolve the promise", ->
+            expect(@promise.resolve).wasCalled()
       
           it "should pass the object to done callback", ->
             expect(@args).toBe 'cached_object'
@@ -93,9 +92,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       
           it "should call fail callback", ->
             promise = @store.save 'document', '123', { name: 'test' }
-            error = jasmine.createSpy 'error'
-            promise.fail error
-            expect(error).wasCalled()
+            expect(promise.reject).wasCalled()
   
       _when "id is '123', type is 'document', object is {id: '123', type: 'document', name: 'test'}", ->
         beforeEach ->
@@ -118,22 +115,18 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         invalid = ['UPPERCASE', 'under_lines', '-?&$']
     
         for key in invalid
-          spy = jasmine.createSpy "fail with key = #{key}"
           promise = @store.save key, 'valid', {}
-          promise.fail spy
-          expect(spy).wasCalled()
+          expect(promise.reject).wasCalled()
     
         for key in invalid
-          spy = jasmine.createSpy "fail with key = #{key}"
           promise = @store.save 'valid', key, {}
-          promise.fail spy
-          expect(spy).wasCalled()
-  
+          expect(promise.reject).wasCalled()
+          
       _when "called without id", ->
         _and "object has no id", ->
           beforeEach ->
             # keep promise, key, and stored object for assertions
-            promise = @store.save 'document', { name: 'test' }, { option: 'value' }
+            @store.save 'document', { name: 'test' }, { option: 'value' }
             [@type, @key, @object] = @store.cache.mostRecentCall.args
       
           it "should generate an id", ->
@@ -192,16 +185,12 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         _when "no arguments passed", ->          
           it "should call the fail callback", ->
             promise = @store.load()
-            error = jasmine.createSpy 'error'
-            promise.fail error
-            expect(error).wasCalled()
+            expect(promise.reject).wasCalled()
 
         _when "no id passed", ->
           it "should call the fail callback", ->
             promise = @store.load 'document'
-            error = jasmine.createSpy 'error'
-            promise.fail error
-            expect(error).wasCalled()
+            expect(promise.reject).wasCalled()
             
       it "should allow to pass an object as paramter {type: 'car', id: 'abc4567'}", ->
         @store.load {type: 'car', id: 'abc4567'}
@@ -211,25 +200,19 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       _when "object can be found", ->
         beforeEach ->
           @store.cache.andReturn name: 'test'
-
           @promise = @store.load 'document', 'abc4567'
-          @success = jasmine.createSpy 'success'
-          @promise.done @success
-          @object = @success.mostRecentCall.args[0]
     
         it "should call the done callback", ->
-          expect(@success).wasCalled()
+          expect(@promise.resolve).wasCalled()
       
       _when "object cannot be found", ->
         beforeEach ->
           @store.cache.andReturn false
       
           @promise = @store.load 'document', 'abc4567'
-          @error = jasmine.createSpy 'error'
-          @promise.fail @error
       
         it "should call the fail callback", ->
-          expect(@error).wasCalled()
+          expect(@promise.reject).wasCalled()
   
       it "should cache the object after the first get", ->
         @store.load 'document', 'abc4567'
@@ -249,7 +232,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           beforeEach ->
             spyOn(@store, "_index").andReturn ["cat/1", "cat/2", "dog/1", "dog/2", "dog/3"]
             spyOn(@store, "cache").andReturn name: 'becks'
-        
           specs()
   
   
@@ -263,8 +245,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           it "should return'em all", ->
             success = jasmine.createSpy 'success'
             promise = @store.loadAll()
-            promise.done success
-            results = success.mostRecentCall.args[0]
+            results = promise.resolve.mostRecentCall.args[0]
             expect(results.length).toBe 5
         
         _and "no documents exist in the store", ->          
@@ -272,10 +253,8 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
             spyOn(@store, "_index").andReturn []
       
           it "should return an empty array", ->
-            success = jasmine.createSpy 'success'
             promise = @store.loadAll()
-            promise.done success
-            expect(success).wasCalledWith []
+            expect(promise.resolve).wasCalledWith []
     
         _and "there are other documents in localStorage not stored with store", ->
           beforeEach ->
@@ -283,19 +262,15 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
             spyOn(@store, "cache").andReturn {}
       
           it "should not return them", ->
-            success = jasmine.createSpy 'success'
             promise = @store.loadAll()
-            promise.done success
-            results = success.mostRecentCall.args[0]
+            results = promise.resolve.mostRecentCall.args[0]
             expect(results.length).toBe 1
       
       _when "called with type = 'cat'", ->
         with_2_cats_and_3_dogs ->
           it "should return only the cat objects", ->
-            success = jasmine.createSpy 'success'
             promise = @store.loadAll('cat')
-            promise.done success
-            results = success.mostRecentCall.args[0]
+            results = promise.resolve.mostRecentCall.args[0]
             expect(results.length).toBe 2
             
       describe "aliases", ->
@@ -305,16 +280,68 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
     # /.loadAll(type)
 
     describe ".delete(type, id)", ->
-      it "should return a promise", ->
-        promise = @store.destroy 'document', '123'
-        do expect(promise.done).toBeDefined
-        do expect(promise.fail).toBeDefined
   
-      it "should have more specs"
+      _when "objecet cannot be found", ->
+        beforeEach ->
+          spyOn(@store, "cache").andReturn false
+          
+        it "should return a rejected the promise", ->
+          promise = @store.delete 'document', '123'
+          expect(promise.reject).wasCalled()
+          
+      _when "object can be found and has not been synched before", ->
+        beforeEach ->
+          spyOn(@store, "cache").andReturn {}
+          
+        it "should remove the object", ->
+          @store.delete 'document', '123'
+          expect(@store.db.removeItem).wasCalledWith 'document/123'
+          
+        it "should set the _cached object to false", ->
+          delete @store._cached['document/123']
+          @store.delete 'document', '123'
+          expect(@store._cached['document/123']).toBe false
+          
+        it "should clear document from changed", ->
+          spyOn(@store, "clear_changed")
+          @store.delete 'document', '123'
+          expect(@store.clear_changed).wasCalledWith 'document', '123'
+        
+        it "should return a resolved promise", ->
+          promise = @store.delete 'document', '123'
+          expect(promise.resolve).wasCalledWith {}
+        
+        it "should return a clone of the cached object (before it was deleted)", ->
+          spyOn($, "extend")
+          promise = @store.delete 'document', '123', remote: true
+          expect($.extend).wasCalled()
+      
+      _when "object can be found and delete comes from remote", ->
+        beforeEach ->
+          spyOn(@store, "cache").andReturn {_synced_at: 'now'}
+        
+        it "should remove the object", ->
+          @store.delete 'document', '123', remote: true
+          expect(@store.db.removeItem).wasCalledWith 'document/123'
+          
+      _when "object can be found and was synched before", ->
+        beforeEach ->
+          spyOn(@store, "cache").andReturn {_synced_at: 'now'}
+          
+        it "should mark the object as deleted and cache it", ->
+          promise = @store.delete 'document', '123'
+          expect(@store.cache).wasCalledWith 'document', '123', {_synced_at: 'now', _deleted: true}
+          
+        it "should not remove the object from store", ->
+          @store.delete 'document', '123'
+          expect(@store.db.removeItem).wasNotCalled()
+        
+        
+        
       
       describe "aliases", ->
         it "should allow to use .destroy", ->
-          expect(@store.delete).toBe @store.destroy
+          expect(@store.destroy).toBe @store.delete
       # /aliases
     # /.destroy(type, id)
 
@@ -327,35 +354,14 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         @store._cached = {}
         
       _when "object passed", ->
-        _when "object is marked as deleted", ->
-          beforeEach ->
-            @store.is_marked_as_deleted.andReturn true
-          
-          it "should not write the object to localStorage", ->
-            @store.cache 'couch', '123', color: 'red', _deleted: true
-            expect(@store.db.setItem).wasNotCalled()
-            
-          it "should remove the object from localStorage", ->
-            @store.cache 'couch', '123', color: 'red', _deleted: true
-            expect(@store.db.removeItem).wasCalled()
-            
-          it "should cache the object as false", ->
-            expect(@store._cached['couch/123']).toBeUndefined()
-            @store.cache 'couch', '123', color: 'red', _deleted: true
-            expect(@store._cached['couch/123']).toBe false
-          
-        _when "object isn't marked as deleted", ->
-          beforeEach ->
-            @store.is_marked_as_deleted.andReturn false
-          
-          it "should write the object to localStorage, but without type & id attributes", ->
-            @store.cache('couch', '123', color: 'red')
-            expect(@store.db.setItem).wasCalledWith 'couch/123', '{"color":"red"}'
-          
-          _when "`options.remote = true` passed", ->
-            it "should clear changed object", ->
-              @store.cache('couch', '123', {color: 'red'}, remote: true)
-              expect(@store.clear_changed).wasCalledWith 'couch', '123'
+        it "should write the object to localStorage, but without type & id attributes", ->
+          @store.cache('couch', '123', color: 'red')
+          expect(@store.db.setItem).wasCalledWith 'couch/123', '{"color":"red"}'
+        
+        _when "`options.remote = true` passed", ->
+          it "should clear changed object", ->
+            @store.cache('couch', '123', {color: 'red'}, remote: true)
+            expect(@store.clear_changed).wasCalledWith 'couch', '123'
       
       _when "no object passed", ->
         _and "object is already cached", ->
@@ -427,15 +433,10 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
     # /.cache(type, id, object)
 
     describe ".clear()", ->
-      beforeEach ->
-
-        spyOn(@store, "_promise").andReturn
-          resolve: jasmine.createSpy 'resolve'
-          reject:  jasmine.createSpy 'reject'
       
       it "should return a promise", ->
         promise = @store.clear()
-        expect(promise).toBe @store._promise()
+        expect(promise).toBe @app.promise_mock
         
       it "should clear localStorage", ->
         @store.clear()
@@ -453,7 +454,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         
       it "should resolve promise", ->
         @store.clear()      
-        do expect(@store._promise().resolve).wasCalled
+        do expect(@app.promise().resolve).wasCalled
       
       _when "an error occurs", ->
         beforeEach ->
@@ -461,7 +462,7 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
         
         it "should reject the promise", ->
           @store.clear()      
-          do expect(@store._promise().reject).wasCalled
+          do expect(@app.promise().reject).wasCalled
     # /.clear()
 
     describe ".is_dirty(type, id)", ->
