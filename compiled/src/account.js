@@ -1,5 +1,4 @@
-var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-  __slice = Array.prototype.slice;
+var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 define('account', function() {
   'use strict';
@@ -57,9 +56,8 @@ define('account', function() {
         }),
         contentType: 'application/json',
         success: function() {
-          var _ref, _ref2;
-          (_ref = _this.app).trigger.apply(_ref, ['account:signed_up'].concat(__slice.call(arguments)));
-          return (_ref2 = _this.app).trigger.apply(_ref2, ['account:signed_in'].concat(__slice.call(arguments)));
+          _this.app.trigger('account:signed_up', email);
+          return _this.app.trigger('account:signed_in', email);
         }
       });
     };
@@ -72,8 +70,7 @@ define('account', function() {
           password: password
         },
         success: function() {
-          var _ref;
-          return (_ref = _this.app).trigger.apply(_ref, ['account:signed_in'].concat(__slice.call(arguments)));
+          return _this.app.trigger('account:signed_in', email);
         }
       });
     };
@@ -88,21 +85,20 @@ define('account', function() {
       var _this = this;
       return this.app.request('DELETE', '/_session', {
         success: function() {
-          var _ref;
-          return (_ref = _this.app).trigger.apply(_ref, ['account:signed_out'].concat(__slice.call(arguments)));
+          return _this.app.trigger('account:signed_out');
         }
       });
     };
 
     Account.prototype.logout = Account.prototype.sign_out;
 
-    Account.prototype._handle_sign_in = function(response) {
-      this.email = response.name;
+    Account.prototype._handle_sign_in = function(email) {
+      this.email = email;
       this.app.store.db.setItem('_couch.account.email', this.email);
       return this._authenticated = true;
     };
 
-    Account.prototype._handle_sign_out = function(response) {
+    Account.prototype._handle_sign_out = function() {
       delete this.email;
       this.app.store.db.removeItem('_couch.account.email');
       return this._authenticated = false;

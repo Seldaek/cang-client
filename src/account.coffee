@@ -76,8 +76,9 @@ define 'account', ->
         contentType:  'application/json'
         
         success   : => 
-          @app.trigger 'account:signed_up', arguments...
-          @app.trigger 'account:signed_in', arguments...
+          # {"ok":true,"id":"org.couchdb.user:funk","rev":"1-0a8c05f25b227b4689bbdcf55af06afc"}
+          @app.trigger 'account:signed_up', email
+          @app.trigger 'account:signed_in', email
 
 
     # ## sign in with email & password
@@ -91,7 +92,7 @@ define 'account', ->
           name      : email
           password  : password
           
-        success : => @app.trigger 'account:signed_in', arguments...
+        success : => @app.trigger 'account:signed_in', email
 
     # alias
     login: @::sign_in
@@ -112,7 +113,7 @@ define 'account', ->
     # TODO: handle errors
     sign_out: ->
       @app.request 'DELETE', '/_session', 
-        success : => @app.trigger 'account:signed_out', arguments...
+        success : => @app.trigger 'account:signed_out'
 
     # alias
     logout: @::sign_out
@@ -123,13 +124,12 @@ define 'account', ->
     #
     
     #
-    _handle_sign_in: (response) =>
-      @email = response.name
+    _handle_sign_in: (@email) =>
       @app.store.db.setItem '_couch.account.email', @email
       @_authenticated = true
     
     #
-    _handle_sign_out: (response) =>
+    _handle_sign_out: =>
       delete @email
       @app.store.db.removeItem '_couch.account.email'
       @_authenticated = false

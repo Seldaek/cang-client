@@ -46,11 +46,7 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
       describe("_handle_sign_in", function() {
         beforeEach(function() {
           spyOn(this.app.store.db, "setItem");
-          return this.account._handle_sign_in({
-            "ok": true,
-            "name": "joe@example.com",
-            "roles": []
-          });
+          return this.account._handle_sign_in('joe@example.com');
         });
         it("should set @email", function() {
           return expect(this.account.email).toBe('joe@example.com');
@@ -243,11 +239,11 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
         });
         it("should trigger `account:signed_up` event", function() {
           this.account.sign_up('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:signed_up');
+          return expect(this.app.trigger).wasCalledWith('account:signed_up', 'joe@example.com');
         });
         return it("should trigger `account:signed_in` event", function() {
           this.account.sign_up('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:signed_in');
+          return expect(this.app.trigger).wasCalledWith('account:signed_in', 'joe@example.com');
         });
       });
     });
@@ -276,7 +272,7 @@ define('specs/account', ['mocks/couchapp', 'account'], function(couchAppMock, Ac
         });
         return it("should trigger `account:signed_in` event", function() {
           this.account.sign_in('joe@example.com', 'secret');
-          return expect(this.app.trigger).wasCalledWith('account:signed_in');
+          return expect(this.app.trigger).wasCalledWith('account:signed_in', 'joe@example.com');
         });
       });
     });

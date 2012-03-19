@@ -46,7 +46,7 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
       describe "_handle_sign_in", ->
         beforeEach ->
           spyOn(@app.store.db, "setItem")
-          @account._handle_sign_in {"ok":true,"name":"joe@example.com","roles":[]}
+          @account._handle_sign_in 'joe@example.com'
         
         it "should set @email", ->
           expect(@account.email).toBe 'joe@example.com'
@@ -206,11 +206,11 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
         
         it "should trigger `account:signed_up` event", ->
           @account.sign_up('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:signed_up'
+          expect(@app.trigger).wasCalledWith 'account:signed_up', 'joe@example.com'
           
         it "should trigger `account:signed_in` event", ->
           @account.sign_up('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:signed_in'
+          expect(@app.trigger).wasCalledWith 'account:signed_in', 'joe@example.com'
     # /.sign_up(email, password)
   
     describe ".sign_in(email, password)", ->
@@ -235,7 +235,7 @@ define 'specs/account', ['mocks/couchapp', 'account'], (couchAppMock, Account) -
           
         it "should trigger `account:signed_in` event", ->
           @account.sign_in('joe@example.com', 'secret')
-          expect(@app.trigger).wasCalledWith 'account:signed_in'
+          expect(@app.trigger).wasCalledWith 'account:signed_in', 'joe@example.com'
     # /.sign_in(email, password)
   
     describe ".change_password(email, password)", ->
