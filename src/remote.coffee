@@ -37,7 +37,6 @@ define 'remote', ['errors'], (ERROR) ->
     # stop pulling changes from the userDB
     disconnect : =>
       @_connected = false
-      console.log 'aborting _changes_request', @_changes_request
       @_changes_request.abort() if @_changes_request
       
       @app.store.db.removeItem '_couch.remote.seq'
@@ -225,7 +224,6 @@ define 'remote', ['errors'], (ERROR) ->
         else
           @app.store.save(_doc.type, _doc.id, _doc, remote: true)
           .done (object, object_was_created) => 
-            console.log "save from remote", object, object_was_created
             @app.trigger 'remote:changed', _doc.type, _doc.id, object
             @app.trigger "remote:changed:#{_doc.type}", _doc.id, object
             if object_was_created

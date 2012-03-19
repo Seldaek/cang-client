@@ -33,7 +33,6 @@ define('remote', ['errors'], function(ERROR) {
 
     Remote.prototype.disconnect = function() {
       this._connected = false;
-      console.log('aborting _changes_request', this._changes_request);
       if (this._changes_request) this._changes_request.abort();
       this.app.store.db.removeItem('_couch.remote.seq');
       this.app.unbind('store:dirty:idle', this.push_changes);
@@ -174,7 +173,6 @@ define('remote', ['errors'], function(ERROR) {
           _results.push(this.app.store.save(_doc.type, _doc.id, _doc, {
             remote: true
           }).done(function(object, object_was_created) {
-            console.log("save from remote", object, object_was_created);
             _this.app.trigger('remote:changed', _doc.type, _doc.id, object);
             _this.app.trigger("remote:changed:" + _doc.type, _doc.id, object);
             if (object_was_created) {
