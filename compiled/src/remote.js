@@ -174,6 +174,7 @@ define('remote', ['errors'], function(ERROR) {
           _results.push(this.app.store.save(_doc.type, _doc.id, _doc, {
             remote: true
           }).done(function(object, object_was_created) {
+            console.log("save from remote", object, object_was_created);
             _this.app.trigger('remote:changed', _doc.type, _doc.id, object);
             _this.app.trigger("remote:changed:" + _doc.type, _doc.id, object);
             if (object_was_created) {

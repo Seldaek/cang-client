@@ -225,6 +225,7 @@ define 'remote', ['errors'], (ERROR) ->
         else
           @app.store.save(_doc.type, _doc.id, _doc, remote: true)
           .done (object, object_was_created) => 
+            console.log "save from remote", object, object_was_created
             @app.trigger 'remote:changed', _doc.type, _doc.id, object
             @app.trigger "remote:changed:#{_doc.type}", _doc.id, object
             if object_was_created
