@@ -228,7 +228,7 @@ define 'store', ['errors'], (ERROR) ->
         return $.extend {}, @_cached[key] if @_cached[key]?
         @_cached[key] = @_getObject type, id
       
-      if @_cached[key] and (@is_dirty(@_cached[key]) or @is_marked_as_deleted(@_cached[key]))
+      if @_cached[key] and (@_is_dirty(@_cached[key]) or @_is_marked_as_deleted(@_cached[key]))
         @mark_as_changed type, id, @_cached[key]
       else
         @clear_changed type, id
@@ -258,14 +258,9 @@ define 'store', ['errors'], (ERROR) ->
     #
     # when an object gets deleted that has been synched before (`_rev` attribute),
     # it cannot be removed from store but gets a `_deleted: true` attribute
-    #
-    # The object can be passed directly `is_marked_as_deleted(object)`
-    # or just its type and id `is_marked_as_deleted('couch','123')`
     is_marked_as_deleted : (type, id) ->
-      if typeof type is 'object'
-        type._deleted is true
-      else
-        @cache(type, id)._deleted is true
+      @_is_marked_as_deleted @cache(type, id)
+        
     
     # ## Mark as changed
     #
@@ -295,22 +290,11 @@ define 'store', ['errors'], (ERROR) ->
     #
     # Otherwise it returns `true` or `false` for the passed object. An object is dirty
     # if it has no `_synced_at` attribute or if `updated_at` is more recent than `_synced_at`
-    #
-    # The object can be passed directly `is_dirty(object)` or just its type and id
-    # `is_dirty('couch','123')`
     is_dirty: (type, id) ->
       unless type
         return $.isEmptyObject @_dirty
         
-      if typeof type is 'object' 
-        obj = type
-      else
-        obj = @cache(type, id)
-      
-      return true  unless obj._synced_at  # no synced_at? uuhh, that's dirty.
-      return false unless obj.updated_at # no updated_at? no dirt then
-    
-      obj._synced_at.getTime() < obj.updated_at.getTime()
+      @_is_dirty @cache(type, id)
   
   
     # ## Clear
@@ -419,7 +403,18 @@ define 'store', ['errors'], (ERROR) ->
   
     # map of dirty objects by their ids
     _dirty: {}
+    
+    # is dirty?
+    _is_dirty: (object) ->
+      
+      return true  unless object._synced_at  # no synced_at? uuhh, that's dirty.
+      return false unless object.updated_at # no updated_at? no dirt then
+    
+      object._synced_at.getTime() < object.updated_at.getTime()
   
+    # marked as deleted?
+    _is_marked_as_deleted: (object) ->
+      object._deleted is true
 
     # document key index
     #

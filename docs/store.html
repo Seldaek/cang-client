@@ -192,7 +192,7 @@ and caches it for faster future access. Updates cache when <code>value</code> is
         <span class="k">return</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="k">if</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span><span class="o">?</span>
         <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@_getObject</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span>
       
-      <span class="k">if</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">and</span> <span class="p">(</span><span class="nx">@is_dirty</span><span class="p">(</span><span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">])</span> <span class="o">or</span> <span class="nx">@is_marked_as_deleted</span><span class="p">(</span><span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]))</span>
+      <span class="k">if</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">and</span> <span class="p">(</span><span class="nx">@_is_dirty</span><span class="p">(</span><span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">])</span> <span class="o">or</span> <span class="nx">@_is_marked_as_deleted</span><span class="p">(</span><span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]))</span>
         <span class="nx">@mark_as_changed</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">@_cached</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
       <span class="k">else</span>
         <span class="nx">@clear_changed</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">id</span>
@@ -218,14 +218,9 @@ and triggers a <code>store:dirty</code> event</p>             </td>             
     </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <h2>Marked as deleted?</h2>
 
 <p>when an object gets deleted that has been synched before (<code>_rev</code> attribute),
-it cannot be removed from store but gets a <code>_deleted: true</code> attribute</p>
-
-<p>The object can be passed directly <code>is_marked_as_deleted(object)</code>
-or just its type and id <code>is_marked_as_deleted('couch','123')</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">is_marked_as_deleted : </span><span class="nf">(type, id) -&gt;</span>
-      <span class="k">if</span> <span class="k">typeof</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;object&#39;</span>
-        <span class="nx">type</span><span class="p">.</span><span class="nx">_deleted</span> <span class="o">is</span> <span class="kc">true</span>
-      <span class="k">else</span>
-        <span class="nx">@cache</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">).</span><span class="nx">_deleted</span> <span class="o">is</span> <span class="kc">true</span>
+it cannot be removed from store but gets a <code>_deleted: true</code> attribute</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">is_marked_as_deleted : </span><span class="nf">(type, id) -&gt;</span>
+      <span class="nx">@_is_marked_as_deleted</span> <span class="nx">@cache</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
+        
     </pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <h2>Mark as changed</h2>
 
 <p>Marks object as changed (dirty). Triggers a <code>store:dirty</code> event immediately and a 
@@ -249,22 +244,11 @@ or just its type and id <code>is_marked_as_deleted('couch','123')</code></p>    
 dirty objects in the store.</p>
 
 <p>Otherwise it returns <code>true</code> or <code>false</code> for the passed object. An object is dirty
-if it has no <code>_synced_at</code> attribute or if <code>updated_at</code> is more recent than <code>_synced_at</code></p>
-
-<p>The object can be passed directly <code>is_dirty(object)</code> or just its type and id
-<code>is_dirty('couch','123')</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">is_dirty: </span><span class="nf">(type, id) -&gt;</span>
+if it has no <code>_synced_at</code> attribute or if <code>updated_at</code> is more recent than <code>_synced_at</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">is_dirty: </span><span class="nf">(type, id) -&gt;</span>
       <span class="nx">unless</span> <span class="nx">type</span>
         <span class="k">return</span> <span class="nx">$</span><span class="p">.</span><span class="nx">isEmptyObject</span> <span class="nx">@_dirty</span>
         
-      <span class="k">if</span> <span class="k">typeof</span> <span class="nx">type</span> <span class="o">is</span> <span class="s1">&#39;object&#39;</span> 
-        <span class="nv">obj = </span><span class="nx">type</span>
-      <span class="k">else</span>
-        <span class="nv">obj = </span><span class="nx">@cache</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
-      
-      <span class="k">return</span> <span class="kc">true</span>  <span class="nx">unless</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">_synced_at</span>  <span class="c1"># no synced_at? uuhh, that&#39;s dirty.</span>
-      <span class="k">return</span> <span class="kc">false</span> <span class="nx">unless</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">updated_at</span> <span class="c1"># no updated_at? no dirt then</span>
-    
-      <span class="nx">obj</span><span class="p">.</span><span class="nx">_synced_at</span><span class="p">.</span><span class="nx">getTime</span><span class="p">()</span> <span class="o">&lt;</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">updated_at</span><span class="p">.</span><span class="nx">getTime</span><span class="p">()</span>
+      <span class="nx">@_is_dirty</span> <span class="nx">@cache</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
   
   </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <h2>Clear</h2>
 
@@ -341,7 +325,14 @@ as it is when Safari's private browsing mode is active.</p>             </td>   
     <span class="nv">_is_semantic_id: </span><span class="nf">(key) -&gt;</span>
       <span class="o">/^</span><span class="p">[</span><span class="nx">a</span><span class="o">-</span><span class="nx">z0</span><span class="o">-</span><span class="mi">9</span><span class="p">]</span><span class="o">+</span><span class="err">\</span><span class="o">/</span><span class="p">[</span><span class="nx">a</span><span class="o">-</span><span class="nx">z0</span><span class="o">-</span><span class="mi">9</span><span class="p">]</span><span class="o">+</span><span class="nx">$</span><span class="err">/.test key</span></pre></div>             </td>           </tr>                               <tr id="section-37">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-37">&#182;</a>               </div>               <p>cache of localStorage for quicker access</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_cached: </span><span class="p">{}</span>
   </pre></div>             </td>           </tr>                               <tr id="section-38">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-38">&#182;</a>               </div>               <p>map of dirty objects by their ids</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_dirty: </span><span class="p">{}</span>
-  </pre></div>             </td>           </tr>                               <tr id="section-39">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-39">&#182;</a>               </div>               <p>document key index</p>
+    </pre></div>             </td>           </tr>                               <tr id="section-39">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-39">&#182;</a>               </div>               <p>is dirty?</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_is_dirty: </span><span class="nf">(object) -&gt;</span>
+      
+      <span class="k">return</span> <span class="kc">true</span>  <span class="nx">unless</span> <span class="nx">object</span><span class="p">.</span><span class="nx">_synced_at</span>  <span class="c1"># no synced_at? uuhh, that&#39;s dirty.</span>
+      <span class="k">return</span> <span class="kc">false</span> <span class="nx">unless</span> <span class="nx">object</span><span class="p">.</span><span class="nx">updated_at</span> <span class="c1"># no updated_at? no dirt then</span>
+    
+      <span class="nx">object</span><span class="p">.</span><span class="nx">_synced_at</span><span class="p">.</span><span class="nx">getTime</span><span class="p">()</span> <span class="o">&lt;</span> <span class="nx">object</span><span class="p">.</span><span class="nx">updated_at</span><span class="p">.</span><span class="nx">getTime</span><span class="p">()</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-40">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-40">&#182;</a>               </div>               <p>marked as deleted?</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_is_marked_as_deleted: </span><span class="nf">(object) -&gt;</span>
+      <span class="nx">object</span><span class="p">.</span><span class="nx">_deleted</span> <span class="o">is</span> <span class="kc">true</span></pre></div>             </td>           </tr>                               <tr id="section-41">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-41">&#182;</a>               </div>               <p>document key index</p>
 
 <p>TODO: make this cachy</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">_index: </span><span class="o">-&gt;</span>
       <span class="nx">@db</span><span class="p">.</span><span class="nx">key</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">...</span><span class="nx">@db</span><span class="p">.</span><span class="nx">length</span><span class="p">()]</span>

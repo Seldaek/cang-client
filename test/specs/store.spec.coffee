@@ -367,8 +367,8 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
       beforeEach ->
         spyOn(@store, "mark_as_changed")
         spyOn(@store, "clear_changed")
-        spyOn(@store, "is_dirty")
-        spyOn(@store, "is_marked_as_deleted")
+        spyOn(@store, "_is_dirty")
+        spyOn(@store, "_is_marked_as_deleted")
         @store._cached = {}
         
       _when "object passed", ->
@@ -419,24 +419,24 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
             
       
       _when "object is dirty", ->
-        beforeEach -> @store.is_dirty.andReturn true
+        beforeEach -> @store._is_dirty.andReturn true
         
         it "should mark it as changed", ->
           @store.cache 'couch', '123'
           expect(@store.mark_as_changed).wasCalledWith 'couch', '123', color: 'red', type: 'couch', id: '123'
       
       _when "object is not dirty", ->
-        beforeEach -> @store.is_dirty.andReturn false
+        beforeEach -> @store._is_dirty.andReturn false
         
         _and "not marked as deleted", ->
-          beforeEach -> @store.is_marked_as_deleted.andReturn false
+          beforeEach -> @store._is_marked_as_deleted.andReturn false
           
           it "should clean it", ->
             @store.cache 'couch', '123'
             expect(@store.clear_changed).wasCalledWith 'couch', '123'
             
         _but "marked as deleted", ->
-          beforeEach -> @store.is_marked_as_deleted.andReturn true
+          beforeEach -> @store._is_marked_as_deleted.andReturn true
         
           it "should mark it as changed", ->
             @store.cache 'couch', '123'
@@ -524,19 +524,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
                 
             it "should return true", ->
               do expect(@store.is_dirty 'couch', '123').toBeTruthy
-        
-      _when "object passed", ->
-        _and "it is dirty", ->
-          it "should return true", ->
-            it_is_dirty = @store.is_dirty _synced_at: undefined
-            do expect(it_is_dirty).toBeTruthy
-
-        _and "object isn't dirty", ->
-          it "should return false", ->
-            it_is_dirty = @store.is_dirty 
-              updated_at: new Date(0)
-              _synced_at: new Date(0)
-            do expect(it_is_dirty).toBeFalsy
     # /.is_dirty(type, id)
     
     describe ".mark_as_changed(type, id, object)", ->
@@ -599,10 +586,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           
         it "should return false", ->
           expect(@store.is_marked_as_deleted('couch', '123')).toBeFalsy()
-          
-      _when "passed object is marked as deleted", ->
-        it "should return true", ->
-          expect(@store.is_marked_as_deleted( {_deleted: true} )).toBeTruthy()
     # /.is_marked_as_deleted(type, id)
 
     describe ".clear_changed(type, id)", ->

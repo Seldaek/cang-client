@@ -486,8 +486,8 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       beforeEach(function() {
         spyOn(this.store, "mark_as_changed");
         spyOn(this.store, "clear_changed");
-        spyOn(this.store, "is_dirty");
-        spyOn(this.store, "is_marked_as_deleted");
+        spyOn(this.store, "_is_dirty");
+        spyOn(this.store, "_is_marked_as_deleted");
         return this.store._cached = {};
       });
       _when("object passed", function() {
@@ -554,7 +554,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       });
       _when("object is dirty", function() {
         beforeEach(function() {
-          return this.store.is_dirty.andReturn(true);
+          return this.store._is_dirty.andReturn(true);
         });
         return it("should mark it as changed", function() {
           this.store.cache('couch', '123');
@@ -567,11 +567,11 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
       });
       _when("object is not dirty", function() {
         beforeEach(function() {
-          return this.store.is_dirty.andReturn(false);
+          return this.store._is_dirty.andReturn(false);
         });
         _and("not marked as deleted", function() {
           beforeEach(function() {
-            return this.store.is_marked_as_deleted.andReturn(false);
+            return this.store._is_marked_as_deleted.andReturn(false);
           });
           return it("should clean it", function() {
             this.store.cache('couch', '123');
@@ -580,7 +580,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
         });
         return _but("marked as deleted", function() {
           beforeEach(function() {
-            return this.store.is_marked_as_deleted.andReturn(true);
+            return this.store._is_marked_as_deleted.andReturn(true);
           });
           return it("should mark it as changed", function() {
             this.store.cache('couch', '123');
@@ -645,7 +645,7 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
           return expect(this.store.is_dirty()).toBeTruthy();
         });
       });
-      _when("type & id passed", function() {
+      return _when("type & id passed", function() {
         _and("object was not yet synced", function() {
           beforeEach(function() {
             return spyOn(this.store, "cache").andReturn({
@@ -689,27 +689,6 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
             return it("should return true", function() {
               return expect(this.store.is_dirty('couch', '123')).toBeTruthy();
             });
-          });
-        });
-      });
-      return _when("object passed", function() {
-        _and("it is dirty", function() {
-          return it("should return true", function() {
-            var it_is_dirty;
-            it_is_dirty = this.store.is_dirty({
-              _synced_at: void 0
-            });
-            return expect(it_is_dirty).toBeTruthy();
-          });
-        });
-        return _and("object isn't dirty", function() {
-          return it("should return false", function() {
-            var it_is_dirty;
-            it_is_dirty = this.store.is_dirty({
-              updated_at: new Date(0),
-              _synced_at: new Date(0)
-            });
-            return expect(it_is_dirty).toBeFalsy();
           });
         });
       });
@@ -784,19 +763,12 @@ define('specs/store', ['store', 'mocks/couchapp'], function(Store, couchAppMock)
           return expect(this.store.is_marked_as_deleted('couch', '123')).toBeTruthy();
         });
       });
-      _when("object 'couch/123' isn't marked as deleted", function() {
+      return _when("object 'couch/123' isn't marked as deleted", function() {
         beforeEach(function() {
           return spyOn(this.store, "cache").andReturn({});
         });
         return it("should return false", function() {
           return expect(this.store.is_marked_as_deleted('couch', '123')).toBeFalsy();
-        });
-      });
-      return _when("passed object is marked as deleted", function() {
-        return it("should return true", function() {
-          return expect(this.store.is_marked_as_deleted({
-            _deleted: true
-          })).toBeTruthy();
         });
       });
     });

@@ -195,7 +195,7 @@ define('store', ['errors'], function(ERROR) {
         if (this._cached[key] != null) return $.extend({}, this._cached[key]);
         this._cached[key] = this._getObject(type, id);
       }
-      if (this._cached[key] && (this.is_dirty(this._cached[key]) || this.is_marked_as_deleted(this._cached[key]))) {
+      if (this._cached[key] && (this._is_dirty(this._cached[key]) || this._is_marked_as_deleted(this._cached[key]))) {
         this.mark_as_changed(type, id, this._cached[key]);
       } else {
         this.clear_changed(type, id);
@@ -219,11 +219,7 @@ define('store', ['errors'], function(ERROR) {
     };
 
     Store.prototype.is_marked_as_deleted = function(type, id) {
-      if (typeof type === 'object') {
-        return type._deleted === true;
-      } else {
-        return this.cache(type, id)._deleted === true;
-      }
+      return this._is_marked_as_deleted(this.cache(type, id));
     };
 
     Store.prototype.mark_as_changed = function(type, id, object) {
@@ -251,16 +247,8 @@ define('store', ['errors'], function(ERROR) {
     };
 
     Store.prototype.is_dirty = function(type, id) {
-      var obj;
       if (!type) return $.isEmptyObject(this._dirty);
-      if (typeof type === 'object') {
-        obj = type;
-      } else {
-        obj = this.cache(type, id);
-      }
-      if (!obj._synced_at) return true;
-      if (!obj.updated_at) return false;
-      return obj._synced_at.getTime() < obj.updated_at.getTime();
+      return this._is_dirty(this.cache(type, id));
     };
 
     Store.prototype.clear = function() {
@@ -345,6 +333,16 @@ define('store', ['errors'], function(ERROR) {
     Store.prototype._cached = {};
 
     Store.prototype._dirty = {};
+
+    Store.prototype._is_dirty = function(object) {
+      if (!object._synced_at) return true;
+      if (!object.updated_at) return false;
+      return object._synced_at.getTime() < object.updated_at.getTime();
+    };
+
+    Store.prototype._is_marked_as_deleted = function(object) {
+      return object._deleted === true;
+    };
 
     Store.prototype._index = function() {
       var i, _ref, _results;
