@@ -124,9 +124,6 @@ define 'store', ['errors'], (ERROR) ->
     #     store.get(car)
     load : (type, id) ->
       promise = @app.promise()
-      
-      if arguments.length = 1 and typeof type is 'object'
-        [type, id] = [type.type, type.id]
     
       unless typeof type is 'string' and typeof id is 'string'
         return promise.reject ERROR.INVALID_ARGUMENTS "type & id are required"
@@ -291,6 +288,7 @@ define 'store', ['errors'], (ERROR) ->
     # returns an Array of all dirty documents
     changed_docs: -> 
       object for key, object of @_dirty
+      
          
     # ## Is dirty?
     #

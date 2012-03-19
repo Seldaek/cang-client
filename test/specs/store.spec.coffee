@@ -191,11 +191,6 @@ define 'specs/store', ['store', 'mocks/couchapp'], (Store, couchAppMock) ->
           it "should call the fail callback", ->
             promise = @store.load 'document'
             expect(promise.reject).wasCalled()
-            
-      it "should allow to pass an object as paramter {type: 'car', id: 'abc4567'}", ->
-        @store.load {type: 'car', id: 'abc4567'}
-        expect(@store.cache).wasCalled()
-      
         
       _when "object can be found", ->
         beforeEach ->
