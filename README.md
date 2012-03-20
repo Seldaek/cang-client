@@ -237,3 +237,10 @@ Contribute
 When you feel like contributing, I highly recommend to install [PhantomJS](http://www.phantomjs.org/) for automated, headless testing. Run `$ cake autotest` to have test running in the background while hacking.
 
 When you're done with changes, make sure to run `$ r.js -o name=cang baseUrl=./compiled out=cang.min.js` to update the concatenated & minified js file for production use.
+
+
+License & Copyright
+===================
+
+(c) 2012 Gregor Martynus <g@minutes.io>
+Licensed under the Apache License 2.0.
