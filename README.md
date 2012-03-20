@@ -195,9 +195,9 @@ hell, yeah!
 
 ```javascript
 email = {
-  to      : ['you@roundthewor.ld'],
-  cc      : ['rest@roundthewor.ld'],
-  subject : 'rule the wolrd',
+  to      : ['susan@example.com'],
+  cc      : ['bill@example.com'],
+  subject : 'rule the world',
   body    : "we can do it!\nSigned, Joe"
 }
 
