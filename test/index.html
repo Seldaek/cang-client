@@ -3,13 +3,13 @@
 <head>
   <title>Jasmine Test Runner</title>
   <link rel="stylesheet" type="text/css" href="lib/jasmine-1.1.0/jasmine.css">
-  
+
   <script src="lib/jasmine-1.1.0/jasmine.js"></script>
   <script src="lib/jasmine-1.1.0/jasmine-html.js"></script>
   <script src="../compiled/test/lib/jasmine-helpers.js"></script>
 
   <script src="../vendor/require-1.0.7.js"></script>
-  
+
   <!--   <script src="../vendor/jquery-1.7.1.min.js"></script>
      -->
   <script src="http://code.jquery.com/jquery-1.7.1.js"></script>
@@ -19,11 +19,11 @@
   <script src="../compiled/src/store.js"></script>
   <script src="../compiled/src/account.js"></script>
   <script src="../compiled/src/remote.js"></script>
-  <script src="../compiled/src/cang.js"></script>
-  
-  <script src="../compiled/test/mocks/cang.mock.js"></script>
-  
-  <script src="../compiled/test/specs/cang.spec.js"></script>
+  <script src="../compiled/src/kang.js"></script>
+
+  <script src="../compiled/test/mocks/kang.mock.js"></script>
+
+  <script src="../compiled/test/specs/kang.spec.js"></script>
   <script src="../compiled/test/specs/store.spec.js"></script>
   <script src="../compiled/test/specs/account.spec.js"></script>
   <script src="../compiled/test/specs/remote.spec.js"></script>
@@ -33,14 +33,14 @@
   <script>
     jas = jasmine.getEnv()
     jas.addReporter(new jasmine.TrivialReporter());
-    
+
     require([
-      'mocks/cang',
-      
+      'mocks/kang',
+
       'specs/store',
       'specs/account',
       'specs/remote',
-      'specs/cang'
+      'specs/kang'
     ], function () {
       jas.execute();
     });

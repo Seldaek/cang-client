@@ -6,9 +6,9 @@ Setup
 -----
 
 ```javascript
-Cang = require('cang')
+Kang = require('kang')
 couchDB_endpoint = 'http://worlddominatorapp.iriscouch.com';
-app = new Cang(couchDB_endpoint);
+app = new Kang(couchDB_endpoint);
 ```
 
 
@@ -24,14 +24,14 @@ app.account.sign_up('joe@example.com', 'secret')
   .done( function(user) {
     user.email // 'joe@example.com'
     user.uuid  // auto generated
-    
+
     // data sync kicks in
-  } ) 
-  
+  } )
+
   // signup error
   .fail( function(err) {
     alert("Oops: " + err.message)
-  } ) 
+  } )
 ```
 
 
@@ -42,10 +42,10 @@ app.account.sign_in('joe@example.com', 'secret')
 
   .done( function(user) {
     // data sync kicks in
-  } ) 
+  } )
   .fail( function(err) {
     alert("Oops: " + err.message)
-  } ) 
+  } )
 ```
 
 ### Change password
@@ -53,7 +53,7 @@ app.account.sign_in('joe@example.com', 'secret')
 ```javascript
 app.account.change_password('current_secret', 'new_secret')
 
-  .done( function(user) { } ) 
+  .done( function(user) { } )
   .fail( function(err)  { } )
 ```
 
@@ -64,10 +64,10 @@ app.account.sign_out()
 
   .done( function() {
     // session ends, local data gets cleaned up
-  } ) 
+  } )
   .fail( function(err) {
     alert("Oops: " + err.message)
-  } ) 
+  } )
 ```
 
 
@@ -78,7 +78,7 @@ app.account.forgot_password('joe@example.com')
 
   .done( function() {
     alert( "Link has been sent to joe@example.com")
-  } ) 
+  } )
   .fail( function(err) {
     alert("Oops: " + err.message)
   } )
@@ -105,23 +105,23 @@ create or update an object.
 // create a new object
 type = 'rule'
 app.store.create( type, {name: "rule the world"} )
-  
+
   .done ( function(new_object) { } )
   .fail ( function(err)        { } )
-  
+
 // save an object
 id   = 'abc4567'
 type = 'rule'
 app.store.save( type, id, {name: "rule the world"} )
-  
+
   .done ( function(object) { } )
   .fail ( function(err)        { } )
-  
+
 // update an existing object
 id   = 'abc4567'
 type = 'rule'
 app.store.update( type, id, {nr: 1} )
-  
+
   .done ( function(updated_object) { } )
   .fail ( function(err)        { } )
 ```
@@ -227,7 +227,7 @@ Future Ideas
 Dependencies
 ------------
 
-Cang depends on and [require.js](http://requirejs.org).
+Kang depends on and [require.js](http://requirejs.org).
 It currently also depends on jQuery/[zepto](http://zeptojs.com/), but we will remove the dependance soon.
 
 
@@ -236,7 +236,7 @@ Contribute
 
 When you feel like contributing, I highly recommend to install [PhantomJS](http://www.phantomjs.org/) for automated, headless testing. Run `$ cake autotest` to have test running in the background while hacking.
 
-When you're done with changes, make sure to run `$ r.js -o name=cang baseUrl=./compiled out=cang.min.js` to update the concatenated & minified js file for production use.
+When you're done with changes, make sure to run `$ r.js -o name=kang baseUrl=./compiled out=kang.min.js` to update the concatenated & minified js file for production use.
 
 
 License & Copyright

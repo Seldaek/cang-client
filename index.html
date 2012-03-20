@@ -1,71 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Cang Test page</title>
+  <title>Kang Test page</title>
 
   <script src="vendor/require-1.0.7.js"></script>
   <script src="vendor/jquery-1.7.1.min.js"></script>
-  
+
   <script>
-    require(["compiled/src/errors.js", "compiled/src/events.js", "compiled/src/store.js", "compiled/src/account.js", "compiled/src/remote.js", "compiled/src/cang.js"])
+    require(["compiled/src/errors.js", "compiled/src/events.js", "compiled/src/store.js", "compiled/src/account.js", "compiled/src/remote.js", "compiled/src/kang.js"])
   </script>
-  
+
   <link href="http://google-code-prettify.googlecode.com/svn/trunk/styles/sunburst.css" type="text/css" rel="stylesheet" />
-  
-  
+
+
 </head>
 <body>
-  
+
   <div class="container" style="margin: 50px auto; max-width: 920px;">
     <pre class="prettyprint"><code class="language-js">
-    // initialize your Cang App
-    Cang = require('cang');
+    // initialize your Kang App
+    Kang = require('kang');
     couchDB_endpoint = 'http://corscouch.example.com';
-    app = new Cang(couchDB_endpoint);
-    
-    // 
-    // Account 
+    app = new Kang(couchDB_endpoint);
+
     //
-    
+    // Account
+    //
+
     // sign up
     app.account.sign_up('joe@example.com', 'secret')
-      .done( function(user) { } ) 
+      .done( function(user) { } )
       .fail( function(err)  { } )
-      
+
     // sign in
     app.account.sign_in('joe@example.com', 'secret')
-      .done( function(user) { } ) 
+      .done( function(user) { } )
       .fail( function(err)  { } )
-      
+
     // sign out
     app.account.sign_out()
-      .done( function(user) { } ) 
+      .done( function(user) { } )
       .fail( function(err)  { } )
-    
+
     // change password (coming soon)
     app.account.change_password('current_secret', 'new_secret')
-      .done( function(user) { } ) 
+      .done( function(user) { } )
       .fail( function(err)  { } )
-      
+
     // forgot password (coming soon)
     app.account.forgot_password('joe@example.com')
-      .done( function(user) { } ) 
+      .done( function(user) { } )
       .fail( function(err)  { } )
-      
+
     //
     // Store
     //
-    
+
     // helper to generate uuids
     uuid = app.store.uuid(length)
-    
+
     // create a new object
     type = 'couch'
     attributes = {color: "red"}
     app.store.create(type, attributes )
       .done ( function(new_object) { } )
       .fail ( function(err)        { } )
-      
+
     // save an object
     type = 'couch'
     id   = 'abc4567'
@@ -73,7 +73,7 @@
     app.store.save( type, id, attributes )
       .done ( function(new_object) { } )
       .fail ( function(err)        { } )
-      
+
     // update an existing object
     type = 'couch'
     id   = 'abc4567'
@@ -81,39 +81,39 @@
     app.store.update( type, id, update )
       .done ( function(updated_object) { } )
       .fail ( function(err)            { } )
-    
+
     // load one object
     type = 'couch'
     id   = 'abc4567'
     app.store.load( type, id )
       .done ( function(object) { } )
       .fail ( function(err)    { } )
-      
+
     // Load all objects
     app.store.loadAll()
       .done ( function(objects) { } )
       .fail ( function(err)     { } )
-      
+
     // Load all objects from one type
     type = 'couch'
     app.store.loadAll( type )
       .done ( function(objects) { } )
       .fail ( function(err)     { } )
-      
+
     // delete an existing object
     type = 'couch'
     id   = 'abc4567'
     app.store.delete( type, id )
       .done ( function(deleted_object) { } )
       .fail ( function(err)            { } )
-      
+
     //
     // Synchronization
     //
     // When signed in, local changes do get synched automatically.
     // You can subscribe to remote updates
-    // 
-    
+    //
+
     // new doc created
     app.remote.on( 'created', function( type, id, created_object) { } )
 
@@ -131,10 +131,10 @@
     app.remote.on( "updated:couch", function( id, updated_object)  { } )
     app.remote.on( "deleted:couch", function( id, deleted_object) { } )
     app.remote.on( "changed:couch", function( id, changed_object) { } )
-    
+
     //
     // Send emails (coming soon)
-    // 
+    //
     email = {
       to      : ['you@roundthewor.ld'],
       cc      : ['rest@roundthewor.ld'],
@@ -154,13 +154,13 @@
       .fail     ( function(err)   { } )
     </code></pre>
   </div>
-  
+
   <!-- <link href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css" type="text/css" rel="stylesheet" /> -->
   <script src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"></script>
   <script>
     prettyPrint()
   </script>
-  
-  
+
+
 </body>
 </html>

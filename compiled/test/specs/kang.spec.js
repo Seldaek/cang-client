@@ -1,19 +1,19 @@
 
-define('specs/cang', ['cang'], function(Cang) {
-  return describe("Cang", function() {
+define('specs/kang', ['kang'], function(Kang) {
+  return describe("Kang", function() {
     beforeEach(function() {
-      this.app = new Cang('http://couch.example.com');
+      this.app = new Kang('http://couch.example.com');
       return spyOn($, "ajax").andReturn($.Deferred());
     });
     describe("new", function() {
       it("should store the couchDB URL", function() {
         var app;
-        app = new Cang('http://couch.example.com');
+        app = new Kang('http://couch.example.com');
         return expect(app.couchDB_url).toBe('http://couch.example.com');
       });
       return it("should remove trailing slash from passed URL", function() {
         var app;
-        app = new Cang('http://couch.example.com/');
+        app = new Kang('http://couch.example.com/');
         return expect(app.couchDB_url).toBe('http://couch.example.com');
       });
     });

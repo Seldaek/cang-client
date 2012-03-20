@@ -1,8 +1,8 @@
 
-define('specs/remote', ['mocks/cang'], function(CangMock) {
+define('specs/remote', ['mocks/kang'], function(KangMock) {
   return describe("Remote", function() {
     return beforeEach(function() {
-      this.app = new CangMock;
+      this.app = new KangMock;
       return this.store = new Store(this.app);
     });
   });

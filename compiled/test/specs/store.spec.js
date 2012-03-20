@@ -1,8 +1,8 @@
 
-define('specs/store', ['store', 'mocks/cang'], function(Store, CangMock) {
+define('specs/store', ['store', 'mocks/kang'], function(Store, KangMock) {
   return describe("Store", function() {
     beforeEach(function() {
-      this.app = new CangMock;
+      this.app = new KangMock;
       this.store = new Store(this.app);
       spyOn(this.app.promise_mock, "resolve").andCallThrough();
       spyOn(this.app.promise_mock, "reject").andCallThrough();
