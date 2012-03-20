@@ -227,7 +227,8 @@ Future Ideas
 Dependencies
 ------------
 
-Cang depends on jQuery/[zepto](http://zeptojs.com/) and [require.js](http://requirejs.org) 
+Cang depends on and [require.js](http://requirejs.org).
+It currently also depends on jQuery/[zepto](http://zeptojs.com/), but we will remove the dependance soon.
 
 
 Contribute
